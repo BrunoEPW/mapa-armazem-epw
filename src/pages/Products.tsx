@@ -1,23 +1,60 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Plus, Edit, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useWarehouse } from '@/contexts/WarehouseContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
-import { useWarehouse } from '@/contexts/WarehouseContext';
-import { Product } from '@/types/warehouse';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Edit, Trash2, Home, LogOut, Search } from 'lucide-react';
 import { ProductDialog } from '@/components/warehouse/ProductDialog';
+import { Product } from '@/types/warehouse';
+import { Input } from '@/components/ui/input';
 
-const Products = () => {
+const Products: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuth();
   const { products, deleteProduct } = useWarehouse();
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   const handleDeleteProduct = (productId: string) => {
     if (confirm('Tem certeza que deseja eliminar este produto? Isto também removerá todos os materiais relacionados.')) {
       deleteProduct(productId);
     }
   };
+
+  const filteredProducts = products
+    .filter(product => 
+      product.modelo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.acabamento.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.cor.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.modelo.localeCompare(b.modelo));
+
+  const groupedProducts = filteredProducts.reduce((acc, product) => {
+    const modelo = product.modelo;
+    if (!acc[modelo]) {
+      acc[modelo] = [];
+    }
+    acc[modelo].push(product);
+    return acc;
+  }, {} as Record<string, Product[]>);
 
   return (
     <div className="min-h-screen bg-warehouse-bg p-8">
@@ -26,101 +63,127 @@ const Products = () => {
           <Button
             variant="outline"
             onClick={() => navigate('/')}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 text-white border-white hover:bg-white hover:text-black"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar ao Mapa
+            <Home className="w-4 h-4" />
+            Home
           </Button>
           
-          <h1 className="text-3xl font-bold text-foreground">
+          <h1 className="text-3xl font-bold text-white">
             Gestão de Produtos
           </h1>
           
-          <Button
-            onClick={() => setShowAddDialog(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Novo Produto
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowDialog(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Novo Produto
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleLogout}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </Button>
+          </div>
         </div>
 
-        {products.length === 0 ? (
+        {/* Pesquisa rápida */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Pesquisar por modelo, acabamento ou cor..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {Object.keys(groupedProducts).length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <p className="text-muted-foreground text-lg mb-4">
-                Nenhum produto cadastrado
+                Nenhum produto encontrado
               </p>
-              <Button onClick={() => setShowAddDialog(true)}>
+              <Button onClick={() => setShowDialog(true)}>
                 <Plus className="w-4 h-4 mr-2" />
-                Adicionar Primeiro Produto
+                Criar Primeiro Produto
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <Card key={product.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{product.modelo}</CardTitle>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditingProduct(product)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteProduct(product.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Acabamento</p>
-                      <p className="font-medium">{product.acabamento}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Cor</p>
-                      <p className="font-medium">{product.cor}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Comprimento</p>
-                      <p className="font-medium">{product.comprimento}mm</p>
-                    </div>
-                    {product.foto && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Foto</p>
-                        <img
-                          src={product.foto}
-                          alt={product.modelo}
-                          className="w-full h-32 object-cover rounded-md mt-2"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="space-y-6">
+            {Object.entries(groupedProducts).map(([modelo, modeloProducts]) => (
+              <div key={modelo}>
+                <h2 className="text-xl font-semibold text-white mb-3">{modelo}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {modeloProducts.map((product) => (
+                    <Card key={product.id} className="hover:shadow-lg transition-shadow">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <CardTitle className="text-lg">{product.modelo}</CardTitle>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingProduct(product);
+                                setShowDialog(true);
+                              }}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteProduct(product.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <Badge variant="secondary">{product.acabamento}</Badge>
+                            <Badge variant="outline">{product.cor}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Comprimento: {product.comprimento}mm
+                          </p>
+                          {product.foto && (
+                            <div className="mt-3">
+                              <img 
+                                src={product.foto} 
+                                alt={product.modelo}
+                                className="w-full h-32 object-cover rounded border"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
 
-        {showAddDialog && (
-          <ProductDialog onClose={() => setShowAddDialog(false)} />
-        )}
-
-        {editingProduct && (
+        {showDialog && (
           <ProductDialog
             product={editingProduct}
-            onClose={() => setEditingProduct(null)}
+            onClose={() => {
+              setShowDialog(false);
+              setEditingProduct(null);
+            }}
           />
         )}
       </div>

@@ -22,17 +22,15 @@ const WarehouseMap: React.FC = () => {
   const getShelfClassName = (estante: string) => {
     const status = getShelfStatus(estante);
     const isSelected = selectedShelf?.estante === estante;
-    const isHighShelf = ['A', 'H'].includes(estante);
     
     return cn(
-      'relative rounded-lg transition-all duration-300 cursor-pointer text-xl font-bold text-black flex items-center justify-center transform hover:scale-105',
-      isHighShelf ? 'h-40' : 'h-32',
-      'bg-warehouse-shelf-yellow border-4 border-warehouse-shelf-base',
+      'relative bg-warehouse-shelf-yellow transition-all duration-300 cursor-pointer text-2xl font-bold text-black flex items-center justify-center transform hover:scale-105',
+      'w-32 h-48',
       {
-        'after:absolute after:inset-2 after:rounded after:bg-warehouse-shelf-empty': status === 'empty',
-        'after:absolute after:inset-2 after:rounded after:bg-warehouse-shelf-low': status === 'low',
-        'after:absolute after:inset-2 after:rounded after:bg-warehouse-shelf-stock': status === 'stock',
-        'after:absolute after:inset-2 after:rounded after:bg-warehouse-shelf-selected': isSelected,
+        'after:absolute after:inset-4 after:rounded after:bg-warehouse-shelf-empty': status === 'empty',
+        'after:absolute after:inset-4 after:rounded after:bg-warehouse-shelf-low': status === 'low', 
+        'after:absolute after:inset-4 after:rounded after:bg-warehouse-shelf-stock': status === 'stock',
+        'after:absolute after:inset-4 after:rounded after:bg-warehouse-shelf-selected': isSelected,
       }
     );
   };
@@ -41,19 +39,30 @@ const WarehouseMap: React.FC = () => {
     navigate(`/estante/${estante}`);
   };
 
-  const renderShelfGroup = (estantes: string[], withSeparator = false) => (
-    <div className="flex items-center gap-2">
+  const renderSingleShelf = (estante: string) => (
+    <div className="bg-warehouse-shelf-base p-2">
+      <div
+        key={estante}
+        className={getShelfClassName(estante)}
+        onClick={() => handleShelfClick(estante)}
+      >
+        <span className="relative z-10">{estante}</span>
+      </div>
+    </div>
+  );
+
+  const renderShelfGroup = (estantes: string[]) => (
+    <div className="bg-warehouse-shelf-base p-2 flex gap-1">
       {estantes.map((estante, index) => (
         <React.Fragment key={estante}>
           <div
             className={getShelfClassName(estante)}
             onClick={() => handleShelfClick(estante)}
-            style={{ width: '120px' }}
           >
             <span className="relative z-10">{estante}</span>
           </div>
-          {withSeparator && index === 0 && (
-            <div className="w-2 h-32 bg-warehouse-shelf-separator rounded"></div>
+          {index === 0 && estantes.length === 2 && (
+            <div className="w-2 bg-warehouse-shelf-separator"></div>
           )}
         </React.Fragment>
       ))}
@@ -67,22 +76,22 @@ const WarehouseMap: React.FC = () => {
           Mapa do Armazém
         </h1>
         
-        {/* Layout específico das estantes */}
-        <div className="flex justify-center items-center gap-8 mb-8">
+        {/* Layout específico das estantes conforme imagem */}
+        <div className="flex justify-center items-end gap-8 mb-8">
           {/* Estante A - Isolada à esquerda */}
-          {renderShelfGroup(['A'])}
+          {renderSingleShelf('A')}
           
           {/* Grupo B-C */}
-          {renderShelfGroup(['B', 'C'], true)}
+          {renderShelfGroup(['B', 'C'])}
           
           {/* Grupo D-E */}
-          {renderShelfGroup(['D', 'E'], true)}
+          {renderShelfGroup(['D', 'E'])}
           
           {/* Grupo F-G */}
-          {renderShelfGroup(['F', 'G'], true)}
+          {renderShelfGroup(['F', 'G'])}
           
           {/* Estante H - Isolada à direita */}
-          {renderShelfGroup(['H'])}
+          {renderSingleShelf('H')}
         </div>
 
         {/* Legenda */}
