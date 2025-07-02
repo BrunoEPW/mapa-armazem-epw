@@ -13,7 +13,7 @@ const Index = () => {
       description: 'Vista geral do armazém com estantes interativas',
       icon: Warehouse,
       path: '/armazem',
-      color: 'bg-warehouse-shelf-base',
+      color: 'bg-warehouse-shelf-stock',
     },
     {
       title: 'Pesquisa de Materiais',
@@ -60,7 +60,7 @@ const Index = () => {
               <CardHeader>
                 <div className="flex items-center gap-4">
                   <div className={`p-3 rounded-lg ${item.color}`}>
-                    <item.icon className="w-8 h-8 text-warehouse-bg" />
+                    <item.icon className="w-8 h-8 text-white" />
                   </div>
                   <CardTitle className="text-xl">{item.title}</CardTitle>
                 </div>
