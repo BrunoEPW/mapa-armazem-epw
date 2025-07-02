@@ -49,12 +49,12 @@ export interface WarehouseConfig {
 export const WAREHOUSE_CONFIG: WarehouseConfig = {
   estantes: {
     A: { name: 'A', prateleiras: [1] },
-    B: { name: 'B', prateleiras: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] },
-    C: { name: 'C', prateleiras: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] },
-    D: { name: 'D', prateleiras: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] },
-    E: { name: 'E', prateleiras: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] },
-    F: { name: 'F', prateleiras: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] },
-    G: { name: 'G', prateleiras: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] },
-    H: { name: 'H', prateleiras: [1, 2, 3, 4, 5, 6, 7] },
+    B: { name: 'B', prateleiras: [1, 2, 3, 4, 5, 6, 7] },
+    C: { name: 'C', prateleiras: [1, 2, 3, 4, 5, 6, 7] },
+    D: { name: 'D', prateleiras: [1, 2, 3, 4, 5, 6, 7] },
+    E: { name: 'E', prateleiras: [1, 2, 3, 4, 5, 6, 7] },
+    F: { name: 'F', prateleiras: [1, 2, 3, 4, 5, 6, 7] },
+    G: { name: 'G', prateleiras: [1, 2, 3, 4, 5, 6, 7] },
+    H: { name: 'H', prateleiras: [1, 2, 3, 4, 5, 6] },
   },
 };
