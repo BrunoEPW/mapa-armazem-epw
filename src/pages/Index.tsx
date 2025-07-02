@@ -103,7 +103,7 @@ const Index = () => {
       icon: BarChart3,
       path: '/relatorios',
       color: 'bg-warehouse-shelf-low',
-      showText: true,
+      showText: false,
     },
   ];
 

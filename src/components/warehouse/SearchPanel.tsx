@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { useNavigate } from 'react-router-dom';
+import { MovementHistoryDialog } from './MovementHistoryDialog';
 
 const SearchPanel: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const SearchPanel: React.FC = () => {
   });
   
   const [searchResults, setSearchResults] = useState<Array<any>>([]);
+  const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
 
   // Get unique values from products
   const uniqueModelos = [...new Set(products.map(p => p.modelo))].sort();
@@ -136,7 +138,10 @@ const SearchPanel: React.FC = () => {
                   className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex-1">
+                    <div 
+                      className="flex-1 cursor-pointer"
+                      onClick={() => setSelectedMaterialId(material.id)}
+                    >
                       <h4 className="font-medium">
                         {material.product.modelo} - {material.product.acabamento}
                       </h4>
@@ -173,6 +178,13 @@ const SearchPanel: React.FC = () => {
             </CardContent>
           </Card>
         ) : null
+      )}
+
+      {selectedMaterialId && (
+        <MovementHistoryDialog
+          materialId={selectedMaterialId}
+          onClose={() => setSelectedMaterialId(null)}
+        />
       )}
     </div>
   );
