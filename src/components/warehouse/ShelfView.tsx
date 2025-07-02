@@ -48,13 +48,12 @@ const ShelfView: React.FC = () => {
     
     return cn(
       'h-16 flex items-center justify-center rounded-lg border-2 transition-all duration-300 cursor-pointer text-lg font-bold',
-      'hover:scale-105 hover:shadow-lg transform',
+      'hover:scale-105 hover:shadow-lg transform text-white',
       {
         'bg-warehouse-shelf-empty border-warehouse-shelf-empty': status === 'empty',
         'bg-warehouse-shelf-low border-warehouse-shelf-low': status === 'low',
         'bg-warehouse-shelf-stock border-warehouse-shelf-stock': status === 'stock',
         'hover:bg-warehouse-shelf-hover': true,
-        'text-warehouse-bg': true,
       }
     );
   };

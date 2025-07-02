@@ -36,14 +36,13 @@ All colors MUST be HSL.
     --input: 217 19% 15%;
     --ring: 58 100% 68%;
 
-    /* Warehouse specific colors */
+    /* Warehouse specific colors - simplified */
     --warehouse-bg: 0 0% 5%;
-    --shelf-base: 58 100% 68%;
-    --shelf-with-stock: 142 76% 36%;
-    --shelf-low-stock: 25 95% 53%;
-    --shelf-empty: 0 84% 60%;
-    --shelf-selected: 217 91% 60%;
-    --shelf-hover: 58 100% 75%;
+    --shelf-stock: 120 100% 25%;
+    --shelf-low: 35 100% 50%;
+    --shelf-empty: 0 100% 50%;
+    --shelf-selected: 220 100% 60%;
+    --shelf-hover: 220 100% 70%;
 
     --radius: 0.75rem;
 

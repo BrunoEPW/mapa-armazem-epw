@@ -25,14 +25,13 @@ const WarehouseMap: React.FC = () => {
     
     return cn(
       'h-32 flex items-center justify-center rounded-lg border-2 transition-all duration-300 cursor-pointer text-xl font-bold',
-      'hover:scale-105 hover:shadow-lg transform',
+      'hover:scale-105 hover:shadow-lg transform text-white',
       {
         'bg-warehouse-shelf-empty border-warehouse-shelf-empty': status === 'empty',
         'bg-warehouse-shelf-low border-warehouse-shelf-low': status === 'low',
         'bg-warehouse-shelf-stock border-warehouse-shelf-stock': status === 'stock',
         'bg-warehouse-shelf-selected border-warehouse-shelf-selected': isSelected,
         'hover:bg-warehouse-shelf-hover': !isSelected,
-        'text-warehouse-bg': true,
       }
     );
   };

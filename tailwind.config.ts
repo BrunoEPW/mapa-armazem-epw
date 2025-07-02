@@ -55,9 +55,8 @@ export default {
 				warehouse: {
 					bg: 'hsl(var(--warehouse-bg))',
 					shelf: {
-						base: 'hsl(var(--shelf-base))',
-						stock: 'hsl(var(--shelf-with-stock))',
-						low: 'hsl(var(--shelf-low-stock))',
+						stock: 'hsl(var(--shelf-stock))',
+						low: 'hsl(var(--shelf-low))',
 						empty: 'hsl(var(--shelf-empty))',
 						selected: 'hsl(var(--shelf-selected))',
 						hover: 'hsl(var(--shelf-hover))'
