@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Material, Product, Movement, ShelfData, ShelfLocation } from '@/types/warehouse';
 
 interface WarehouseContextType {
@@ -21,7 +21,14 @@ interface WarehouseContextType {
 
 const WarehouseContext = createContext<WarehouseContextType | undefined>(undefined);
 
-// Mock data
+// Storage keys
+const STORAGE_KEYS = {
+  PRODUCTS: 'warehouse-products',
+  MATERIALS: 'warehouse-materials',
+  MOVEMENTS: 'warehouse-movements',
+};
+
+// Mock data as fallback
 const mockProducts: Product[] = [
   {
     id: '1',
@@ -73,7 +80,7 @@ const mockMaterials: Material[] = [
     productId: '1',
     product: mockProducts[0],
     pecas: 3,
-    location: { estante: 'F', prateleira: 0 },
+    location: { estante: 'F', prateleira: 1 },
   },
 ];
 
@@ -96,11 +103,59 @@ const mockMovements: Movement[] = [
   },
 ];
 
+// Storage utilities
+const loadFromStorage = (key: string, fallback: any) => {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const saveToStorage = (key: string, data: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.warn('Failed to save to localStorage:', error);
+  }
+};
+
 export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [materials, setMaterials] = useState<Material[]>(mockMaterials);
-  const [products, setProducts] = useState<Product[]>(mockProducts);
-  const [movements, setMovements] = useState<Movement[]>(mockMovements);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [movements, setMovements] = useState<Movement[]>([]);
   const [selectedShelf, setSelectedShelf] = useState<ShelfLocation | null>(null);
+
+  // Load data from localStorage on mount
+  useEffect(() => {
+    const savedProducts = loadFromStorage(STORAGE_KEYS.PRODUCTS, mockProducts);
+    const savedMaterials = loadFromStorage(STORAGE_KEYS.MATERIALS, mockMaterials);
+    const savedMovements = loadFromStorage(STORAGE_KEYS.MOVEMENTS, mockMovements);
+
+    setProducts(savedProducts);
+    setMaterials(savedMaterials);
+    setMovements(savedMovements);
+  }, []);
+
+  // Save to localStorage when data changes
+  useEffect(() => {
+    if (products.length > 0) {
+      saveToStorage(STORAGE_KEYS.PRODUCTS, products);
+    }
+  }, [products]);
+
+  useEffect(() => {
+    if (materials.length > 0) {
+      saveToStorage(STORAGE_KEYS.MATERIALS, materials);
+    }
+  }, [materials]);
+
+  useEffect(() => {
+    if (movements.length > 0) {
+      saveToStorage(STORAGE_KEYS.MOVEMENTS, movements);
+    }
+  }, [movements]);
 
   const addMaterial = (material: Omit<Material, 'id'>) => {
     const newMaterial: Material = {
