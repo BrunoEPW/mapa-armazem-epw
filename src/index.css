@@ -8,35 +8,44 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 220 15% 8%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 15% 10%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 15% 10%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 58 100% 68%;
+    --primary-foreground: 220 15% 8%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217 19% 15%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 217 19% 15%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 58 100% 68%;
+    --accent-foreground: 220 15% 8%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 217 19% 20%;
+    --input: 217 19% 15%;
+    --ring: 58 100% 68%;
 
-    --radius: 0.5rem;
+    /* Warehouse specific colors */
+    --warehouse-bg: 0 0% 5%;
+    --shelf-base: 58 100% 68%;
+    --shelf-with-stock: 142 76% 36%;
+    --shelf-low-stock: 25 95% 53%;
+    --shelf-empty: 0 84% 60%;
+    --shelf-selected: 217 91% 60%;
+    --shelf-hover: 58 100% 75%;
+
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 

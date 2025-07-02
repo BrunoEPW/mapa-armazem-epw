@@ -52,6 +52,17 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				warehouse: {
+					bg: 'hsl(var(--warehouse-bg))',
+					shelf: {
+						base: 'hsl(var(--shelf-base))',
+						stock: 'hsl(var(--shelf-with-stock))',
+						low: 'hsl(var(--shelf-low-stock))',
+						empty: 'hsl(var(--shelf-empty))',
+						selected: 'hsl(var(--shelf-selected))',
+						hover: 'hsl(var(--shelf-hover))'
+					}
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
