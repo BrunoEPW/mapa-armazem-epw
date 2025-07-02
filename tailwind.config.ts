@@ -55,11 +55,14 @@ export default {
 				warehouse: {
 					bg: 'hsl(var(--warehouse-bg))',
 					shelf: {
+						base: 'hsl(var(--shelf-base))',
+						yellow: 'hsl(var(--shelf-yellow))',
 						stock: 'hsl(var(--shelf-stock))',
 						low: 'hsl(var(--shelf-low))',
 						empty: 'hsl(var(--shelf-empty))',
 						selected: 'hsl(var(--shelf-selected))',
-						hover: 'hsl(var(--shelf-hover))'
+						hover: 'hsl(var(--shelf-hover))',
+						separator: 'hsl(var(--shelf-separator))'
 					}
 				},
 				sidebar: {

@@ -22,16 +22,17 @@ const WarehouseMap: React.FC = () => {
   const getShelfClassName = (estante: string) => {
     const status = getShelfStatus(estante);
     const isSelected = selectedShelf?.estante === estante;
+    const isHighShelf = ['A', 'H'].includes(estante);
     
     return cn(
-      'h-32 flex items-center justify-center rounded-lg border-2 transition-all duration-300 cursor-pointer text-xl font-bold',
-      'hover:scale-105 hover:shadow-lg transform text-white',
+      'relative rounded-lg transition-all duration-300 cursor-pointer text-xl font-bold text-black flex items-center justify-center transform hover:scale-105',
+      isHighShelf ? 'h-40' : 'h-32',
+      'bg-warehouse-shelf-yellow border-4 border-warehouse-shelf-base',
       {
-        'bg-warehouse-shelf-empty border-warehouse-shelf-empty': status === 'empty',
-        'bg-warehouse-shelf-low border-warehouse-shelf-low': status === 'low',
-        'bg-warehouse-shelf-stock border-warehouse-shelf-stock': status === 'stock',
-        'bg-warehouse-shelf-selected border-warehouse-shelf-selected': isSelected,
-        'hover:bg-warehouse-shelf-hover': !isSelected,
+        'after:absolute after:inset-2 after:rounded after:bg-warehouse-shelf-empty': status === 'empty',
+        'after:absolute after:inset-2 after:rounded after:bg-warehouse-shelf-low': status === 'low',
+        'after:absolute after:inset-2 after:rounded after:bg-warehouse-shelf-stock': status === 'stock',
+        'after:absolute after:inset-2 after:rounded after:bg-warehouse-shelf-selected': isSelected,
       }
     );
   };
@@ -40,26 +41,52 @@ const WarehouseMap: React.FC = () => {
     navigate(`/estante/${estante}`);
   };
 
+  const renderShelfGroup = (estantes: string[], withSeparator = false) => (
+    <div className="flex items-center gap-2">
+      {estantes.map((estante, index) => (
+        <React.Fragment key={estante}>
+          <div
+            className={getShelfClassName(estante)}
+            onClick={() => handleShelfClick(estante)}
+            style={{ width: '120px' }}
+          >
+            <span className="relative z-10">{estante}</span>
+          </div>
+          {withSeparator && index === 0 && (
+            <div className="w-2 h-32 bg-warehouse-shelf-separator rounded"></div>
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-warehouse-bg p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-foreground mb-8 text-center">
+        <h1 className="text-3xl font-bold text-white mb-8 text-center">
           Mapa do Armazém
         </h1>
         
-        <div className="grid grid-cols-8 gap-4 mb-8">
-          {Object.keys(WAREHOUSE_CONFIG.estantes).map((estante) => (
-            <div
-              key={estante}
-              className={getShelfClassName(estante)}
-              onClick={() => handleShelfClick(estante)}
-            >
-              {estante}
-            </div>
-          ))}
+        {/* Layout específico das estantes */}
+        <div className="flex justify-center items-center gap-8 mb-8">
+          {/* Estante A - Isolada à esquerda */}
+          {renderShelfGroup(['A'])}
+          
+          {/* Grupo B-C */}
+          {renderShelfGroup(['B', 'C'], true)}
+          
+          {/* Grupo D-E */}
+          {renderShelfGroup(['D', 'E'], true)}
+          
+          {/* Grupo F-G */}
+          {renderShelfGroup(['F', 'G'], true)}
+          
+          {/* Estante H - Isolada à direita */}
+          {renderShelfGroup(['H'])}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
+        {/* Legenda */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-white">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 bg-warehouse-shelf-stock rounded"></div>
             <span>Com Stock</span>
@@ -75,6 +102,24 @@ const WarehouseMap: React.FC = () => {
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 bg-warehouse-shelf-selected rounded"></div>
             <span>Selecionado</span>
+          </div>
+        </div>
+
+        {/* Legenda da estrutura */}
+        <div className="mt-8 text-center text-gray-400">
+          <div className="flex items-center justify-center gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-warehouse-shelf-yellow rounded"></div>
+              <span>Estante</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-warehouse-shelf-base rounded"></div>
+              <span>Base</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-warehouse-shelf-separator rounded"></div>
+              <span>Separador</span>
+            </div>
           </div>
         </div>
       </div>
