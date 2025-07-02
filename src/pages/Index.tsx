@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Package, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,9 +7,15 @@ import { WAREHOUSE_CONFIG } from '@/types/warehouse';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { cn } from '@/lib/utils';
 
+
 const Index = () => {
   const navigate = useNavigate();
   const { materials, selectedShelf } = useWarehouse();
+  const [lastUpdate, setLastUpdate] = useState(new Date());
+
+  useEffect(() => {
+    setLastUpdate(new Date());
+  }, [materials]);
 
   const getShelfStatus = (estante: string) => {
     const shelfMaterials = materials.filter(m => m.location.estante === estante);
@@ -87,7 +93,6 @@ const Index = () => {
       icon: Search,
       path: '/pesquisa',
       color: 'bg-blue-500',
-      showText: false,
     },
     {
       title: 'Gestão de Produtos',
@@ -95,7 +100,6 @@ const Index = () => {
       icon: Package,
       path: '/login',
       color: 'bg-blue-600',
-      showText: false,
     },
     {
       title: 'Relatórios',
@@ -103,16 +107,47 @@ const Index = () => {
       icon: BarChart3,
       path: '/relatorios',
       color: 'bg-warehouse-shelf-low',
-      showText: true,
     },
   ];
 
   return (
     <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-6 sm:mb-8 text-center">
-          Mapa do Armazém
-        </h1>
+        {/* Header com logo e data/hora */}
+        <div className="flex justify-between items-start mb-6 sm:mb-8">
+          <div className="flex items-center gap-4">
+            {/* Logo EPW */}
+            <div className="relative h-12 w-24">
+              <svg viewBox="0 0 120 48" className="h-full w-full">
+                {/* Elementos do logo inspirados nas imagens */}
+                <rect x="0" y="8" width="40" height="8" fill="#FF6600" rx="2" />
+                <rect x="0" y="20" width="60" height="8" fill="#FF6600" rx="2" />
+                <rect x="0" y="32" width="35" height="8" fill="#FF6600" rx="2" />
+                <text x="70" y="20" fill="white" fontSize="14" fontWeight="bold" fontFamily="Arial">EPW</text>
+                <text x="70" y="35" fill="#FF6600" fontSize="8" fontFamily="Arial">tecnologia de extrusão</text>
+              </svg>
+            </div>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
+              Mapa do Armazém
+            </h1>
+          </div>
+          <div className="text-right text-white">
+            <p className="text-sm text-gray-300">Última atualização</p>
+            <p className="text-lg font-semibold">
+              {lastUpdate.toLocaleDateString('pt-PT', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+              })}
+            </p>
+            <p className="text-sm">
+              {lastUpdate.toLocaleTimeString('pt-PT', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </p>
+          </div>
+        </div>
         
         {/* Layout específico das estantes conforme imagem */}
         <div className="flex justify-center items-end gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12 overflow-x-auto pb-4">
@@ -146,9 +181,6 @@ const Index = () => {
                     <item.icon className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" />
                   </div>
                 </div>
-                {item.showText && (
-                  <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-center mb-2">{item.title}</h3>
-                )}
                 <p className="text-sm sm:text-base text-muted-foreground mb-4">{item.description}</p>
                 <Button className="w-full" onClick={() => navigate(item.path)}>
                   Aceder
