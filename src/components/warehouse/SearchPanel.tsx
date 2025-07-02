@@ -121,7 +121,7 @@ const SearchPanel: React.FC = () => {
         </CardContent>
       </Card>
 
-      {searchResults.length > 0 && (
+      {searchResults.length > 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>
@@ -161,6 +161,18 @@ const SearchPanel: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+      ) : (
+        searchQuery.modelo || searchQuery.acabamento || searchQuery.comprimento ? (
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center text-muted-foreground">
+                <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">Nenhum resultado encontrado</p>
+                <p>Não foi encontrado nenhum produto com essas características no armazém.</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null
       )}
     </div>
   );

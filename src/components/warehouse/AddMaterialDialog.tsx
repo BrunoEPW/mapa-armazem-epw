@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { ShelfLocation } from '@/types/warehouse';
 import { toast } from 'sonner';
+import { Search } from 'lucide-react';
 
 interface AddMaterialDialogProps {
   location: ShelfLocation;
@@ -21,6 +22,17 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
   const [selectedProductId, setSelectedProductId] = useState('');
   const [pecas, setPecas] = useState('');
   const [norc, setNorc] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery) return products;
+    return products.filter(product =>
+      product.modelo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.acabamento.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.cor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.comprimento.toString().includes(searchQuery)
+    );
+  }, [products, searchQuery]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,17 +81,36 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="product">Produto</Label>
+            <Label htmlFor="search">Pesquisar Produto</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Pesquisar por modelo, acabamento, cor ou comprimento..."
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="product">Produto ({filteredProducts.length} encontrados)</Label>
             <Select value={selectedProductId} onValueChange={setSelectedProductId}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um produto" />
               </SelectTrigger>
-              <SelectContent>
-                {products.map(product => (
+              <SelectContent className="max-h-60">
+                {filteredProducts.map(product => (
                   <SelectItem key={product.id} value={product.id}>
                     {product.modelo} - {product.acabamento} - {product.cor} - {product.comprimento}mm
                   </SelectItem>
                 ))}
+                {filteredProducts.length === 0 && (
+                  <div className="py-6 text-center text-sm text-muted-foreground">
+                    Nenhum produto encontrado com esses critérios
+                  </div>
+                )}
               </SelectContent>
             </Select>
           </div>

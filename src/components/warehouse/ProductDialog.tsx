@@ -16,7 +16,7 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
   product,
   onClose,
 }) => {
-  const { addProduct, updateProduct } = useWarehouse();
+  const { addProduct, updateProduct, products } = useWarehouse();
   const isEdit = !!product;
   
   const [formData, setFormData] = useState({
@@ -47,6 +47,19 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
       updateProduct(product.id, productData);
       toast.success('Produto atualizado com sucesso');
     } else {
+      // Check for duplicates before adding
+      const isDuplicate = products.some(p => 
+        p.modelo === productData.modelo &&
+        p.acabamento === productData.acabamento &&
+        p.cor === productData.cor &&
+        p.comprimento === productData.comprimento
+      );
+
+      if (isDuplicate) {
+        toast.error('Este produto já existe no sistema');
+        return;
+      }
+
       addProduct(productData);
       toast.success('Produto adicionado com sucesso');
     }

@@ -11,6 +11,7 @@ import ShelfDetail from "./pages/ShelfDetail";
 import Search from "./pages/Search";
 import Products from "./pages/Products";
 import Login from "./pages/Login";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/pesquisa" element={<Search />} />
               <Route path="/login" element={<Login />} />
               <Route path="/produtos" element={<Products />} />
+              <Route path="/relatorios" element={<Reports />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

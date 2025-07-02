@@ -87,6 +87,7 @@ const Index = () => {
       icon: Search,
       path: '/pesquisa',
       color: 'bg-warehouse-shelf-stock',
+      showText: false,
     },
     {
       title: 'Gestão de Produtos',
@@ -94,6 +95,7 @@ const Index = () => {
       icon: Package,
       path: '/login',
       color: 'bg-warehouse-shelf-selected',
+      showText: false,
     },
     {
       title: 'Relatórios',
@@ -101,6 +103,7 @@ const Index = () => {
       icon: BarChart3,
       path: '/relatorios',
       color: 'bg-warehouse-shelf-low',
+      showText: true,
     },
   ];
 
@@ -142,7 +145,9 @@ const Index = () => {
                   <div className={`p-2 sm:p-3 rounded-lg ${item.color}`}>
                     <item.icon className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-white" />
                   </div>
-                  <h3 className="text-base sm:text-lg lg:text-xl font-semibold">{item.title}</h3>
+                  {item.showText && (
+                    <h3 className="text-base sm:text-lg lg:text-xl font-semibold">{item.title}</h3>
+                  )}
                 </div>
                 <p className="text-sm sm:text-base text-muted-foreground mb-4">{item.description}</p>
                 <Button className="w-full" onClick={() => navigate(item.path)}>
