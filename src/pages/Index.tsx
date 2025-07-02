@@ -103,7 +103,7 @@ const Index = () => {
       icon: BarChart3,
       path: '/relatorios',
       color: 'bg-warehouse-shelf-low',
-      showText: false,
+      showText: true,
     },
   ];
 
@@ -141,14 +141,14 @@ const Index = () => {
               onClick={() => navigate(item.path)}
             >
               <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center gap-3 sm:gap-4 mb-3">
-                  <div className={`p-2 sm:p-3 rounded-lg ${item.color}`}>
-                    <item.icon className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-white" />
+                <div className="flex items-center justify-center mb-3">
+                  <div className={`p-4 sm:p-6 rounded-lg ${item.color}`}>
+                    <item.icon className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" />
                   </div>
-                  {item.showText && (
-                    <h3 className="text-base sm:text-lg lg:text-xl font-semibold">{item.title}</h3>
-                  )}
                 </div>
+                {item.showText && (
+                  <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-center mb-2">{item.title}</h3>
+                )}
                 <p className="text-sm sm:text-base text-muted-foreground mb-4">{item.description}</p>
                 <Button className="w-full" onClick={() => navigate(item.path)}>
                   Aceder

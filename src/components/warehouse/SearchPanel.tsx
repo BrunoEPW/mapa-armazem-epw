@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { useNavigate } from 'react-router-dom';
-import { MovementHistoryDialog } from './MovementHistoryDialog';
+import { ProductDetailsDialog } from './ProductDetailsDialog';
 
 const SearchPanel: React.FC = () => {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ const SearchPanel: React.FC = () => {
   });
   
   const [searchResults, setSearchResults] = useState<Array<any>>([]);
-  const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   // Get unique values from products
   const uniqueModelos = [...new Set(products.map(p => p.modelo))].sort();
@@ -133,35 +133,35 @@ const SearchPanel: React.FC = () => {
           <CardContent>
             <div className="space-y-3">
               {searchResults.map((material) => (
-                <div
-                  key={material.id}
-                  className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div 
-                      className="flex-1 cursor-pointer"
-                      onClick={() => setSelectedMaterialId(material.id)}
-                    >
-                      <h4 className="font-medium">
-                        {material.product.modelo} - {material.product.acabamento}
-                      </h4>
-                      <div className="flex gap-4 text-sm text-muted-foreground mt-1">
-                        <span>Cor: {material.product.cor}</span>
-                        <span>Comprimento: {material.product.comprimento}mm</span>
-                        <Badge variant="outline">{material.pecas} peças</Badge>
+                  <div
+                    key={material.id}
+                    className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div 
+                        className="flex-1 cursor-pointer" 
+                        onClick={() => setSelectedProduct(material.product)}
+                      >
+                        <h4 className="font-medium hover:text-primary transition-colors">
+                          {material.product.modelo} - {material.product.acabamento}
+                        </h4>
+                        <div className="flex gap-4 text-sm text-muted-foreground mt-1">
+                          <span>Cor: {material.product.cor}</span>
+                          <span>Comprimento: {material.product.comprimento}mm</span>
+                          <Badge variant="outline">{material.pecas} peças</Badge>
+                        </div>
                       </div>
+                      
+                      <Button
+                        variant="outline"
+                        onClick={() => handleLocationClick(material.location)}
+                        className="flex items-center gap-2"
+                      >
+                        <MapPin className="w-4 h-4" />
+                        {material.location.estante}{material.location.prateleira}
+                      </Button>
                     </div>
-                    
-                    <Button
-                      variant="outline"
-                      onClick={() => handleLocationClick(material.location)}
-                      className="flex items-center gap-2"
-                    >
-                      <MapPin className="w-4 h-4" />
-                      {material.location.estante}{material.location.prateleira}
-                    </Button>
                   </div>
-                </div>
               ))}
             </div>
           </CardContent>
@@ -180,10 +180,10 @@ const SearchPanel: React.FC = () => {
         ) : null
       )}
 
-      {selectedMaterialId && (
-        <MovementHistoryDialog
-          materialId={selectedMaterialId}
-          onClose={() => setSelectedMaterialId(null)}
+      {selectedProduct && (
+        <ProductDetailsDialog 
+          product={selectedProduct} 
+          onClose={() => setSelectedProduct(null)} 
         />
       )}
     </div>
