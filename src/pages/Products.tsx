@@ -57,26 +57,26 @@ const Products: React.FC = () => {
   }, {} as Record<string, Product[]>);
 
   return (
-    <div className="min-h-screen bg-warehouse-bg p-8">
+    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
           <Button
             variant="outline"
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-white border-white hover:bg-white hover:text-black"
+            className="flex items-center gap-2 text-white border-white hover:bg-white hover:text-black order-3 sm:order-1"
           >
             <Home className="w-4 h-4" />
             Home
           </Button>
           
-          <h1 className="text-3xl font-bold text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white order-1 sm:order-2">
             Gestão de Produtos
           </h1>
           
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 order-2 sm:order-3 w-full sm:w-auto">
             <Button
               onClick={() => setShowDialog(true)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 justify-center"
             >
               <Plus className="w-4 h-4" />
               Novo Produto
@@ -84,7 +84,7 @@ const Products: React.FC = () => {
             <Button
               variant="destructive"
               onClick={handleLogout}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 justify-center"
             >
               <LogOut className="w-4 h-4" />
               Logout
@@ -94,7 +94,7 @@ const Products: React.FC = () => {
 
         {/* Pesquisa rápida */}
         <div className="mb-6">
-          <div className="relative max-w-md">
+          <div className="relative max-w-full sm:max-w-md">
             <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Pesquisar por modelo, acabamento ou cor..."
@@ -125,42 +125,42 @@ const Products: React.FC = () => {
                 <Card>
                   <CardContent className="p-0">
                     <div className="overflow-x-auto">
-                      <table className="w-full">
+                      <table className="w-full min-w-[600px]">
                         <thead>
                           <tr className="border-b">
-                            <th className="text-left p-4 font-medium">Foto</th>
-                            <th className="text-left p-4 font-medium">Modelo</th>
-                            <th className="text-left p-4 font-medium">Acabamento</th>
-                            <th className="text-left p-4 font-medium">Cor</th>
-                            <th className="text-left p-4 font-medium">Comprimento</th>
-                            <th className="text-left p-4 font-medium">Ações</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Foto</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Modelo</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Acabamento</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Cor</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Comprimento</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Ações</th>
                           </tr>
                         </thead>
                         <tbody>
                           {modeloProducts.map((product) => (
                             <tr key={product.id} className="border-b hover:bg-muted/50">
-                              <td className="p-4">
+                              <td className="p-3 sm:p-4">
                                 {product.foto ? (
                                   <img 
                                     src={product.foto} 
                                     alt={product.modelo}
-                                    className="w-16 h-16 object-cover rounded border"
+                                    className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded border"
                                   />
                                 ) : (
-                                  <div className="w-16 h-16 bg-muted rounded border flex items-center justify-center">
-                                    <Package className="w-6 h-6 text-muted-foreground" />
+                                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted rounded border flex items-center justify-center">
+                                    <Package className="w-4 h-4 sm:w-6 sm:h-6 text-muted-foreground" />
                                   </div>
                                 )}
                               </td>
-                              <td className="p-4 font-medium">{product.modelo}</td>
-                              <td className="p-4">
-                                <Badge variant="secondary">{product.acabamento}</Badge>
+                              <td className="p-3 sm:p-4 font-medium text-sm sm:text-base">{product.modelo}</td>
+                              <td className="p-3 sm:p-4">
+                                <Badge variant="secondary" className="text-xs sm:text-sm">{product.acabamento}</Badge>
                               </td>
-                              <td className="p-4">
-                                <Badge variant="outline">{product.cor}</Badge>
+                              <td className="p-3 sm:p-4">
+                                <Badge variant="outline" className="text-xs sm:text-sm">{product.cor}</Badge>
                               </td>
-                              <td className="p-4">{product.comprimento}mm</td>
-                              <td className="p-4">
+                              <td className="p-3 sm:p-4 text-sm sm:text-base">{product.comprimento}mm</td>
+                              <td className="p-3 sm:p-4">
                                 <div className="flex gap-1">
                                   <Button
                                     variant="outline"
@@ -170,14 +170,14 @@ const Products: React.FC = () => {
                                       setShowDialog(true);
                                     }}
                                   >
-                                    <Edit className="w-4 h-4" />
+                                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                                   </Button>
                                   <Button
                                     variant="destructive"
                                     size="sm"
                                     onClick={() => handleDeleteProduct(product.id)}
                                   >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                                   </Button>
                                 </div>
                               </td>
