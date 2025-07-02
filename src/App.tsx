@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WarehouseProvider } from "@/contexts/WarehouseContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
-import Warehouse from "./pages/Warehouse";
 import Shelf from "./pages/Shelf";
 import ShelfDetail from "./pages/ShelfDetail";
 import Search from "./pages/Search";
@@ -26,7 +25,6 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/armazem" element={<Warehouse />} />
               <Route path="/estante/:estante" element={<Shelf />} />
               <Route path="/prateleira/:estante/:prateleira" element={<ShelfDetail />} />
               <Route path="/pesquisa" element={<Search />} />

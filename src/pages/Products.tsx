@@ -5,7 +5,7 @@ import { useWarehouse } from '@/contexts/WarehouseContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Home, LogOut, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, Home, LogOut, Search, Package } from 'lucide-react';
 import { ProductDialog } from '@/components/warehouse/ProductDialog';
 import { Product } from '@/types/warehouse';
 import { Input } from '@/components/ui/input';
@@ -122,56 +122,72 @@ const Products: React.FC = () => {
             {Object.entries(groupedProducts).map(([modelo, modeloProducts]) => (
               <div key={modelo}>
                 <h2 className="text-xl font-semibold text-white mb-3">{modelo}</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {modeloProducts.map((product) => (
-                    <Card key={product.id} className="hover:shadow-lg transition-shadow">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <CardTitle className="text-lg">{product.modelo}</CardTitle>
-                          <div className="flex gap-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setEditingProduct(product);
-                                setShowDialog(true);
-                              }}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDeleteProduct(product.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          <div className="flex gap-2">
-                            <Badge variant="secondary">{product.acabamento}</Badge>
-                            <Badge variant="outline">{product.cor}</Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            Comprimento: {product.comprimento}mm
-                          </p>
-                          {product.foto && (
-                            <div className="mt-3">
-                              <img 
-                                src={product.foto} 
-                                alt={product.modelo}
-                                className="w-full h-32 object-cover rounded border"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                <Card>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-4 font-medium">Foto</th>
+                            <th className="text-left p-4 font-medium">Modelo</th>
+                            <th className="text-left p-4 font-medium">Acabamento</th>
+                            <th className="text-left p-4 font-medium">Cor</th>
+                            <th className="text-left p-4 font-medium">Comprimento</th>
+                            <th className="text-left p-4 font-medium">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {modeloProducts.map((product) => (
+                            <tr key={product.id} className="border-b hover:bg-muted/50">
+                              <td className="p-4">
+                                {product.foto ? (
+                                  <img 
+                                    src={product.foto} 
+                                    alt={product.modelo}
+                                    className="w-16 h-16 object-cover rounded border"
+                                  />
+                                ) : (
+                                  <div className="w-16 h-16 bg-muted rounded border flex items-center justify-center">
+                                    <Package className="w-6 h-6 text-muted-foreground" />
+                                  </div>
+                                )}
+                              </td>
+                              <td className="p-4 font-medium">{product.modelo}</td>
+                              <td className="p-4">
+                                <Badge variant="secondary">{product.acabamento}</Badge>
+                              </td>
+                              <td className="p-4">
+                                <Badge variant="outline">{product.cor}</Badge>
+                              </td>
+                              <td className="p-4">{product.comprimento}mm</td>
+                              <td className="p-4">
+                                <div className="flex gap-1">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setEditingProduct(product);
+                                      setShowDialog(true);
+                                    }}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleDeleteProduct(product.id)}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             ))}
           </div>

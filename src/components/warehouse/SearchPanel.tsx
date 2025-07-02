@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Search, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { useNavigate } from 'react-router-dom';
 
 const SearchPanel: React.FC = () => {
   const navigate = useNavigate();
-  const { searchMaterials, setSelectedShelf } = useWarehouse();
+  const { searchMaterials, setSelectedShelf, products } = useWarehouse();
   
   const [searchQuery, setSearchQuery] = useState({
     modelo: '',
@@ -20,12 +20,17 @@ const SearchPanel: React.FC = () => {
   
   const [searchResults, setSearchResults] = useState<Array<any>>([]);
 
+  // Get unique values from products
+  const uniqueModelos = [...new Set(products.map(p => p.modelo))].sort();
+  const uniqueAcabamentos = [...new Set(products.map(p => p.acabamento))].sort();
+  const uniqueComprimentos = [...new Set(products.map(p => p.comprimento.toString()))].sort((a, b) => parseInt(a) - parseInt(b));
+
   const handleSearch = () => {
     const query: any = {};
     
-    if (searchQuery.modelo.trim()) query.modelo = searchQuery.modelo.trim();
-    if (searchQuery.acabamento.trim()) query.acabamento = searchQuery.acabamento.trim();
-    if (searchQuery.comprimento.trim()) query.comprimento = parseInt(searchQuery.comprimento);
+    if (searchQuery.modelo && searchQuery.modelo !== 'all') query.modelo = searchQuery.modelo;
+    if (searchQuery.acabamento && searchQuery.acabamento !== 'all') query.acabamento = searchQuery.acabamento;
+    if (searchQuery.comprimento && searchQuery.comprimento !== 'all') query.comprimento = parseInt(searchQuery.comprimento);
     
     const results = searchMaterials(query);
     setSearchResults(results);
@@ -54,33 +59,53 @@ const SearchPanel: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="modelo">Modelo</Label>
-              <Input
-                id="modelo"
-                value={searchQuery.modelo}
-                onChange={(e) => setSearchQuery(prev => ({ ...prev, modelo: e.target.value }))}
-                placeholder="Ex: Perfil L"
-              />
+              <Select value={searchQuery.modelo} onValueChange={(value) => setSearchQuery(prev => ({ ...prev, modelo: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o modelo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os modelos</SelectItem>
+                  {uniqueModelos.map((modelo) => (
+                    <SelectItem key={modelo} value={modelo}>
+                      {modelo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div>
               <Label htmlFor="acabamento">Acabamento</Label>
-              <Input
-                id="acabamento"
-                value={searchQuery.acabamento}
-                onChange={(e) => setSearchQuery(prev => ({ ...prev, acabamento: e.target.value }))}
-                placeholder="Ex: Anodizado"
-              />
+              <Select value={searchQuery.acabamento} onValueChange={(value) => setSearchQuery(prev => ({ ...prev, acabamento: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o acabamento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os acabamentos</SelectItem>
+                  {uniqueAcabamentos.map((acabamento) => (
+                    <SelectItem key={acabamento} value={acabamento}>
+                      {acabamento}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div>
               <Label htmlFor="comprimento">Comprimento (mm)</Label>
-              <Input
-                id="comprimento"
-                type="number"
-                value={searchQuery.comprimento}
-                onChange={(e) => setSearchQuery(prev => ({ ...prev, comprimento: e.target.value }))}
-                placeholder="Ex: 2000"
-              />
+              <Select value={searchQuery.comprimento} onValueChange={(value) => setSearchQuery(prev => ({ ...prev, comprimento: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o comprimento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os comprimentos</SelectItem>
+                  {uniqueComprimentos.map((comprimento) => (
+                    <SelectItem key={comprimento} value={comprimento}>
+                      {comprimento}mm
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           
