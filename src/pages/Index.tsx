@@ -105,7 +105,11 @@ const Index = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header simplificado */}
         <div className="flex flex-col items-center mb-6 sm:mb-8">
-          <EPWLogo size="large" className="drop-shadow-lg mb-4" />
+          <img 
+            src="/lovable-uploads/e3f287c7-c1ee-485f-8e58-cb96b7ff55b3.png" 
+            alt="EPW Logo" 
+            className="h-16 sm:h-20 lg:h-24 drop-shadow-lg mb-4"
+          />
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider">
             ARMAZÉM
           </h1>
