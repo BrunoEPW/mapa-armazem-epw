@@ -132,28 +132,19 @@ const ShelfView: React.FC = () => {
                 className={cn(getShelfClassName(prateleira, 'esquerda'), 'rounded-l-lg rounded-r-none flex-1')}
                 onClick={() => handleShelfClick(prateleira, 'esquerda')}
               >
-                <div className="flex items-center justify-center gap-2">
-                  <span>E</span>
-                  <span className="text-xs">P{prateleira}</span>
-                </div>
+                <span className="text-xl font-bold">P{prateleira} - E</span>
               </div>
               <div
                 className={cn(getShelfClassName(prateleira, 'central'), 'rounded-none flex-1')}
                 onClick={() => handleShelfClick(prateleira, 'central')}
               >
-                <div className="flex items-center justify-center gap-2">
-                  <span>C</span>
-                  <span className="text-xs">P{prateleira}</span>
-                </div>
+                <span className="text-xl font-bold">P{prateleira} - C</span>
               </div>
               <div
                 className={cn(getShelfClassName(prateleira, 'direita'), 'rounded-r-lg rounded-l-none flex-1')}
                 onClick={() => handleShelfClick(prateleira, 'direita')}
               >
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-xs">P{prateleira}</span>
-                  <span>D</span>
-                </div>
+                <span className="text-xl font-bold">P{prateleira} - D</span>
               </div>
             </div>
           ))}
