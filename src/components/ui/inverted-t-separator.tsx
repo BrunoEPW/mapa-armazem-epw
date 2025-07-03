@@ -8,7 +8,7 @@ const InvertedTSeparator: React.FC<InvertedTSeparatorProps> = ({ className = "" 
   return (
     <svg 
       viewBox="0 0 12 80" 
-      className={`w-3 sm:w-4 md:w-5 lg:w-6 h-32 sm:h-40 md:h-48 lg:h-56 mb-2 sm:mb-3 ${className}`}
+      className={`w-3 sm:w-4 md:w-5 lg:w-6 h-32 sm:h-40 md:h-48 lg:h-56 ${className}`}
       fill="none"
     >
       {/* Vertical support beam - full height from bottom to top of shelf */}

@@ -67,7 +67,7 @@ const Index = () => {
   );
 
   const renderShelfGroup = (estantes: string[]) => (
-    <div className="flex items-end gap-0">
+    <div className="flex items-end -gap-1">
       {estantes.map((estante, index) => (
         <React.Fragment key={estante}>
           <div className="flex flex-col items-center">
