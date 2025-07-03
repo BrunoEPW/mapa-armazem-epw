@@ -34,7 +34,15 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-warehouse-bg flex items-center justify-center p-8">
+    <div className="min-h-screen bg-warehouse-bg flex items-center justify-center p-8 relative">
+      {/* Logo marca d'água no canto superior esquerdo */}
+      <div className="fixed top-4 left-4 z-10 opacity-50">
+        <img 
+          src="/lovable-uploads/ce6ad3d6-6728-414c-b327-428c5cd38f81.png" 
+          alt="EPW Logo" 
+          className="h-8 sm:h-10"
+        />
+      </div>
       <div className="absolute top-8 left-8">
         <Button
           variant="outline"
