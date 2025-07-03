@@ -49,15 +49,15 @@ All colors MUST be HSL.
     
     /* Split shelf colors for left/central/right sections - More appealing colors */
     /* Left section - Green tones */
-    --shelf-left-empty: 142 45% 70%;
+    --shelf-left-empty: 142 30% 50% / 0.3;
     --shelf-left-low: 142 60% 55%;
     --shelf-left-stock: 142 76% 36%;
     /* Central section - Blue tones */
-    --shelf-central-empty: 217 45% 70%;
+    --shelf-central-empty: 217 30% 50% / 0.3;
     --shelf-central-low: 217 60% 55%;
     --shelf-central-stock: 217 91% 40%;
     /* Right section - Orange/Amber tones */
-    --shelf-right-empty: 32 45% 70%;
+    --shelf-right-empty: 32 30% 50% / 0.3;
     --shelf-right-low: 32 75% 55%;
     --shelf-right-stock: 32 95% 44%;
 
