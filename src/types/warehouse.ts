@@ -19,6 +19,7 @@ export interface Material {
 export interface ShelfLocation {
   estante: string;
   prateleira: number;
+  posicao?: 'esquerda' | 'direita';
 }
 
 export interface Movement {

@@ -46,6 +46,14 @@ All colors MUST be HSL.
     --shelf-selected: 221 83% 53%;
     --shelf-hover: 221 83% 60%;
     --shelf-separator: 0 85% 40%;
+    
+    /* Split shelf colors for left/right sections */
+    --shelf-left-empty: 210 84% 45%;
+    --shelf-left-low: 210 90% 35%;
+    --shelf-left-stock: 210 76% 25%;
+    --shelf-right-empty: 200 84% 55%;
+    --shelf-right-low: 200 90% 45%;
+    --shelf-right-stock: 200 76% 35%;
 
     --radius: 0.75rem;
 

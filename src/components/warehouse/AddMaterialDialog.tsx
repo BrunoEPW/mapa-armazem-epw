@@ -26,6 +26,7 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
   const [norc, setNorc] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFamilia, setSelectedFamilia] = useState('');
+  const [selectedPosicao, setSelectedPosicao] = useState<'esquerda' | 'direita'>('esquerda');
 
   const familias = useMemo(() => {
     const uniqueFamilias = [...new Set(products.map(p => p.familia))];
@@ -78,7 +79,7 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
       productId: selectedProductId,
       product,
       pecas: parseInt(pecas),
-      location,
+      location: location.estante === 'A' ? { ...location, posicao: selectedPosicao } : location,
     };
 
     console.log('Attempting to add material:', newMaterial);
@@ -181,6 +182,21 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
               min="1"
             />
           </div>
+
+          {location.estante === 'A' && (
+            <div>
+              <Label htmlFor="posicao">Posição na Prateleira</Label>
+              <Select value={selectedPosicao} onValueChange={(value) => setSelectedPosicao(value as 'esquerda' | 'direita')}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a posição" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="esquerda">Lado Esquerdo (E)</SelectItem>
+                  <SelectItem value="direita">Lado Direito (D)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="norc">NORC</Label>
