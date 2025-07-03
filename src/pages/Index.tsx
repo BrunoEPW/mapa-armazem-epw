@@ -90,21 +90,18 @@ const Index = () => {
   const menuItems = [
     {
       title: 'Pesquisa de Materiais',
-      description: 'Encontre materiais por modelo, acabamento ou comprimento',
       icon: Search,
       path: '/pesquisa',
       color: 'bg-blue-500',
     },
     {
       title: 'Gestão de Produtos',
-      description: 'Administre fichas de produtos e características',
       icon: Package,
       path: '/produtos',
       color: 'bg-blue-600',
     },
     {
       title: 'Relatórios',
-      description: 'Análise de stock e movimentações',
       icon: BarChart3,
       path: '/relatorios',
       color: 'bg-warehouse-shelf-low',
@@ -177,7 +174,6 @@ const Index = () => {
                     <item.icon className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" />
                   </div>
                 </div>
-                <p className="text-sm sm:text-base text-muted-foreground mb-4">{item.description}</p>
                 <Button className="w-full" onClick={() => navigate(item.path)}>
                   Aceder
                 </Button>
