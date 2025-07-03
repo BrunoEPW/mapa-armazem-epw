@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -36,7 +36,7 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
     let filtered = products;
     
     // Filter by family first
-    if (selectedFamilia) {
+    if (selectedFamilia && selectedFamilia !== 'all') {
       filtered = filtered.filter(product => product.familia === selectedFamilia);
     }
     
@@ -112,6 +112,9 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
           <DialogTitle>
             Adicionar Material - {location.estante}{location.prateleira}
           </DialogTitle>
+          <DialogDescription>
+            Selecione um produto e especifique a quantidade para adicionar ao estoque.
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -122,7 +125,7 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
                 <SelectValue placeholder="Todas as famílias" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as famílias</SelectItem>
+                <SelectItem value="all">Todas as famílias</SelectItem>
                 {familias.map(familia => (
                   <SelectItem key={familia} value={familia}>
                     {familia} ({products.filter(p => p.familia === familia).length} produtos)
