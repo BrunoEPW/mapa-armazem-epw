@@ -18,14 +18,15 @@ export const useWarehouseOperations = ({
   setMovements,
 }: UseWarehouseOperationsProps) => {
   const addMaterial = (material: Omit<Material, 'id'>) => {
+    console.log('useWarehouseOperations - addMaterial called with:', material);
     const newMaterial: Material = {
       ...material,
       id: `m${Date.now()}`,
     };
-    console.log('Adding material:', newMaterial);
+    console.log('useWarehouseOperations - Created new material:', newMaterial);
     setMaterials(prev => {
       const updated = [...prev, newMaterial];
-      console.log('Updated materials:', updated);
+      console.log('useWarehouseOperations - Updated materials list, new length:', updated.length);
       return updated;
     });
     return newMaterial; // Return the new material so we can use its ID

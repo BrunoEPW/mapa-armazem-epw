@@ -10,9 +10,15 @@ export const useWarehouseData = () => {
 
   // Load data from localStorage on mount
   useEffect(() => {
+    console.log('useWarehouseData - Loading data from storage...');
     const savedProducts = loadFromStorage(STORAGE_KEYS.PRODUCTS, mockProducts);
     const savedMaterials = loadFromStorage(STORAGE_KEYS.MATERIALS, mockMaterials);
     const savedMovements = loadFromStorage(STORAGE_KEYS.MOVEMENTS, mockMovements);
+    console.log('useWarehouseData - Loaded:', { 
+      products: savedProducts.length, 
+      materials: savedMaterials.length, 
+      movements: savedMovements.length 
+    });
 
     // Migrate existing products to include familia if missing
     const migratedProducts = savedProducts.map((product: Product) => {

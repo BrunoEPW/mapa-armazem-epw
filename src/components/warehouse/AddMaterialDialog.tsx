@@ -18,7 +18,9 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
   location,
   onClose,
 }) => {
+  console.log('AddMaterialDialog - Component mounted with location:', location);
   const { products, addMaterial, addMovement } = useWarehouse();
+  console.log('AddMaterialDialog - Products loaded:', products.length);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [pecas, setPecas] = useState('');
   const [norc, setNorc] = useState('');
@@ -53,8 +55,15 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('AddMaterialDialog - Form submitted with:', {
+      selectedProductId,
+      pecas,
+      norc,
+      location
+    });
     
     if (!selectedProductId || !pecas || !norc) {
+      console.log('AddMaterialDialog - Validation failed: missing fields');
       toast.error('Preencha todos os campos');
       return;
     }
@@ -77,6 +86,7 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
     console.log('Location:', location);
 
     const createdMaterial = addMaterial(newMaterial);
+    console.log('AddMaterialDialog - Material created:', createdMaterial);
     
     // Add movement entry with the correct material ID
     addMovement({
@@ -86,14 +96,18 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
       norc,
       date: new Date().toISOString().split('T')[0],
     });
+    console.log('AddMaterialDialog - Movement added for material:', createdMaterial.id);
 
     toast.success('Material adicionado com sucesso');
+    console.log('AddMaterialDialog - Closing dialog');
     onClose();
   };
 
+  console.log('AddMaterialDialog - Rendering dialog');
+  
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="z-[100] max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             Adicionar Material - {location.estante}{location.prateleira}

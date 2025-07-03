@@ -27,6 +27,13 @@ const ShelfDetailView: React.FC = () => {
   const location = { estante, prateleira: parseInt(prateleira) };
   const materials = getMaterialsByShelf(location);
 
+  console.log('ShelfDetailView - Current state:', {
+    showAddDialog,
+    estante,
+    prateleira,
+    materialsCount: materials.length
+  });
+
   const handleRemoveMaterial = (materialId: string) => {
     if (confirm('Tem certeza que deseja remover este material?')) {
       removeMaterial(materialId);
@@ -51,7 +58,11 @@ const ShelfDetailView: React.FC = () => {
           </h1>
           
           <Button
-            onClick={() => setShowAddDialog(true)}
+            onClick={() => {
+              console.log('Adicionar Material button clicked!');
+              setShowAddDialog(true);
+              console.log('showAddDialog set to true');
+            }}
             className="flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -137,9 +148,14 @@ const ShelfDetailView: React.FC = () => {
         {showAddDialog && (
           <AddMaterialDialog
             location={location}
-            onClose={() => setShowAddDialog(false)}
+            onClose={() => {
+              console.log('AddMaterialDialog - onClose called');
+              setShowAddDialog(false);
+            }}
           />
         )}
+
+        {/* Debug: Rendering AddMaterialDialog? {showAddDialog} */}
 
         {editingMaterial && (
           <EditMaterialDialog
