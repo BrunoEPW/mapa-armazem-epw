@@ -66,17 +66,15 @@ const Index = () => {
 
   const renderShelfGroup = (estantes: string[]) => (
     <div className="flex items-end -gap-2">
-      {estantes.map((estante, index) => (
-        <React.Fragment key={estante}>
-          <div className="flex flex-col items-center">
-            <div
-              className={getShelfClassName(estante)}
-              onClick={() => handleShelfClick(estante)}
-            >
-              <span className="relative z-10 font-black drop-shadow-md">{estante}</span>
-            </div>
+      {estantes.map((estante) => (
+        <div key={estante} className="flex flex-col items-center">
+          <div
+            className={getShelfClassName(estante)}
+            onClick={() => handleShelfClick(estante)}
+          >
+            <span className="relative z-10 font-black drop-shadow-md">{estante}</span>
           </div>
-        </React.Fragment>
+        </div>
       ))}
     </div>
   );
