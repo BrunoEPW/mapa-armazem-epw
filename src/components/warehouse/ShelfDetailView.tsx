@@ -81,8 +81,8 @@ const ShelfDetailView: React.FC = () => {
               </p>
             </CardContent>
           </Card>
-        ) : estante === 'A' ? (
-          // Three-part view for Shelf A materials
+        ) : (
+          // Three-part view for all shelves
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div>
               <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -308,69 +308,6 @@ const ShelfDetailView: React.FC = () => {
                 )}
               </div>
             </div>
-          </div>
-        ) : (
-          // Original view for other shelves
-          <div className="space-y-4">
-            {materials.map((material) => (
-              <Card key={material.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">
-                      {material.product.modelo}
-                    </CardTitle>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowHistoryFor(material.id)}
-                      >
-                        <History className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditingMaterial(material)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleRemoveMaterial(material.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Acabamento</p>
-                      <p className="font-medium">{material.product.acabamento}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Cor</p>
-                      <p className="font-medium">{material.product.cor}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Comprimento</p>
-                      <p className="font-medium">{material.product.comprimento}mm</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Quantidade</p>
-                      <Badge 
-                        variant={material.pecas < 10 ? "destructive" : "default"}
-                        className="text-lg px-3 py-1"
-                      >
-                        {material.pecas} peças
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
           </div>
         )}
 

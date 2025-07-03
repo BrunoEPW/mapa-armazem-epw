@@ -79,7 +79,7 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
       productId: selectedProductId,
       product,
       pecas: parseInt(pecas),
-      location: location.estante === 'A' ? { ...location, posicao: selectedPosicao } : location,
+      location: { ...location, posicao: selectedPosicao },
     };
 
     console.log('Attempting to add material:', newMaterial);
@@ -183,21 +183,19 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
             />
           </div>
 
-          {location.estante === 'A' && (
-            <div>
-              <Label htmlFor="posicao">Posição na Prateleira</Label>
-              <Select value={selectedPosicao} onValueChange={(value) => setSelectedPosicao(value as 'esquerda' | 'central' | 'direita')}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a posição" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="esquerda">Lado Esquerdo (E)</SelectItem>
-                  <SelectItem value="central">Parte Central (C)</SelectItem>
-                  <SelectItem value="direita">Lado Direito (D)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div>
+            <Label htmlFor="posicao">Posição na Prateleira</Label>
+            <Select value={selectedPosicao} onValueChange={(value) => setSelectedPosicao(value as 'esquerda' | 'central' | 'direita')}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a posição" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="esquerda">Lado Esquerdo (E)</SelectItem>
+                <SelectItem value="central">Parte Central (C)</SelectItem>
+                <SelectItem value="direita">Lado Direito (D)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           <div>
             <Label htmlFor="norc">NORC</Label>

@@ -250,7 +250,7 @@ const SearchPanel: React.FC = () => {
                       >
                         <MapPin className="w-4 h-4" />
                         {material.location.estante}{material.location.prateleira}
-                        {material.location.estante === 'A' && material.location.posicao && (
+                        {material.location.posicao && (
                           <span className="text-xs text-muted-foreground">
                             ({material.location.posicao === 'esquerda' ? 'E' : material.location.posicao === 'central' ? 'C' : 'D'})
                           </span>
