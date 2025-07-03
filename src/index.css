@@ -17,8 +17,8 @@ All colors MUST be HSL.
     --popover: 220 15% 10%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 58 100% 68%;
-    --primary-foreground: 220 15% 8%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
 
     --secondary: 217 19% 15%;
     --secondary-foreground: 210 40% 98%;
@@ -26,15 +26,15 @@ All colors MUST be HSL.
     --muted: 217 19% 15%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 58 100% 68%;
-    --accent-foreground: 220 15% 8%;
+    --accent: 221 83% 53%;
+    --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 217 19% 20%;
     --input: 217 19% 15%;
-    --ring: 58 100% 68%;
+    --ring: 221 83% 53%;
 
     /* Warehouse specific colors - Apple-like design */
     --warehouse-bg: 220 20% 6%;

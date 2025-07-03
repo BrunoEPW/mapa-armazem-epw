@@ -65,10 +65,9 @@ const ShelfDetailView: React.FC = () => {
               <p className="text-muted-foreground text-lg mb-4">
                 Esta prateleira está vazia
               </p>
-              <Button onClick={() => setShowAddDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Primeiro Material
-              </Button>
+              <p className="text-sm text-muted-foreground">
+                Use o botão "Adicionar Material" no topo da página para começar
+              </p>
             </CardContent>
           </Card>
         ) : (
