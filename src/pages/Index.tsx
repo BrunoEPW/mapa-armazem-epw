@@ -7,6 +7,7 @@ import { WAREHOUSE_CONFIG } from '@/types/warehouse';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { cn } from '@/lib/utils';
 import EPWLogo from '@/components/ui/epw-logo';
+import InvertedTSeparator from '@/components/ui/inverted-t-separator';
 
 
 const Index = () => {
@@ -80,7 +81,7 @@ const Index = () => {
             <div className="bg-gradient-to-r from-gray-700 to-gray-800 p-1 sm:p-2 rounded-b-lg w-14 sm:w-16 md:w-18 lg:w-20 h-2 sm:h-3 shadow-lg"></div>
           </div>
           {index === 0 && estantes.length === 2 && (
-            <div className="w-1 sm:w-2 bg-gradient-to-b from-gray-600 to-gray-800 h-20 sm:h-24 md:h-32 lg:h-40 mb-2 sm:mb-3 rounded shadow-md"></div>
+            <InvertedTSeparator />
           )}
         </React.Fragment>
       ))}
