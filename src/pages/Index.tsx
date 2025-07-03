@@ -61,8 +61,6 @@ const Index = () => {
       >
         <span className="relative z-10 font-black drop-shadow-md">{estante}</span>
       </div>
-      {/* Base da estante */}
-      <div className="bg-gradient-to-r from-gray-700 to-gray-800 p-1 sm:p-2 rounded-b-lg w-14 sm:w-16 md:w-18 lg:w-20 h-2 sm:h-3 shadow-lg"></div>
     </div>
   );
 
@@ -77,8 +75,6 @@ const Index = () => {
             >
               <span className="relative z-10 font-black drop-shadow-md">{estante}</span>
             </div>
-            {/* Base da estante */}
-            <div className="bg-gradient-to-r from-gray-700 to-gray-800 p-1 sm:p-2 rounded-b-lg w-14 sm:w-16 md:w-18 lg:w-20 h-2 sm:h-3 shadow-lg"></div>
           </div>
         </React.Fragment>
       ))}
