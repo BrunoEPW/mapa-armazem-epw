@@ -34,15 +34,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-warehouse-bg flex items-center justify-center p-8 relative">
-      {/* Logo marca d'água no canto superior esquerdo */}
-      <div className="fixed top-4 left-4 z-10 opacity-50">
-        <img 
-          src="/lovable-uploads/ce6ad3d6-6728-414c-b327-428c5cd38f81.png" 
-          alt="EPW Logo" 
-          className="h-8 sm:h-10"
-        />
-      </div>
+    <div className="min-h-screen bg-warehouse-bg flex items-center justify-center p-8">
       <div className="absolute top-8 left-8">
         <Button
           variant="outline"
@@ -57,7 +49,11 @@ const Login: React.FC = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <EPWLogo size="medium" />
+            <img 
+              src="/lovable-uploads/ce6ad3d6-6728-414c-b327-428c5cd38f81.png" 
+              alt="EPW Logo" 
+              className="h-8 sm:h-10"
+            />
           </div>
           <CardTitle className="flex items-center justify-center gap-2 text-2xl">
             <Lock className="w-6 h-6" />
