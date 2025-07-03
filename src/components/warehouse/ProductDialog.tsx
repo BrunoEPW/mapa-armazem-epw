@@ -3,9 +3,70 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { Product } from '@/types/warehouse';
 import { toast } from 'sonner';
+
+// Listas pré-definidas para facilitar a criação de produtos
+const MODELOS = [
+  'Perfil L',
+  'Perfil U',
+  'Perfil T',
+  'Perfil H',
+  'Perfil Quadrado',
+  'Perfil Retangular',
+  'Tubo Redondo',
+  'Tubo Quadrado',
+  'Chapa Lisa',
+  'Chapa Perfurada',
+  'Barra Redonda',
+  'Barra Hexagonal',
+  'Cantoneira',
+  'Viga I',
+  'Trilho',
+];
+
+const ACABAMENTOS = [
+  'Natural',
+  'Anodizado',
+  'Pintado',
+  'Lacado',
+  'Polido',
+  'Escovado',
+  'Texturizado',
+  'Oxidado',
+  'Galvanizado',
+  'Cromado',
+];
+
+const CORES = [
+  'Alumínio Natural',
+  'Prata',
+  'Preto',
+  'Branco',
+  'Cinza',
+  'Azul',
+  'Verde',
+  'Vermelho',
+  'Dourado',
+  'Bronze',
+  'Cobre',
+  'Inox',
+];
+
+const COMPRIMENTOS = [
+  1000,
+  1500,
+  2000,
+  2500,
+  3000,
+  3500,
+  4000,
+  4500,
+  5000,
+  6000,
+];
 
 interface ProductDialogProps {
   product?: Product;
@@ -83,44 +144,66 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="modelo">Modelo *</Label>
-            <Input
-              id="modelo"
-              value={formData.modelo}
-              onChange={(e) => handleInputChange('modelo', e.target.value)}
-              placeholder="Ex: Perfil L"
-            />
+            <Select value={formData.modelo} onValueChange={(value) => handleInputChange('modelo', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um modelo" />
+              </SelectTrigger>
+              <SelectContent>
+                {MODELOS.map((modelo) => (
+                  <SelectItem key={modelo} value={modelo}>
+                    {modelo}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
             <Label htmlFor="acabamento">Acabamento *</Label>
-            <Input
-              id="acabamento"
-              value={formData.acabamento}
-              onChange={(e) => handleInputChange('acabamento', e.target.value)}
-              placeholder="Ex: Anodizado"
-            />
+            <Select value={formData.acabamento} onValueChange={(value) => handleInputChange('acabamento', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um acabamento" />
+              </SelectTrigger>
+              <SelectContent>
+                {ACABAMENTOS.map((acabamento) => (
+                  <SelectItem key={acabamento} value={acabamento}>
+                    {acabamento}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
             <Label htmlFor="cor">Cor *</Label>
-            <Input
-              id="cor"
-              value={formData.cor}
-              onChange={(e) => handleInputChange('cor', e.target.value)}
-              placeholder="Ex: Prata"
-            />
+            <Select value={formData.cor} onValueChange={(value) => handleInputChange('cor', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma cor" />
+              </SelectTrigger>
+              <SelectContent>
+                {CORES.map((cor) => (
+                  <SelectItem key={cor} value={cor}>
+                    {cor}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
             <Label htmlFor="comprimento">Comprimento (mm) *</Label>
-            <Input
-              id="comprimento"
-              type="number"
-              value={formData.comprimento}
-              onChange={(e) => handleInputChange('comprimento', e.target.value)}
-              placeholder="Ex: 2000"
-              min="1"
-            />
+            <Select value={formData.comprimento} onValueChange={(value) => handleInputChange('comprimento', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um comprimento" />
+              </SelectTrigger>
+              <SelectContent>
+                {COMPRIMENTOS.map((comprimento) => (
+                  <SelectItem key={comprimento} value={comprimento.toString()}>
+                    {comprimento} mm
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
