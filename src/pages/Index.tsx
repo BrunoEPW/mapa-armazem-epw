@@ -34,7 +34,7 @@ const Index = () => {
     
     return cn(
       'relative transition-all duration-300 cursor-pointer text-xl md:text-2xl font-bold flex items-center justify-center transform hover:scale-105 rounded-lg shadow-xl',
-      'w-24 h-32 sm:w-28 sm:h-40 md:w-32 md:h-48 lg:w-36 lg:h-56',
+      'w-12 h-32 sm:w-14 sm:h-40 md:w-16 md:h-48 lg:w-18 lg:h-56',
       'border-2 hover:border-blue-400',
       'bg-gradient-to-br from-gray-600 to-gray-800',
       {
@@ -60,7 +60,7 @@ const Index = () => {
         <span className="relative z-10 font-black drop-shadow-md">{estante}</span>
       </div>
       {/* Base da estante */}
-      <div className="bg-gradient-to-r from-gray-700 to-gray-800 p-1 sm:p-2 rounded-b-lg w-28 sm:w-32 md:w-36 lg:w-40 h-2 sm:h-3 shadow-lg"></div>
+      <div className="bg-gradient-to-r from-gray-700 to-gray-800 p-1 sm:p-2 rounded-b-lg w-14 sm:w-16 md:w-18 lg:w-20 h-2 sm:h-3 shadow-lg"></div>
     </div>
   );
 
@@ -76,7 +76,7 @@ const Index = () => {
               <span className="relative z-10 font-black drop-shadow-md">{estante}</span>
             </div>
             {/* Base da estante */}
-            <div className="bg-gradient-to-r from-gray-700 to-gray-800 p-1 sm:p-2 rounded-b-lg w-28 sm:w-32 md:w-36 lg:w-40 h-2 sm:h-3 shadow-lg"></div>
+            <div className="bg-gradient-to-r from-gray-700 to-gray-800 p-1 sm:p-2 rounded-b-lg w-14 sm:w-16 md:w-18 lg:w-20 h-2 sm:h-3 shadow-lg"></div>
           </div>
           {index === 0 && estantes.length === 2 && (
             <div className="w-1 sm:w-2 bg-gradient-to-b from-gray-600 to-gray-800 h-20 sm:h-24 md:h-32 lg:h-40 mb-2 sm:mb-3 rounded shadow-md"></div>
