@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin } from 'lucide-react';
+import { Search, MapPin, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { MovementHistoryDialog } from './MovementHistoryDialog';
 
 const SearchPanel: React.FC = () => {
   const navigate = useNavigate();
-  const { searchMaterials, setSelectedShelf, products } = useWarehouse();
+  const { searchMaterials, setSelectedShelf, products, materials } = useWarehouse();
   
   const [searchQuery, setSearchQuery] = useState({
     familia: '',
@@ -51,6 +51,33 @@ const SearchPanel: React.FC = () => {
     setSelectedShelf(location);
     navigate(`/prateleira/${location.estante}/${location.prateleira}`);
   };
+
+  const handleModelClick = (modelo: string) => {
+    const modelMaterials = materials.filter(m => m.product.modelo === modelo);
+    setSearchResults(modelMaterials);
+    setSearchQuery({ familia: '', modelo, acabamento: '', comprimento: '' });
+  };
+
+  // Agrupamentos de materiais por modelo com contagens
+  const modelGroups = materials.reduce((acc, material) => {
+    const modelo = material.product.modelo;
+    if (!acc[modelo]) {
+      acc[modelo] = {
+        modelo,
+        totalPecas: 0,
+        locations: new Set<string>(),
+        materials: []
+      };
+    }
+    acc[modelo].totalPecas += material.pecas;
+    acc[modelo].locations.add(`${material.location.estante}${material.location.prateleira}`);
+    acc[modelo].materials.push(material);
+    return acc;
+  }, {} as Record<string, { modelo: string; totalPecas: number; locations: Set<string>; materials: any[] }>);
+
+  const sortedModels = Object.values(modelGroups)
+    .sort((a, b) => b.totalPecas - a.totalPecas)
+    .slice(0, 8); // Mostrar apenas os 8 modelos com mais stock
 
   return (
     <div className="space-y-6">
@@ -141,6 +168,49 @@ const SearchPanel: React.FC = () => {
               Limpar
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Acesso Rápido por Modelo */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="w-5 h-5" />
+            Acesso Rápido por Modelo
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {sortedModels.map((group) => (
+              <Button
+                key={group.modelo}
+                variant="outline"
+                onClick={() => handleModelClick(group.modelo)}
+                className="h-auto p-4 flex flex-col gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all duration-200 group"
+              >
+                <div className="flex items-center gap-2 w-full">
+                  <div className="w-3 h-3 rounded-full bg-emerald-500 group-hover:bg-primary transition-colors"></div>
+                  <span className="font-medium text-sm truncate flex-1 text-left">
+                    {group.modelo}
+                  </span>
+                </div>
+                <div className="flex justify-between w-full text-xs text-muted-foreground">
+                  <span className="font-semibold text-emerald-600 group-hover:text-primary">
+                    {group.totalPecas} pcs
+                  </span>
+                  <span className="text-orange-600 group-hover:text-primary">
+                    {group.locations.size} loc.
+                  </span>
+                </div>
+              </Button>
+            ))}
+          </div>
+          {sortedModels.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>Nenhum modelo em stock</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

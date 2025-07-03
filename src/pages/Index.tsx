@@ -92,54 +92,49 @@ const Index = () => {
       title: 'Pesquisa de Materiais',
       icon: Search,
       path: '/pesquisa',
-      color: 'bg-blue-500',
+      color: 'bg-emerald-500 hover:bg-emerald-600',
     },
     {
       title: 'Gestão de Produtos',
       icon: Package,
       path: '/produtos',
-      color: 'bg-blue-600',
+      color: 'bg-violet-500 hover:bg-violet-600',
     },
     {
       title: 'Relatórios',
       icon: BarChart3,
       path: '/relatorios',
-      color: 'bg-warehouse-shelf-low',
+      color: 'bg-orange-500 hover:bg-orange-600',
     },
   ];
 
   return (
-    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8 relative">
       <div className="max-w-7xl mx-auto">
-        {/* Header com logo e data/hora */}
-        <div className="flex justify-between items-start mb-6 sm:mb-8">
-          <div className="flex items-center gap-6">
-            <EPWLogo size="large" className="drop-shadow-lg" />
-            <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
-                Sistema de Gestão de Armazém
-              </h1>
-              <p className="text-primary text-sm sm:text-base font-medium mt-1">
-                Mapa Visual de Stock
-              </p>
-            </div>
-          </div>
-          <div className="text-right text-white">
-            <p className="text-sm text-gray-300">Última atualização</p>
-            <p className="text-lg font-semibold">
-              {lastUpdate.toLocaleDateString('pt-PT', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-              })}
-            </p>
-            <p className="text-sm">
-              {lastUpdate.toLocaleTimeString('pt-PT', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </p>
-          </div>
+        {/* Header simplificado */}
+        <div className="flex flex-col items-center mb-6 sm:mb-8">
+          <EPWLogo size="large" className="drop-shadow-lg mb-4" />
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider">
+            ARMAZÉM
+          </h1>
+        </div>
+        
+        {/* Info de atualização no canto */}
+        <div className="absolute top-4 right-4 text-right text-white">
+          <p className="text-sm text-gray-300">Última atualização</p>
+          <p className="text-lg font-semibold">
+            {lastUpdate.toLocaleDateString('pt-PT', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric'
+            })}
+          </p>
+          <p className="text-sm">
+            {lastUpdate.toLocaleTimeString('pt-PT', {
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </p>
         </div>
         
         {/* Layout específico das estantes conforme imagem */}
@@ -160,23 +155,20 @@ const Index = () => {
           {renderSingleShelf('H')}
         </div>
 
-        {/* Menu de navegação */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {menuItems.map((item) => (
             <Card
               key={item.path}
-              className="cursor-pointer hover:scale-105 transition-all duration-300 border-2 hover:border-primary"
+              className="cursor-pointer hover:scale-105 transition-all duration-300 border-2 hover:border-primary bg-card/50 backdrop-blur-sm"
               onClick={() => navigate(item.path)}
             >
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-center mb-3">
-                  <div className={`p-4 sm:p-6 rounded-lg ${item.color}`}>
-                    <item.icon className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" />
-                  </div>
+              <CardContent className="p-6 sm:p-8 flex flex-col items-center justify-center">
+                <div className={`p-6 sm:p-8 rounded-full ${item.color} transition-all duration-300 shadow-lg hover:shadow-xl`}>
+                  <item.icon className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
                 </div>
-                <Button className="w-full" onClick={() => navigate(item.path)}>
-                  Aceder
-                </Button>
+                <h3 className="text-lg font-semibold text-center mt-4 text-white">
+                  {item.title}
+                </h3>
               </CardContent>
             </Card>
           ))}
