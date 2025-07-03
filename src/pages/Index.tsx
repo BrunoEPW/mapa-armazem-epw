@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { WAREHOUSE_CONFIG } from '@/types/warehouse';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { cn } from '@/lib/utils';
+import EPWLogo from '@/components/ui/epw-logo';
 
 
 const Index = () => {
@@ -115,21 +116,16 @@ const Index = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header com logo e data/hora */}
         <div className="flex justify-between items-start mb-6 sm:mb-8">
-          <div className="flex items-center gap-4">
-            {/* Logo EPW */}
-            <div className="relative h-12 w-24">
-              <svg viewBox="0 0 120 48" className="h-full w-full">
-                {/* Elementos do logo inspirados nas imagens */}
-                <rect x="0" y="8" width="40" height="8" fill="#FF6600" rx="2" />
-                <rect x="0" y="20" width="60" height="8" fill="#FF6600" rx="2" />
-                <rect x="0" y="32" width="35" height="8" fill="#FF6600" rx="2" />
-                <text x="70" y="20" fill="white" fontSize="14" fontWeight="bold" fontFamily="Arial">EPW</text>
-                <text x="70" y="35" fill="#FF6600" fontSize="8" fontFamily="Arial">tecnologia de extrusão</text>
-              </svg>
+          <div className="flex items-center gap-6">
+            <EPWLogo size="large" className="drop-shadow-lg" />
+            <div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
+                Sistema de Gestão de Armazém
+              </h1>
+              <p className="text-primary text-sm sm:text-base font-medium mt-1">
+                Mapa Visual de Stock
+              </p>
             </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
-              Mapa do Armazém
-            </h1>
           </div>
           <div className="text-right text-white">
             <p className="text-sm text-gray-300">Última atualização</p>

@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import EPWLogo from '@/components/ui/epw-logo';
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -121,9 +122,12 @@ const Reports = () => {
             Home
           </Button>
           
-          <h1 className="text-2xl sm:text-3xl font-bold text-white order-1 sm:order-2">
-            Relatórios Inteligentes
-          </h1>
+          <div className="flex items-center gap-4 order-1 sm:order-2">
+            <EPWLogo size="medium" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">
+              Relatórios Inteligentes
+            </h1>
+          </div>
           
           <div className="hidden sm:block order-3"></div>
         </div>

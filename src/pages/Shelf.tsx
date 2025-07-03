@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ShelfView from '@/components/warehouse/ShelfView';
+import EPWLogo from '@/components/ui/epw-logo';
 
 const Shelf = () => {
   const { estante } = useParams<{ estante: string }>();
@@ -26,9 +27,12 @@ const Shelf = () => {
             Home
           </Button>
           
-          <h1 className="text-2xl sm:text-3xl font-bold text-white order-1 sm:order-2">
-            Estante {estante}
-          </h1>
+          <div className="flex items-center gap-4 order-1 sm:order-2">
+            <EPWLogo size="medium" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">
+              Estante {estante}
+            </h1>
+          </div>
           
           <div className="flex gap-2 order-3">
             {canGoPrevious && (

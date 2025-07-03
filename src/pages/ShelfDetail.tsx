@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ShelfDetailView from '@/components/warehouse/ShelfDetailView';
+import EPWLogo from '@/components/ui/epw-logo';
 
 const ShelfDetail = () => {
   const { estante, prateleira } = useParams<{ estante: string; prateleira: string }>();
@@ -21,9 +22,12 @@ const ShelfDetail = () => {
             Home
           </Button>
           
-          <h1 className="text-2xl sm:text-3xl font-bold text-white order-1 sm:order-2">
-            Prateleira {estante}{prateleira}
-          </h1>
+          <div className="flex items-center gap-4 order-1 sm:order-2">
+            <EPWLogo size="medium" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">
+              Prateleira {estante}{prateleira}
+            </h1>
+          </div>
           
           <div className="order-3 hidden sm:block"></div>
         </div>

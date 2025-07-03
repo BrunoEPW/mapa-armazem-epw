@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Lock, Home, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import EPWLogo from '@/components/ui/epw-logo';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -47,6 +48,9 @@ const Login: React.FC = () => {
 
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <EPWLogo size="medium" />
+          </div>
           <CardTitle className="flex items-center justify-center gap-2 text-2xl">
             <Lock className="w-6 h-6" />
             Gestão de Produtos

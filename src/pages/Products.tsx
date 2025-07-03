@@ -9,6 +9,7 @@ import { Plus, Edit, Trash2, Home, LogOut, Search, Package } from 'lucide-react'
 import { ProductDialog } from '@/components/warehouse/ProductDialog';
 import { Product } from '@/types/warehouse';
 import { Input } from '@/components/ui/input';
+import EPWLogo from '@/components/ui/epw-logo';
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
@@ -69,9 +70,12 @@ const Products: React.FC = () => {
             Home
           </Button>
           
-          <h1 className="text-2xl sm:text-3xl font-bold text-white order-1 sm:order-2">
-            Gestão de Produtos
-          </h1>
+          <div className="flex items-center gap-4 order-1 sm:order-2">
+            <EPWLogo size="medium" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">
+              Gestão de Produtos
+            </h1>
+          </div>
           
           <div className="flex flex-col sm:flex-row gap-2 order-2 sm:order-3 w-full sm:w-auto">
             <Button
