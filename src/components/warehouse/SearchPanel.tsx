@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useWarehouse } from '@/contexts/WarehouseContext';
+import { FAMILIAS } from '@/data/product-data';
 import { useNavigate } from 'react-router-dom';
 import { MovementHistoryDialog } from './MovementHistoryDialog';
 
@@ -14,6 +15,7 @@ const SearchPanel: React.FC = () => {
   const { searchMaterials, setSelectedShelf, products } = useWarehouse();
   
   const [searchQuery, setSearchQuery] = useState({
+    familia: '',
     modelo: '',
     acabamento: '',
     comprimento: '',
@@ -23,6 +25,7 @@ const SearchPanel: React.FC = () => {
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
 
   // Get unique values from products
+  const uniqueFamilias = [...new Set(products.map(p => p.familia))].filter(Boolean).sort();
   const uniqueModelos = [...new Set(products.map(p => p.modelo))].sort();
   const uniqueAcabamentos = [...new Set(products.map(p => p.acabamento))].sort();
   const uniqueComprimentos = [...new Set(products.map(p => p.comprimento.toString()))].sort((a, b) => parseInt(a) - parseInt(b));
@@ -30,6 +33,7 @@ const SearchPanel: React.FC = () => {
   const handleSearch = () => {
     const query: any = {};
     
+    if (searchQuery.familia && searchQuery.familia !== 'all') query.familia = searchQuery.familia;
     if (searchQuery.modelo && searchQuery.modelo !== 'all') query.modelo = searchQuery.modelo;
     if (searchQuery.acabamento && searchQuery.acabamento !== 'all') query.acabamento = searchQuery.acabamento;
     if (searchQuery.comprimento && searchQuery.comprimento !== 'all') query.comprimento = parseInt(searchQuery.comprimento);
@@ -39,7 +43,7 @@ const SearchPanel: React.FC = () => {
   };
 
   const handleClearSearch = () => {
-    setSearchQuery({ modelo: '', acabamento: '', comprimento: '' });
+    setSearchQuery({ familia: '', modelo: '', acabamento: '', comprimento: '' });
     setSearchResults([]);
   };
 
@@ -58,7 +62,24 @@ const SearchPanel: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="familia">Família</Label>
+              <Select value={searchQuery.familia} onValueChange={(value) => setSearchQuery(prev => ({ ...prev, familia: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a família" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as famílias</SelectItem>
+                  {uniqueFamilias.map((familia) => (
+                    <SelectItem key={familia} value={familia}>
+                      {familia}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div>
               <Label htmlFor="modelo">Modelo</Label>
               <Select value={searchQuery.modelo} onValueChange={(value) => setSearchQuery(prev => ({ ...prev, modelo: value }))}>
@@ -143,7 +164,7 @@ const SearchPanel: React.FC = () => {
                         onClick={() => setSelectedMaterialId(material.id)}
                       >
                         <h4 className="font-medium hover:text-primary transition-colors">
-                          {material.product.modelo} - {material.product.acabamento}
+                          {material.product.familia} - {material.product.modelo} - {material.product.acabamento}
                         </h4>
                         <div className="flex gap-4 text-sm text-muted-foreground mt-1">
                           <span>Cor: {material.product.cor}</span>
@@ -167,7 +188,7 @@ const SearchPanel: React.FC = () => {
           </CardContent>
         </Card>
       ) : (
-        searchQuery.modelo || searchQuery.acabamento || searchQuery.comprimento ? (
+        searchQuery.familia || searchQuery.modelo || searchQuery.acabamento || searchQuery.comprimento ? (
           <Card>
             <CardContent className="py-8">
               <div className="text-center text-muted-foreground">

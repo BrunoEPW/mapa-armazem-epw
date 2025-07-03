@@ -12,7 +12,7 @@ interface WarehouseContextType {
   addMovement: (movement: Omit<Movement, 'id'>) => void;
   getMaterialsByShelf: (location: ShelfLocation) => Material[];
   getShelfData: (location: ShelfLocation) => ShelfData;
-  searchMaterials: (query: { modelo?: string; acabamento?: string; comprimento?: number }) => Material[];
+  searchMaterials: (query: { familia?: string; modelo?: string; acabamento?: string; comprimento?: number }) => Material[];
   setSelectedShelf: (location: ShelfLocation | null) => void;
   addProduct: (product: Omit<Product, 'id'>) => void;
   updateProduct: (productId: string, updates: Partial<Product>) => void;
@@ -32,23 +32,26 @@ const STORAGE_KEYS = {
 const mockProducts: Product[] = [
   {
     id: '1',
-    modelo: 'Perfil L',
+    familia: 'Aluminios',
+    modelo: 'Remate L 35x48',
     acabamento: 'Anodizado',
     cor: 'Prata',
     comprimento: 2000,
   },
   {
     id: '2',
-    modelo: 'Perfil L',
+    familia: 'Aluminios',
+    modelo: 'Remate L 35x48',
     acabamento: 'Anodizado',
     cor: 'Preto',
     comprimento: 2000,
   },
   {
     id: '3',
-    modelo: 'Perfil U',
-    acabamento: 'Natural',
-    cor: 'Alumínio',
+    familia: 'Classicos',
+    modelo: 'ZoomDeck',
+    acabamento: 'Lixado',
+    cor: 'Antracite',
     comprimento: 3000,
   },
 ];
@@ -133,7 +136,15 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const savedMaterials = loadFromStorage(STORAGE_KEYS.MATERIALS, mockMaterials);
     const savedMovements = loadFromStorage(STORAGE_KEYS.MOVEMENTS, mockMovements);
 
-    setProducts(savedProducts);
+    // Migrate existing products to include familia if missing
+    const migratedProducts = savedProducts.map((product: Product) => {
+      if (!product.familia) {
+        return { ...product, familia: 'Classicos' }; // Default familia for migration
+      }
+      return product;
+    });
+
+    setProducts(migratedProducts);
     setMaterials(savedMaterials);
     setMovements(savedMovements);
   }, []);
@@ -200,9 +211,12 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   };
 
-  const searchMaterials = (query: { modelo?: string; acabamento?: string; comprimento?: number }): Material[] => {
+  const searchMaterials = (query: { familia?: string; modelo?: string; acabamento?: string; comprimento?: number }): Material[] => {
     return materials.filter(material => {
       const { product } = material;
+      if (query.familia && !product.familia.toLowerCase().includes(query.familia.toLowerCase())) {
+        return false;
+      }
       if (query.modelo && !product.modelo.toLowerCase().includes(query.modelo.toLowerCase())) {
         return false;
       }

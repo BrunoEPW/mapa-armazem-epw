@@ -136,6 +136,7 @@ const Products: React.FC = () => {
                         <thead>
                           <tr className="border-b">
                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Foto</th>
+                            <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Família</th>
                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Modelo</th>
                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Acabamento</th>
                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Cor</th>
@@ -146,20 +147,23 @@ const Products: React.FC = () => {
                         <tbody>
                           {modeloProducts.map((product) => (
                             <tr key={product.id} className="border-b hover:bg-muted/50">
-                              <td className="p-3 sm:p-4">
-                                {product.foto ? (
-                                  <img 
-                                    src={product.foto} 
-                                    alt={product.modelo}
-                                    className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded border"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted rounded border flex items-center justify-center">
-                                    <Package className="w-4 h-4 sm:w-6 sm:h-6 text-muted-foreground" />
-                                  </div>
-                                )}
-                              </td>
-                              <td className="p-3 sm:p-4 font-medium text-sm sm:text-base">{product.modelo}</td>
+                               <td className="p-3 sm:p-4">
+                                 {product.foto ? (
+                                   <img 
+                                     src={product.foto} 
+                                     alt={product.modelo}
+                                     className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded border"
+                                   />
+                                 ) : (
+                                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted rounded border flex items-center justify-center">
+                                     <Package className="w-4 h-4 sm:w-6 sm:h-6 text-muted-foreground" />
+                                   </div>
+                                 )}
+                               </td>
+                               <td className="p-3 sm:p-4">
+                                 <Badge variant="secondary" className="text-xs sm:text-sm">{product.familia}</Badge>
+                               </td>
+                               <td className="p-3 sm:p-4 font-medium text-sm sm:text-base">{product.modelo}</td>
                               <td className="p-3 sm:p-4">
                                 <Badge variant="secondary" className="text-xs sm:text-sm">{product.acabamento}</Badge>
                               </td>
