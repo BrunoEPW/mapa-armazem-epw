@@ -3,7 +3,7 @@ export interface Product {
   modelo: string;
   acabamento: string;
   cor: string;
-  comprimento: number;
+  comprimento: number | string;
   foto?: string;
 }
 
