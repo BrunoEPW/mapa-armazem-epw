@@ -72,11 +72,15 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
       location,
     };
 
-    addMaterial(newMaterial);
+    console.log('Attempting to add material:', newMaterial);
+    console.log('Selected product:', product);
+    console.log('Location:', location);
+
+    const createdMaterial = addMaterial(newMaterial);
     
-    // Add movement entry
+    // Add movement entry with the correct material ID
     addMovement({
-      materialId: `m${Date.now()}`, // This will be updated with the actual material ID
+      materialId: createdMaterial.id,
       type: 'entrada' as const,
       pecas: parseInt(pecas),
       norc,

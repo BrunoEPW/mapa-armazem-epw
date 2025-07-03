@@ -22,7 +22,13 @@ export const useWarehouseOperations = ({
       ...material,
       id: `m${Date.now()}`,
     };
-    setMaterials(prev => [...prev, newMaterial]);
+    console.log('Adding material:', newMaterial);
+    setMaterials(prev => {
+      const updated = [...prev, newMaterial];
+      console.log('Updated materials:', updated);
+      return updated;
+    });
+    return newMaterial; // Return the new material so we can use its ID
   };
 
   const removeMaterial = (materialId: string) => {

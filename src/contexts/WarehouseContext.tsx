@@ -8,7 +8,7 @@ interface WarehouseContextType {
   products: Product[];
   movements: Movement[];
   selectedShelf: ShelfLocation | null;
-  addMaterial: (material: Omit<Material, 'id'>) => void;
+  addMaterial: (material: Omit<Material, 'id'>) => Material;
   removeMaterial: (materialId: string) => void;
   updateMaterial: (materialId: string, updates: Partial<Material>) => void;
   addMovement: (movement: Omit<Movement, 'id'>) => void;
