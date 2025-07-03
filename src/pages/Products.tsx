@@ -5,8 +5,9 @@ import { useWarehouse } from '@/contexts/WarehouseContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Home, LogOut, Search, Package } from 'lucide-react';
+import { Plus, Edit, Trash2, Home, LogOut, Search, Package, Users } from 'lucide-react';
 import { ProductDialog } from '@/components/warehouse/ProductDialog';
+import { FamilyManagementDialog } from '@/components/warehouse/FamilyManagementDialog';
 import { Product } from '@/types/warehouse';
 import { Input } from '@/components/ui/input';
 import EPWLogo from '@/components/ui/epw-logo';
@@ -16,6 +17,7 @@ const Products: React.FC = () => {
   const { isAuthenticated, logout } = useAuth();
   const { products, deleteProduct } = useWarehouse();
   const [showDialog, setShowDialog] = useState(false);
+  const [showFamilyDialog, setShowFamilyDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -80,6 +82,14 @@ const Products: React.FC = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-2 order-2 sm:order-3 w-full sm:w-auto">
+            <Button
+              onClick={() => setShowFamilyDialog(true)}
+              variant="outline"
+              className="flex items-center gap-2 justify-center text-white border-white hover:bg-white hover:text-black"
+            >
+              <Users className="w-4 h-4" />
+              Gestão de Famílias
+            </Button>
             <Button
               onClick={() => setShowDialog(true)}
               className="flex items-center gap-2 justify-center"
@@ -211,6 +221,12 @@ const Products: React.FC = () => {
               setShowDialog(false);
               setEditingProduct(null);
             }}
+          />
+        )}
+
+        {showFamilyDialog && (
+          <FamilyManagementDialog
+            onClose={() => setShowFamilyDialog(false)}
           />
         )}
       </div>

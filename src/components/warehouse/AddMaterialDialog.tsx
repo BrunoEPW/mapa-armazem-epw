@@ -128,7 +128,7 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
                 <SelectItem value="all">Todas as famílias</SelectItem>
                 {familias.map(familia => (
                   <SelectItem key={familia} value={familia}>
-                    {familia} ({products.filter(p => p.familia === familia).length} produtos)
+                    {familia}
                   </SelectItem>
                 ))}
               </SelectContent>
