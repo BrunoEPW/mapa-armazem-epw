@@ -30,11 +30,11 @@ const ShelfView: React.FC = () => {
     return null;
   };
 
-  const getShelfStatus = (prateleira: number, posicao?: 'esquerda' | 'direita') => {
+  const getShelfStatus = (prateleira: number, posicao?: 'esquerda' | 'central' | 'direita') => {
     const shelfMaterials = materials.filter(
       m => m.location.estante === estante && 
            m.location.prateleira === prateleira &&
-           (posicao ? m.location.posicao === posicao : true)
+           (posicao ? m.location.posicao === posicao : m.location.posicao === 'central' || !m.location.posicao)
     );
     
     if (shelfMaterials.length === 0) return 'empty';
@@ -45,7 +45,7 @@ const ShelfView: React.FC = () => {
     return 'stock';
   };
 
-  const getShelfClassName = (prateleira: number, posicao?: 'esquerda' | 'direita') => {
+  const getShelfClassName = (prateleira: number, posicao?: 'esquerda' | 'central' | 'direita') => {
     const status = getShelfStatus(prateleira, posicao);
     
     // For Shelf A, use split colors
@@ -57,6 +57,12 @@ const ShelfView: React.FC = () => {
           'bg-[hsl(var(--shelf-left-empty))] border-[hsl(var(--shelf-left-empty))]': status === 'empty',
           'bg-[hsl(var(--shelf-left-low))] border-[hsl(var(--shelf-left-low))]': status === 'low',
           'bg-[hsl(var(--shelf-left-stock))] border-[hsl(var(--shelf-left-stock))]': status === 'stock',
+        });
+      } else if (posicao === 'central') {
+        return cn(baseClasses, {
+          'bg-[hsl(var(--shelf-central-empty))] border-[hsl(var(--shelf-central-empty))]': status === 'empty',
+          'bg-[hsl(var(--shelf-central-low))] border-[hsl(var(--shelf-central-low))]': status === 'low',
+          'bg-[hsl(var(--shelf-central-stock))] border-[hsl(var(--shelf-central-stock))]': status === 'stock',
         });
       } else if (posicao === 'direita') {
         return cn(baseClasses, {
@@ -80,7 +86,7 @@ const ShelfView: React.FC = () => {
     );
   };
 
-  const handleShelfClick = (prateleira: number, posicao?: 'esquerda' | 'direita') => {
+  const handleShelfClick = (prateleira: number, posicao?: 'esquerda' | 'central' | 'direita') => {
     setSelectedShelf({ estante, prateleira, posicao });
     navigate(`/prateleira/${estante}/${prateleira}`);
   };
@@ -129,7 +135,7 @@ const ShelfView: React.FC = () => {
         <div className="space-y-3">
           {[...currentShelf.prateleiras].reverse().map((prateleira) => (
             estante === 'A' ? (
-              // Split view for Shelf A
+              // Three-part view for Shelf A
               <div key={prateleira} className="flex gap-1">
                 <div
                   className={cn(getShelfClassName(prateleira, 'esquerda'), 'rounded-l-lg rounded-r-none flex-1')}
@@ -137,7 +143,16 @@ const ShelfView: React.FC = () => {
                 >
                   <div className="flex items-center justify-center gap-2">
                     <span>E</span>
-                    <span className="text-sm">Prateleira {prateleira}</span>
+                    <span className="text-xs">P{prateleira}</span>
+                  </div>
+                </div>
+                <div
+                  className={cn(getShelfClassName(prateleira, 'central'), 'rounded-none flex-1')}
+                  onClick={() => handleShelfClick(prateleira, 'central')}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <span>C</span>
+                    <span className="text-xs">P{prateleira}</span>
                   </div>
                 </div>
                 <div
@@ -145,7 +160,7 @@ const ShelfView: React.FC = () => {
                   onClick={() => handleShelfClick(prateleira, 'direita')}
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-sm">Prateleira {prateleira}</span>
+                    <span className="text-xs">P{prateleira}</span>
                     <span>D</span>
                   </div>
                 </div>
