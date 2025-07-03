@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { Home, TrendingUp, Package, ArrowUpDown, Calendar as CalendarIcon, Search } from 'lucide-react';
+import { Home, TrendingUp, Package, ArrowUpDown, Calendar as CalendarIcon, Search, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import * as XLSX from 'xlsx';
 import EPWLogo from '@/components/ui/epw-logo';
 
 const Reports = () => {
@@ -19,6 +21,7 @@ const Reports = () => {
   // State for date selection and filters
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [searchFilter, setSearchFilter] = useState('');
+  const [exportType, setExportType] = useState<'modelo' | 'familia'>('modelo');
 
   // Calculate statistics
   const totalMaterials = materials.length;
@@ -97,6 +100,56 @@ const Reports = () => {
 
   const historicalStock = calculateHistoricalStock(selectedDate);
   const productStock = groupedProducts();
+
+  // Export functions
+  const exportToExcel = (type: 'current' | 'historical') => {
+    const data = type === 'current' ? productStock : historicalStock;
+    
+    let exportData;
+    let filename;
+    
+    if (exportType === 'familia') {
+      // Group by family
+      const familyGroups = new Map();
+      data.forEach(item => {
+        const familia = item.product.familia;
+        if (!familyGroups.has(familia)) {
+          familyGroups.set(familia, {
+            familia,
+            totalPecas: 0,
+            modelos: new Set()
+          });
+        }
+        const group = familyGroups.get(familia);
+        group.totalPecas += item.totalPecas;
+        group.modelos.add(item.product.modelo);
+      });
+      
+      exportData = Array.from(familyGroups.values()).map(group => ({
+        'Família': group.familia,
+        'Total de Peças': group.totalPecas,
+        'Modelos': Array.from(group.modelos).join(', ')
+      }));
+      filename = `relatorio_familias_${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
+    } else {
+      // Export by model
+      exportData = data.map(item => ({
+        'Modelo': item.product.modelo,
+        'Acabamento': item.product.acabamento,
+        'Cor': item.product.cor,
+        'Comprimento (mm)': item.product.comprimento,
+        'Família': item.product.familia,
+        'Quantidade': item.totalPecas,
+        'Localizações': Array.from(item.locations).join(', ')
+      }));
+      filename = `relatorio_modelos_${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
+    }
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
+    XLSX.writeFile(wb, filename);
+  };
 
   return (
     <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8">
@@ -189,14 +242,31 @@ const Reports = () => {
                 <Package className="h-5 w-5" />
                 Stock por Produto
               </CardTitle>
-              <div className="flex items-center gap-2">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Pesquisar por modelo..."
-                  value={searchFilter}
-                  onChange={(e) => setSearchFilter(e.target.value)}
-                  className="max-w-sm"
-                />
+              <div className="flex items-center gap-4 justify-between">
+                <div className="flex items-center gap-2">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Pesquisar por modelo..."
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                    className="max-w-sm"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select value={exportType} onValueChange={(value: 'modelo' | 'familia') => setExportType(value)}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Exportar por" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="modelo">Por Modelo</SelectItem>
+                      <SelectItem value="familia">Por Família</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="secondary" onClick={() => exportToExcel('current')}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Exportar
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -281,9 +351,21 @@ const Reports = () => {
                     />
                   </PopoverContent>
                 </Popover>
-                <Button variant="secondary">
-                  Exportar Relatório
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Select value={exportType} onValueChange={(value: 'modelo' | 'familia') => setExportType(value)}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Exportar por" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="modelo">Por Modelo</SelectItem>
+                      <SelectItem value="familia">Por Família</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="secondary" onClick={() => exportToExcel('historical')}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Exportar
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
