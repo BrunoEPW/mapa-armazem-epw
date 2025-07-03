@@ -99,7 +99,7 @@ const Index = () => {
       title: 'Gestão de Produtos',
       description: 'Administre fichas de produtos e características',
       icon: Package,
-      path: '/login',
+      path: '/produtos',
       color: 'bg-blue-600',
     },
     {

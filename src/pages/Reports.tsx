@@ -31,17 +31,6 @@ const Reports = () => {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
 
-  // Materials by shelf
-  const materialsByShelf = materials.reduce((acc, material) => {
-    const key = `${material.location.estante}${material.location.prateleira}`;
-    if (!acc[key]) {
-      acc[key] = { location: material.location, materials: [], totalPecas: 0 };
-    }
-    acc[key].materials.push(material);
-    acc[key].totalPecas += material.pecas;
-    return acc;
-  }, {} as Record<string, any>);
-
   // Calculate historical stock for selected date
   const calculateHistoricalStock = (date: Date) => {
     const targetDate = format(date, 'yyyy-MM-dd');
@@ -347,87 +336,50 @@ const Reports = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Movements */}
-          <Card className="bg-card/80 backdrop-blur">
-            <CardHeader>
-              <CardTitle>Movimentações Recentes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {recentMovements.length > 0 ? (
-                  recentMovements.map((movement) => {
-                    const material = materials.find(m => m.id === movement.materialId);
-                    return (
-                      <div key={movement.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">
-                            {material?.product?.modelo || 'Material não encontrado'}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {movement.type === 'entrada' ? 'Entrada' : 'Saída'} - {movement.pecas} peças
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            NORC: {movement.norc}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-muted-foreground">{movement.date}</p>
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            movement.type === 'entrada' 
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                          }`}>
-                            {movement.type === 'entrada' ? '+' : '-'}{movement.pecas}
-                          </span>
-                        </div>
+        {/* Recent Movements - Full Width */}
+        <Card className="bg-card/80 backdrop-blur">
+          <CardHeader>
+            <CardTitle>Movimentações Recentes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {recentMovements.length > 0 ? (
+                recentMovements.map((movement) => {
+                  const material = materials.find(m => m.id === movement.materialId);
+                  return (
+                    <div key={movement.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">
+                          {material?.product?.modelo || 'Material não encontrado'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {movement.type === 'entrada' ? 'Entrada' : 'Saída'} - {movement.pecas} peças
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          NORC: {movement.norc}
+                        </p>
                       </div>
-                    );
-                  })
-                ) : (
-                  <p className="text-center text-muted-foreground py-8">
-                    Nenhuma movimentação registada ainda
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Stock by Shelf */}
-          <Card className="bg-card/80 backdrop-blur">
-            <CardHeader>
-              <CardTitle>Stock por Prateleira</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {Object.values(materialsByShelf).length > 0 ? (
-                  Object.values(materialsByShelf)
-                    .sort((a: any, b: any) => a.location.estante.localeCompare(b.location.estante) || a.location.prateleira - b.location.prateleira)
-                    .map((shelf: any) => (
-                      <div key={`${shelf.location.estante}${shelf.location.prateleira}`} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">
-                            Prateleira {shelf.location.estante}{shelf.location.prateleira}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {shelf.materials.length} tipos de materiais
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold">{shelf.totalPecas}</p>
-                          <p className="text-xs text-muted-foreground">peças</p>
-                        </div>
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">{movement.date}</p>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          movement.type === 'entrada' 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                        }`}>
+                          {movement.type === 'entrada' ? '+' : '-'}{movement.pecas}
+                        </span>
                       </div>
-                    ))
-                ) : (
-                  <p className="text-center text-muted-foreground py-8">
-                    Nenhum material em stock
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  Nenhuma movimentação registada ainda
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

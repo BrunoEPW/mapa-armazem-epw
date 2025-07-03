@@ -19,15 +19,17 @@ const Products: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-    }
-  }, [isAuthenticated, navigate]);
+  // Remove authentication check for testing phase
+  // useEffect(() => {
+  //   if (!isAuthenticated) {
+  //     navigate('/login');
+  //   }
+  // }, [isAuthenticated, navigate]);
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  // Remove authentication guard for testing phase
+  // if (!isAuthenticated) {
+  //   return null;
+  // }
 
   const handleLogout = () => {
     logout();
@@ -85,14 +87,15 @@ const Products: React.FC = () => {
               <Plus className="w-4 h-4" />
               Novo Produto
             </Button>
-            <Button
+            {/* Remove logout button for testing phase */}
+            {/* <Button
               variant="destructive"
               onClick={handleLogout}
               className="flex items-center gap-2 justify-center"
             >
               <LogOut className="w-4 h-4" />
               Logout
-            </Button>
+            </Button> */}
           </div>
         </div>
 
