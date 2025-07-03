@@ -23,16 +23,33 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
   const [pecas, setPecas] = useState('');
   const [norc, setNorc] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFamilia, setSelectedFamilia] = useState('');
+
+  const familias = useMemo(() => {
+    const uniqueFamilias = [...new Set(products.map(p => p.familia))];
+    return uniqueFamilias.sort();
+  }, [products]);
 
   const filteredProducts = useMemo(() => {
-    if (!searchQuery) return products;
-    return products.filter(product =>
-      product.modelo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.acabamento.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.cor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.comprimento.toString().includes(searchQuery)
-    );
-  }, [products, searchQuery]);
+    let filtered = products;
+    
+    // Filter by family first
+    if (selectedFamilia) {
+      filtered = filtered.filter(product => product.familia === selectedFamilia);
+    }
+    
+    // Then filter by search query
+    if (searchQuery) {
+      filtered = filtered.filter(product =>
+        product.modelo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.acabamento.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.cor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.comprimento.toString().includes(searchQuery)
+      );
+    }
+    
+    return filtered;
+  }, [products, searchQuery, selectedFamilia]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,6 +97,23 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="familia">Família do Produto</Label>
+            <Select value={selectedFamilia} onValueChange={setSelectedFamilia}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todas as famílias" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas as famílias</SelectItem>
+                {familias.map(familia => (
+                  <SelectItem key={familia} value={familia}>
+                    {familia} ({products.filter(p => p.familia === familia).length} produtos)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div>
             <Label htmlFor="search">Pesquisar Produto</Label>
             <div className="relative">

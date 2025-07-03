@@ -56,6 +56,20 @@ export const mockMaterials: Material[] = [
     pecas: 3,
     location: { estante: 'F', prateleira: 1 },
   },
+  {
+    id: 'm5',
+    productId: '2',
+    product: mockProducts[1],
+    pecas: 15,
+    location: { estante: 'A', prateleira: 1 },
+  },
+  {
+    id: 'm6',
+    productId: '3',
+    product: mockProducts[2],
+    pecas: 12,
+    location: { estante: 'A', prateleira: 2 },
+  },
 ];
 
 export const mockMovements: Movement[] = [
