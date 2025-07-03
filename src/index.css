@@ -37,7 +37,7 @@ All colors MUST be HSL.
     --ring: 221 83% 53%;
 
     /* Warehouse specific colors - Apple-like design */
-    --warehouse-bg: 220 20% 6%;
+    --warehouse-bg: 220 20% 3%;
     --shelf-base: 0 85% 40%;
     --shelf-yellow: 45 100% 60%;
     --shelf-stock: 142 76% 36%;
@@ -132,6 +132,6 @@ All colors MUST be HSL.
   
   /* Ensure warehouse background has fallbacks */
   .bg-warehouse-bg {
-    background-color: hsl(220 20% 6%) !important;
+    background-color: hsl(220 20% 3%) !important;
   }
 }

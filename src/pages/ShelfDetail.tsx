@@ -18,7 +18,7 @@ const ShelfDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8" style={{ backgroundColor: 'hsl(220 20% 6%)' }}>
+    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
           <Button
@@ -30,14 +30,15 @@ const ShelfDetail = () => {
             Home
           </Button>
           
-          <div className="flex items-center gap-4 order-1 sm:order-2">
+          
+          <div className="flex flex-col items-center order-1 sm:order-2">
             <img 
               src="/lovable-uploads/ce6ad3d6-6728-414c-b327-428c5cd38f81.png" 
               alt="EPW Logo" 
-              className="h-8 sm:h-10"
+              className="h-16 sm:h-20 lg:h-24 drop-shadow-lg mb-4"
             />
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">
-              Prateleira {estante}{prateleira}
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider">
+              PRATELEIRA {estante}{prateleira}
             </h1>
           </div>
           

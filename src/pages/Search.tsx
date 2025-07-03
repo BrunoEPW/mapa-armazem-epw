@@ -21,14 +21,15 @@ const Search = () => {
             Home
           </Button>
           
-          <div className="flex items-center gap-4 order-1 sm:order-2">
+          
+          <div className="flex flex-col items-center order-1 sm:order-2">
             <img 
               src="/lovable-uploads/ce6ad3d6-6728-414c-b327-428c5cd38f81.png" 
               alt="EPW Logo" 
-              className="h-8 sm:h-10"
+              className="h-16 sm:h-20 lg:h-24 drop-shadow-lg mb-4"
             />
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">
-              Pesquisa de Materiais
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider">
+              PESQUISA
             </h1>
           </div>
           
