@@ -47,17 +47,17 @@ All colors MUST be HSL.
     --shelf-hover: 221 83% 60%;
     --shelf-separator: 0 85% 40%;
     
-    /* Split shelf colors for left/central/right sections - More appealing colors */
-    /* Left section - Green tones */
-    --shelf-left-empty: 142 30% 50% / 0.3;
-    --shelf-left-low: 142 60% 55%;
-    --shelf-left-stock: 142 76% 36%;
-    /* Central section - Blue tones */
-    --shelf-central-empty: 217 30% 50% / 0.3;
-    --shelf-central-low: 217 60% 55%;
-    --shelf-central-stock: 217 91% 40%;
-    /* Right section - Orange/Amber tones */
-    --shelf-right-empty: 32 30% 50% / 0.3;
+    /* Split shelf colors for left/central/right sections - Orange theme */
+    /* Left section - Orange tones */
+    --shelf-left-empty: 32 40% 80%;
+    --shelf-left-low: 32 75% 55%;
+    --shelf-left-stock: 32 95% 44%;
+    /* Central section - Orange tones */
+    --shelf-central-empty: 32 40% 80%;
+    --shelf-central-low: 32 75% 55%;
+    --shelf-central-stock: 32 95% 44%;
+    /* Right section - Orange tones */
+    --shelf-right-empty: 32 40% 80%;
     --shelf-right-low: 32 75% 55%;
     --shelf-right-stock: 32 95% 44%;
 
