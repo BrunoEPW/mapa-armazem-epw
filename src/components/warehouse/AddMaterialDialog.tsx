@@ -107,7 +107,17 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
   
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="z-[100] max-w-2xl">
+      <DialogContent 
+        className="z-[9999] max-w-2xl bg-card text-card-foreground border border-border" 
+        style={{ 
+          backgroundColor: 'hsl(220 15% 10%)', 
+          color: 'hsl(210 40% 98%)',
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)'
+        }}
+      >
         <DialogHeader>
           <DialogTitle>
             Adicionar Material - {location.estante}{location.prateleira}

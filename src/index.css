@@ -112,5 +112,12 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    /* Fallback for tablets and mobile devices */
+    background-color: hsl(220 15% 8%);
+  }
+  
+  /* Ensure warehouse background has fallbacks */
+  .bg-warehouse-bg {
+    background-color: hsl(220 20% 6%) !important;
   }
 }

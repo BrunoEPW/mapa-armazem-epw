@@ -9,8 +9,16 @@ const ShelfDetail = () => {
   const { estante, prateleira } = useParams<{ estante: string; prateleira: string }>();
   const navigate = useNavigate();
 
+  console.log('ShelfDetail - Route params:', { estante, prateleira });
+  
+  if (!estante || !prateleira) {
+    console.log('ShelfDetail - Missing route params, navigating to home');
+    navigate('/');
+    return null;
+  }
+
   return (
-    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8" style={{ backgroundColor: 'hsl(220 20% 6%)' }}>
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
           <Button
