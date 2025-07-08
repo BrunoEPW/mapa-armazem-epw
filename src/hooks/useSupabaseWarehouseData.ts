@@ -204,9 +204,29 @@ export const useSupabaseWarehouseData = () => {
   useEffect(() => {
     const initializeData = async () => {
       if (!isSupabaseConfigured) {
-        setProducts(mockProducts);
-        setMaterials(mockMaterials);
-        setMovements(mockMovements);
+        // Load from localStorage if available, otherwise use mock data
+        const storedProducts = localStorage.getItem('warehouse-products');
+        const storedMaterials = localStorage.getItem('warehouse-materials');
+        const storedMovements = localStorage.getItem('warehouse-movements');
+        
+        if (storedProducts) {
+          setProducts(JSON.parse(storedProducts));
+        } else {
+          setProducts(mockProducts);
+        }
+        
+        if (storedMaterials) {
+          setMaterials(JSON.parse(storedMaterials));
+        } else {
+          setMaterials(mockMaterials);
+        }
+        
+        if (storedMovements) {
+          setMovements(JSON.parse(storedMovements));
+        } else {
+          setMovements(mockMovements);
+        }
+        
         setLoading(false);
         return;
       }

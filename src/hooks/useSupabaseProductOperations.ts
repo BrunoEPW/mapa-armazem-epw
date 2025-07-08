@@ -1,5 +1,5 @@
 import { Product, Material } from '@/types/warehouse';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 interface UseSupabaseProductOperationsProps {
@@ -18,6 +18,37 @@ export const useSupabaseProductOperations = ({
   
   const addProduct = async (product: Omit<Product, 'id'>) => {
     try {
+      console.log('Adding product:', product);
+      
+      // Check if Supabase is configured
+      if (!isSupabaseConfigured) {
+        console.log('Supabase not configured, using localStorage');
+        
+        // Use local storage fallback
+        const newProduct: Product = {
+          id: crypto.randomUUID(),
+          familia: product.familia,
+          modelo: product.modelo,
+          acabamento: product.acabamento,
+          cor: product.cor,
+          comprimento: product.comprimento,
+          foto: product.foto,
+        };
+
+        setProducts(prev => [...prev, newProduct]);
+        
+        // Save to localStorage
+        const existingProducts = localStorage.getItem('warehouse-products');
+        const products = existingProducts ? JSON.parse(existingProducts) : [];
+        products.push(newProduct);
+        localStorage.setItem('warehouse-products', JSON.stringify(products));
+        
+        console.log('Product added to localStorage:', newProduct);
+        toast.success('Produto adicionado com sucesso (modo local)');
+        return;
+      }
+
+      console.log('Adding product to Supabase...');
       const { data, error } = await supabase
         .from('products')
         .insert({
@@ -27,11 +58,16 @@ export const useSupabaseProductOperations = ({
           cor: product.cor,
           comprimento: product.comprimento,
           foto: product.foto,
+          created_by: 'system', // Default user for now
+          updated_by: 'system',
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       const newProduct: Product = {
         id: data.id,
@@ -44,11 +80,33 @@ export const useSupabaseProductOperations = ({
       };
 
       setProducts(prev => [...prev, newProduct]);
+      console.log('Product added to Supabase:', newProduct);
       toast.success('Produto adicionado com sucesso');
       
     } catch (error) {
       console.error('Error adding product:', error);
-      toast.error('Erro ao adicionar produto');
+      
+      // Fallback to local storage if Supabase fails
+      console.log('Falling back to localStorage due to error');
+      const newProduct: Product = {
+        id: crypto.randomUUID(),
+        familia: product.familia,
+        modelo: product.modelo,
+        acabamento: product.acabamento,
+        cor: product.cor,
+        comprimento: product.comprimento,
+        foto: product.foto,
+      };
+
+      setProducts(prev => [...prev, newProduct]);
+      
+      // Save to localStorage
+      const existingProducts = localStorage.getItem('warehouse-products');
+      const products = existingProducts ? JSON.parse(existingProducts) : [];
+      products.push(newProduct);
+      localStorage.setItem('warehouse-products', JSON.stringify(products));
+      
+      toast.success('Produto adicionado com sucesso (modo local)');
     }
   };
 
