@@ -5,9 +5,10 @@ import { useWarehouse } from '@/contexts/WarehouseContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Home, LogOut, Search, Package, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, Home, LogOut, Search, Package, Users, Database } from 'lucide-react';
 import { ProductDialog } from '@/components/warehouse/ProductDialog';
 import { FamilyManagementDialog } from '@/components/warehouse/FamilyManagementDialog';
+import { DatabaseResetDialog } from '@/components/warehouse/DatabaseResetDialog';
 import { Product } from '@/types/warehouse';
 import { Input } from '@/components/ui/input';
 import EPWLogo from '@/components/ui/epw-logo';
@@ -18,6 +19,7 @@ const Products: React.FC = () => {
   const { products, deleteProduct } = useWarehouse();
   const [showDialog, setShowDialog] = useState(false);
   const [showFamilyDialog, setShowFamilyDialog] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -95,6 +97,16 @@ const Products: React.FC = () => {
               <Users className="w-4 h-4" />
               Gestão de Famílias
             </Button>
+            {hasPermission('canManageUsers') && (
+              <Button
+                onClick={() => setShowResetDialog(true)}
+                variant="destructive"
+                className="flex items-center gap-2 justify-center"
+              >
+                <Database className="w-4 h-4" />
+                Limpar BD
+              </Button>
+            )}
             <Button
               onClick={() => setShowDialog(true)}
               className="flex items-center gap-2 justify-center"
@@ -232,6 +244,13 @@ const Products: React.FC = () => {
         {showFamilyDialog && (
           <FamilyManagementDialog
             onClose={() => setShowFamilyDialog(false)}
+          />
+        )}
+
+        {showResetDialog && (
+          <DatabaseResetDialog
+            open={showResetDialog}
+            onClose={() => setShowResetDialog(false)}
           />
         )}
       </div>
