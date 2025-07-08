@@ -14,7 +14,169 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string
+          table_name: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id: string
+          table_name: string
+          user_id?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string
+          table_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      materials: {
+        Row: {
+          created_at: string
+          created_by: string
+          estante: string
+          id: string
+          pecas: number
+          posicao: string | null
+          prateleira: number
+          product_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          estante: string
+          id?: string
+          pecas?: number
+          posicao?: string | null
+          prateleira: number
+          product_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          estante?: string
+          id?: string
+          pecas?: number
+          posicao?: string | null
+          prateleira?: number
+          product_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "materials_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movements: {
+        Row: {
+          created_at: string
+          created_by: string
+          date: string
+          id: string
+          material_id: string
+          norc: string
+          pecas: number
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          date: string
+          id?: string
+          material_id: string
+          norc: string
+          pecas: number
+          type: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          date?: string
+          id?: string
+          material_id?: string
+          norc?: string
+          pecas?: number
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movements_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          acabamento: string
+          comprimento: string
+          cor: string
+          created_at: string
+          created_by: string
+          familia: string
+          foto: string | null
+          id: string
+          modelo: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          acabamento: string
+          comprimento: string
+          cor: string
+          created_at?: string
+          created_by?: string
+          familia: string
+          foto?: string | null
+          id?: string
+          modelo: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          acabamento?: string
+          comprimento?: string
+          cor?: string
+          created_at?: string
+          created_by?: string
+          familia?: string
+          foto?: string | null
+          id?: string
+          modelo?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
