@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState } from 'react';
 import { Material, Product, Movement, ShelfData, ShelfLocation } from '@/types/warehouse';
 import { useSupabaseWarehouseData } from '@/hooks/useSupabaseWarehouseData';
 import { useSupabaseWarehouseOperations } from '@/hooks/useSupabaseWarehouseOperations';
+import { useRealTimeSync } from '@/hooks/useRealTimeSync';
 
 interface WarehouseContextType {
   materials: Material[];
@@ -38,6 +39,9 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setMovements,
     refreshData,
   });
+
+  // Enable real-time synchronization
+  useRealTimeSync(refreshData, refreshData, refreshData);
 
   return (
     <WarehouseContext.Provider value={{

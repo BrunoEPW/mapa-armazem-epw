@@ -9,6 +9,34 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export interface Database {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          id: string
+          email: string
+          name: string
+          role: 'admin' | 'editor' | 'viewer'
+          created_at: string
+          updated_at: string
+          last_seen?: string
+        }
+        Insert: {
+          id: string
+          email: string
+          name: string
+          role?: 'admin' | 'editor' | 'viewer'
+          created_at?: string
+          updated_at?: string
+          last_seen?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          name?: string
+          role?: 'admin' | 'editor' | 'viewer'
+          updated_at?: string
+          last_seen?: string
+        }
+      }
       products: {
         Row: {
           id: string
@@ -20,6 +48,8 @@ export interface Database {
           foto?: string
           created_at: string
           updated_at: string
+          created_by: string
+          updated_by?: string
         }
         Insert: {
           id?: string
@@ -31,6 +61,8 @@ export interface Database {
           foto?: string
           created_at?: string
           updated_at?: string
+          created_by: string
+          updated_by?: string
         }
         Update: {
           id?: string
@@ -41,6 +73,7 @@ export interface Database {
           comprimento?: number | string
           foto?: string
           updated_at?: string
+          updated_by?: string
         }
       }
       materials: {
@@ -53,6 +86,8 @@ export interface Database {
           posicao?: 'esquerda' | 'central' | 'direita'
           created_at: string
           updated_at: string
+          created_by: string
+          updated_by?: string
         }
         Insert: {
           id?: string
@@ -63,6 +98,8 @@ export interface Database {
           posicao?: 'esquerda' | 'central' | 'direita'
           created_at?: string
           updated_at?: string
+          created_by: string
+          updated_by?: string
         }
         Update: {
           id?: string
@@ -72,6 +109,7 @@ export interface Database {
           prateleira?: number
           posicao?: 'esquerda' | 'central' | 'direita'
           updated_at?: string
+          updated_by?: string
         }
       }
       movements: {
@@ -83,7 +121,7 @@ export interface Database {
           norc: string
           date: string
           created_at: string
-          user_id?: string
+          created_by: string
         }
         Insert: {
           id?: string
@@ -93,7 +131,7 @@ export interface Database {
           norc: string
           date: string
           created_at?: string
-          user_id?: string
+          created_by: string
         }
         Update: {
           id?: string
@@ -102,6 +140,37 @@ export interface Database {
           pecas?: number
           norc?: string
           date?: string
+          created_by?: string
+        }
+      }
+      audit_logs: {
+        Row: {
+          id: string
+          table_name: string
+          record_id: string
+          action: 'INSERT' | 'UPDATE' | 'DELETE'
+          old_values?: Record<string, any>
+          new_values?: Record<string, any>
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          table_name: string
+          record_id: string
+          action: 'INSERT' | 'UPDATE' | 'DELETE'
+          old_values?: Record<string, any>
+          new_values?: Record<string, any>
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          table_name?: string
+          record_id?: string
+          action?: 'INSERT' | 'UPDATE' | 'DELETE'
+          old_values?: Record<string, any>
+          new_values?: Record<string, any>
           user_id?: string
         }
       }

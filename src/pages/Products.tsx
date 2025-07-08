@@ -14,7 +14,7 @@ import EPWLogo from '@/components/ui/epw-logo';
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, signOut, user, hasPermission } = useAuth();
   const { products, deleteProduct } = useWarehouse();
   const [showDialog, setShowDialog] = useState(false);
   const [showFamilyDialog, setShowFamilyDialog] = useState(false);
@@ -33,8 +33,8 @@ const Products: React.FC = () => {
   //   return null;
   // }
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
   };
 

@@ -1,6 +1,8 @@
 import { Material, Product, Movement, ShelfLocation, ShelfData } from '@/types/warehouse';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAuditLog } from '@/hooks/useAuditLog';
 
 interface UseSupabaseWarehouseOperationsProps {
   materials: Material[];
@@ -21,8 +23,20 @@ export const useSupabaseWarehouseOperations = ({
   setMovements,
   refreshData,
 }: UseSupabaseWarehouseOperationsProps) => {
+  const { user, hasPermission } = useAuth();
+  const { logAction } = useAuditLog();
   
   const addMaterial = async (material: Omit<Material, 'id'>) => {
+    if (!hasPermission('canCreate')) {
+      toast.error('Não tem permissão para adicionar materiais');
+      throw new Error('Permission denied');
+    }
+
+    if (!user) {
+      toast.error('Utilizador não autenticado');
+      throw new Error('User not authenticated');
+    }
+
     try {
       console.log('Adding material to Supabase:', material);
       
@@ -34,6 +48,7 @@ export const useSupabaseWarehouseOperations = ({
           estante: material.location.estante,
           prateleira: material.location.prateleira,
           posicao: material.location.posicao,
+          created_by: user.id,
         })
         .select()
         .single();
@@ -48,8 +63,16 @@ export const useSupabaseWarehouseOperations = ({
         location: material.location,
       };
 
+      // Log the action
+      await logAction('materials', data.id, 'INSERT', undefined, {
+        product_id: material.productId,
+        pecas: material.pecas,
+        location: material.location,
+      });
+
       setMaterials(prev => [...prev, newMaterial]);
       console.log('Material added successfully:', newMaterial);
+      toast.success('Material adicionado com sucesso');
       return newMaterial;
       
     } catch (error) {

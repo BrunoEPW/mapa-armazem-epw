@@ -10,25 +10,38 @@ import EPWLogo from '@/components/ui/epw-logo';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login, requestPasswordReset } = useAuth();
+  const { signIn, resetPassword, loading } = useAuth();
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [showReset, setShowReset] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(password)) {
+    setError('');
+    
+    if (!email || !password) {
+      setError('Email e password são obrigatórios');
+      return;
+    }
+
+    const success = await signIn(email, password);
+    if (success) {
       navigate('/produtos');
     } else {
-      setError('Password incorreta');
+      setError('Credenciais inválidas');
     }
   };
 
-  const handleReset = (e: React.FormEvent) => {
+  const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    requestPasswordReset(email);
+    if (!email) {
+      setError('Email é obrigatório para reset');
+      return;
+    }
+    
+    await resetPassword(email);
     setShowReset(false);
     setEmail('');
   };
@@ -59,12 +72,23 @@ const Login: React.FC = () => {
             <Lock className="w-6 h-6" />
             Gestão de Produtos
           </CardTitle>
-          <p className="text-muted-foreground">Acesso restrito - Introduza a password</p>
+          <p className="text-muted-foreground">Acesso restrito - Introduza as suas credenciais</p>
         </CardHeader>
         
         <CardContent>
           {!showReset ? (
             <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="seuemail@epw.pt"
+                />
+              </div>
+
               <div>
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
@@ -92,8 +116,8 @@ const Login: React.FC = () => {
                 <p className="text-destructive text-sm">{error}</p>
               )}
 
-              <Button type="submit" className="w-full">
-                Entrar
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'A entrar...' : 'Entrar'}
               </Button>
 
               <Button 
