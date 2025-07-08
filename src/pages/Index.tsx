@@ -8,12 +8,14 @@ import { useWarehouse } from '@/contexts/WarehouseContext';
 import { cn } from '@/lib/utils';
 import EPWLogo from '@/components/ui/epw-logo';
 import InvertedTSeparator from '@/components/ui/inverted-t-separator';
+import { QuickResetDialog } from '@/components/warehouse/QuickResetDialog';
 
 
 const Index = () => {
   const navigate = useNavigate();
   const { materials, selectedShelf } = useWarehouse();
   const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [showResetDialog, setShowResetDialog] = useState(false);
 
   useEffect(() => {
     setLastUpdate(new Date());
@@ -132,6 +134,19 @@ const Index = () => {
             })}
           </p>
         </div>
+
+        {/* Botão de limpeza rápida */}
+        <div className="absolute top-4 left-4">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setShowResetDialog(true)}
+            className="flex items-center gap-2"
+          >
+            <Search className="w-4 h-4" />
+            Limpar Tudo
+          </Button>
+        </div>
         
         {/* Layout específico das estantes conforme imagem */}
         <div className="flex justify-center items-end gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12 overflow-x-auto pb-4">
@@ -170,6 +185,13 @@ const Index = () => {
           ))}
         </div>
       </div>
+
+      {showResetDialog && (
+        <QuickResetDialog
+          open={showResetDialog}
+          onClose={() => setShowResetDialog(false)}
+        />
+      )}
     </div>
   );
 };

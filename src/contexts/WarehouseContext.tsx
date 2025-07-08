@@ -3,6 +3,7 @@ import { Material, Product, Movement, ShelfData, ShelfLocation } from '@/types/w
 import { useSupabaseWarehouseData } from '@/hooks/useSupabaseWarehouseData';
 import { useSupabaseWarehouseOperations } from '@/hooks/useSupabaseWarehouseOperations';
 import { useRealTimeSync } from '@/hooks/useRealTimeSync';
+import { useDataReset } from '@/hooks/useDataReset';
 
 interface WarehouseContextType {
   materials: Material[];
@@ -21,6 +22,7 @@ interface WarehouseContextType {
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
   updateProduct: (productId: string, updates: Partial<Product>) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
+  clearAllData: () => Promise<boolean>;
 }
 
 const WarehouseContext = createContext<WarehouseContextType | undefined>(undefined);
@@ -40,6 +42,8 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     refreshData,
   });
 
+  const { clearAllData } = useDataReset(setMaterials, setProducts, setMovements);
+
   // Enable real-time synchronization
   useRealTimeSync(refreshData, refreshData, refreshData);
 
@@ -51,6 +55,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       selectedShelf,
       loading,
       setSelectedShelf,
+      clearAllData,
       ...operations,
     }}>
       {children}
