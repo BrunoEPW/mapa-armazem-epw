@@ -54,7 +54,7 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
     return filtered;
   }, [products, searchQuery, selectedFamilia]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('AddMaterialDialog - Form submitted with:', {
       selectedProductId,
@@ -86,11 +86,11 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
     console.log('Selected product:', product);
     console.log('Location:', location);
 
-    const createdMaterial = addMaterial(newMaterial);
+    const createdMaterial = await addMaterial(newMaterial);
     console.log('AddMaterialDialog - Material created:', createdMaterial);
     
     // Add movement entry with the correct material ID
-    addMovement({
+    await addMovement({
       materialId: createdMaterial.id,
       type: 'entrada' as const,
       pecas: parseInt(pecas),

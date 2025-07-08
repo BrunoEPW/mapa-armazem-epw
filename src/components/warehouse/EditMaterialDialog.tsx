@@ -21,7 +21,7 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
   const [norc, setNorc] = useState('');
   const [movementType, setMovementType] = useState<'entrada' | 'saida'>('entrada');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!pecas || !norc) {
@@ -35,10 +35,10 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
 
     if (difference !== 0) {
       // Update material quantity
-      updateMaterial(material.id, { pecas: newPecas });
+      await updateMaterial(material.id, { pecas: newPecas });
       
       // Add movement record
-      addMovement({
+      await addMovement({
         materialId: material.id,
         type: difference > 0 ? 'entrada' : 'saida',
         pecas: Math.abs(difference),
