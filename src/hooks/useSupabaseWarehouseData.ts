@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Material, Product, Movement } from '@/types/warehouse';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { loadFromStorage, saveToStorage, STORAGE_KEYS } from '@/lib/storage';
 import { mockProducts, mockMaterials, mockMovements } from '@/data/mock-data';
 import { toast } from 'sonner';
@@ -203,8 +203,24 @@ export const useSupabaseWarehouseData = () => {
   // Load data on mount
   useEffect(() => {
     const initializeData = async () => {
-      await migrateLocalStorageData();
-      await loadData();
+      if (!isSupabaseConfigured) {
+        setProducts(mockProducts);
+        setMaterials(mockMaterials);
+        setMovements(mockMovements);
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        await migrateLocalStorageData();
+        await loadData();
+      } catch (error) {
+        console.error('Error initializing data, falling back to mock data:', error);
+        setProducts(mockProducts);
+        setMaterials(mockMaterials);
+        setMovements(mockMovements);
+        setLoading(false);
+      }
     };
     
     initializeData();
