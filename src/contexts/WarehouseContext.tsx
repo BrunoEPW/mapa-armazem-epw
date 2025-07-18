@@ -65,6 +65,7 @@ const defaultOperations = {
 };
 
 export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // All useState calls first
   const [selectedShelf, setSelectedShelf] = useState<ShelfLocation | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   
@@ -72,17 +73,12 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const auth = useAuth();
   const { loading: authLoading, isAuthenticated } = auth || { loading: true, isAuthenticated: false };
   
-  // Wait for auth to be ready before initializing warehouse operations
-  useEffect(() => {
-    if (!authLoading) {
-      setIsAuthReady(true);
-    }
-  }, [authLoading]);
-  
+  // All hooks must be called consistently
   const { materials, products, movements, loading, setMaterials, setProducts, setMovements, refreshData } = useSupabaseWarehouseData();
+  const { clearAllData } = useDataReset(setMaterials, setProducts, setMovements);
   
-  // Only initialize operations when auth is ready
-  const operations = isAuthReady ? useSupabaseWarehouseOperations({
+  // Conditional hook calls are causing the dispatcher error - we need to call all hooks unconditionally
+  const operations = useSupabaseWarehouseOperations({
     materials,
     products,
     movements,
@@ -90,12 +86,24 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setProducts,
     setMovements,
     refreshData,
-  }) : defaultOperations;
-
-  const { clearAllData } = useDataReset(setMaterials, setProducts, setMovements);
-  const adminOps = isAuthReady ? useSupabaseAdminOperations() : { clearAllMaterials: defaultOperations.clearAllMaterials };
+  });
+  
+  const adminOps = useSupabaseAdminOperations();
+  
+  // Enable real-time synchronization
+  useRealTimeSync(refreshData, refreshData, refreshData);
+  
+  // useEffect for auth ready state
+  useEffect(() => {
+    if (!authLoading) {
+      setIsAuthReady(true);
+    }
+  }, [authLoading]);
 
   const handleClearAllMaterials = async () => {
+    if (!isAuthReady || !isAuthenticated) {
+      throw new Error('Authentication required');
+    }
     const success = await adminOps.clearAllMaterials();
     if (success) {
       // Refresh data to update the UI
@@ -103,9 +111,6 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
     return success;
   };
-
-  // Enable real-time synchronization only when auth is ready
-  useRealTimeSync(refreshData, refreshData, refreshData);
 
   return (
     <WarehouseContext.Provider value={{
