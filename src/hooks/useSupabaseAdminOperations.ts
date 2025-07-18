@@ -111,31 +111,17 @@ export const useSupabaseAdminOperations = () => {
     try {
       console.log('Starting to clear all materials...');
       
-      // First get all materials to delete their movements
-      const { data: allMaterials, error: materialsQueryError } = await supabase
-        .from('materials')
-        .select('id');
-
-      if (materialsQueryError) {
-        console.error('Error querying materials:', materialsQueryError);
-        throw new Error('Erro ao consultar materiais');
-      }
-
-      console.log('Found materials to delete:', allMaterials?.length || 0);
-
       // Delete movements first (they reference materials)
-      if (allMaterials && allMaterials.length > 0) {
-        const { error: movementsError } = await supabase
-          .from('movements')
-          .delete()
-          .in('material_id', allMaterials.map(m => m.id));
+      const { error: movementsError } = await supabase
+        .from('movements')
+        .delete()
+        .gt('created_at', '1900-01-01'); // Delete all by using a condition that matches all
 
-        if (movementsError) {
-          console.error('Error deleting movements:', movementsError);
-          throw new Error('Erro ao eliminar movimentos');
-        }
-        console.log('Movements deleted successfully');
+      if (movementsError) {
+        console.error('Error deleting movements:', movementsError);
+        throw new Error('Erro ao eliminar movimentos');
       }
+      console.log('Movements deleted successfully');
 
       // Delete all materials
       const { error: materialsError } = await supabase
