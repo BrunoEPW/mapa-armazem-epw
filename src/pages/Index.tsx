@@ -148,7 +148,7 @@ const Index = () => {
             className="flex items-center gap-2"
           >
             <Search className="w-4 h-4" />
-            Limpar Tudo
+            Limpar
           </Button>
         </div>
         
