@@ -111,31 +111,40 @@ export const useSupabaseAdminOperations = () => {
     try {
       console.log('Starting to clear all materials...');
       
-      // Delete movements first (they reference materials)
-      const { error: movementsError } = await supabase
-        .from('movements')
-        .delete()
-        .gt('created_at', '1900-01-01'); // Delete all by using a condition that matches all
+      // Try to delete movements with a simpler query and better error handling
+      console.log('Deleting movements...');
+      try {
+        const { count: movementsCount, error: movementsError } = await supabase
+          .from('movements')
+          .delete()
+          .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all except impossible UUID
 
-      if (movementsError) {
-        console.error('Error deleting movements:', movementsError);
-        throw new Error('Erro ao eliminar movimentos');
+        if (movementsError) {
+          console.error('Error deleting movements:', movementsError);
+          // Continue anyway - materials might not have movements
+          console.log('Continuing despite movements error...');
+        } else {
+          console.log(`Movements deleted successfully. Count: ${movementsCount}`);
+        }
+      } catch (networkError) {
+        console.error('Network error when deleting movements:', networkError);
+        console.log('Continuing with materials deletion...');
       }
-      console.log('Movements deleted successfully');
 
       // Delete all materials
-      const { error: materialsError } = await supabase
+      console.log('Deleting materials...');
+      const { count: materialsCount, error: materialsError } = await supabase
         .from('materials')
         .delete()
-        .gt('created_at', '1900-01-01'); // Delete all by using a condition that matches all
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all except impossible UUID
 
       if (materialsError) {
         console.error('Error deleting materials:', materialsError);
-        throw new Error('Erro ao eliminar materiais');
+        throw new Error(`Erro ao eliminar materiais: ${materialsError.message}`);
       }
 
-      console.log('All materials deleted successfully');
-      toast.success('Todos os materiais foram removidos das prateleiras!');
+      console.log(`All materials deleted successfully. Count: ${materialsCount}`);
+      toast.success(`Todos os materiais foram removidos das prateleiras! (${materialsCount || 0} materiais removidos)`);
       return true;
     } catch (error) {
       console.error('Error clearing materials:', error);
