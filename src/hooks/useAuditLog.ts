@@ -15,9 +15,12 @@ export interface AuditLogEntry {
 }
 
 export const useAuditLog = () => {
-  const { user } = useAuth();
+  const auth = useAuth();
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Only access user when auth context is ready
+  const user = auth?.user || null;
 
   const logAction = async (
     table_name: string,

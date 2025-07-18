@@ -13,8 +13,12 @@ export const useSupabaseMaterialOperations = ({
   materials,
   setMaterials,
 }: UseSupabaseMaterialOperationsProps) => {
-  const { user, hasPermission } = useAuth();
+  const auth = useAuth();
   const { logAction } = useAuditLog();
+  
+  // Only access user/permissions when auth context is ready
+  const user = auth?.user || null;
+  const hasPermission = auth?.hasPermission || (() => false);
   
   const addMaterial = async (material: Omit<Material, 'id'>) => {
     if (!hasPermission('canCreate')) {
