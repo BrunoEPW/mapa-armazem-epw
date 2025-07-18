@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, History } from 'lucide-react';
@@ -82,232 +83,70 @@ const ShelfDetailView: React.FC = () => {
             </CardContent>
           </Card>
         ) : (
-          // Three-part view for all shelves
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div>
-              <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                <span className="w-8 h-8 bg-[hsl(var(--shelf-left-stock))] text-white rounded-full flex items-center justify-center text-sm font-bold">E</span>
-                Lado Esquerdo
-              </h3>
-              <div className="space-y-4">
-                {materials.filter(m => m.location.posicao === 'esquerda').map((material) => (
-                  <Card key={material.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">
-                          {material.product.modelo}
-                        </CardTitle>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowHistoryFor(material.id)}
-                          >
-                            <History className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingMaterial(material)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleRemoveMaterial(material.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Acabamento</p>
-                          <p className="font-medium">{material.product.acabamento}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Cor</p>
-                          <p className="font-medium">{material.product.cor}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Comprimento</p>
-                          <p className="font-medium">{material.product.comprimento}mm</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Quantidade</p>
-                          <Badge 
-                            variant={material.pecas < 10 ? "destructive" : "default"}
-                            className="text-lg px-3 py-1"
-                          >
-                            {material.pecas} peças
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                {materials.filter(m => m.location.posicao === 'esquerda').length === 0 && (
-                  <Card>
-                    <CardContent className="p-6 text-center">
-                      <p className="text-muted-foreground">Lado esquerdo vazio</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                <span className="w-8 h-8 bg-[hsl(var(--shelf-central-stock))] text-white rounded-full flex items-center justify-center text-sm font-bold">C</span>
-                Parte Central
-              </h3>
-              <div className="space-y-4">
-                {materials.filter(m => m.location.posicao === 'central' || !m.location.posicao).map((material) => (
-                  <Card key={material.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">
-                          {material.product.modelo}
-                        </CardTitle>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowHistoryFor(material.id)}
-                          >
-                            <History className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingMaterial(material)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleRemoveMaterial(material.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Acabamento</p>
-                          <p className="font-medium">{material.product.acabamento}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Cor</p>
-                          <p className="font-medium">{material.product.cor}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Comprimento</p>
-                          <p className="font-medium">{material.product.comprimento}mm</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Quantidade</p>
-                          <Badge 
-                            variant={material.pecas < 10 ? "destructive" : "default"}
-                            className="text-lg px-3 py-1"
-                          >
-                            {material.pecas} peças
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                {materials.filter(m => m.location.posicao === 'central' || !m.location.posicao).length === 0 && (
-                  <Card>
-                    <CardContent className="p-6 text-center">
-                      <p className="text-muted-foreground">Parte central vazia</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                <span className="w-8 h-8 bg-[hsl(var(--shelf-right-stock))] text-white rounded-full flex items-center justify-center text-sm font-bold">D</span>
-                Lado Direito
-              </h3>
-              <div className="space-y-4">
-                {materials.filter(m => m.location.posicao === 'direita').map((material) => (
-                  <Card key={material.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">
-                          {material.product.modelo}
-                        </CardTitle>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowHistoryFor(material.id)}
-                          >
-                            <History className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingMaterial(material)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleRemoveMaterial(material.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Acabamento</p>
-                          <p className="font-medium">{material.product.acabamento}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Cor</p>
-                          <p className="font-medium">{material.product.cor}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Comprimento</p>
-                          <p className="font-medium">{material.product.comprimento}mm</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Quantidade</p>
-                          <Badge 
-                            variant={material.pecas < 10 ? "destructive" : "default"}
-                            className="text-lg px-3 py-1"
-                          >
-                            {material.pecas} peças
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                {materials.filter(m => m.location.posicao === 'direita').length === 0 && (
-                  <Card>
-                    <CardContent className="p-6 text-center">
-                      <p className="text-muted-foreground">Lado direito vazio</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {materials.map((material) => (
+              <Card key={material.id}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">
+                      {material.product.modelo}
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowHistoryFor(material.id)}
+                      >
+                        <History className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingMaterial(material)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleRemoveMaterial(material.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Família</p>
+                      <p className="font-medium">{material.product.familia}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Acabamento</p>
+                      <p className="font-medium">{material.product.acabamento}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Cor</p>
+                      <p className="font-medium">{material.product.cor}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Comprimento</p>
+                      <p className="font-medium">{material.product.comprimento}mm</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-muted-foreground">Quantidade</p>
+                      <Badge 
+                        variant={material.pecas < 10 ? "destructive" : "default"}
+                        className="text-lg px-3 py-1"
+                      >
+                        {material.pecas} peças
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
 
@@ -320,8 +159,6 @@ const ShelfDetailView: React.FC = () => {
             }}
           />
         )}
-
-        {/* Debug: Rendering AddMaterialDialog? {showAddDialog} */}
 
         {editingMaterial && (
           <EditMaterialDialog

@@ -1,8 +1,8 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { ShelfLocation } from '@/types/warehouse';
 import { ProductSelector } from './ProductSelector';
@@ -24,7 +24,6 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
   const [selectedProductId, setSelectedProductId] = useState('');
   const [pecas, setPecas] = useState('');
   const [norc, setNorc] = useState('');
-  const [selectedPosicao, setSelectedPosicao] = useState<'esquerda' | 'central' | 'direita'>('central');
 
   const productSearch = useProductSearch(products);
 
@@ -54,7 +53,7 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
         productId: selectedProductId,
         product,
         pecas: parseInt(pecas),
-        location: { ...location, posicao: selectedPosicao },
+        location,
       };
 
       console.log('Attempting to add material:', newMaterial);
@@ -97,20 +96,6 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
           placeholder="Ex: 25"
           min="1"
         />
-      </div>
-
-      <div>
-        <Label htmlFor="posicao">Posição na Prateleira</Label>
-        <Select value={selectedPosicao} onValueChange={(value) => setSelectedPosicao(value as 'esquerda' | 'central' | 'direita')}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione a posição" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="esquerda">Lado Esquerdo (E)</SelectItem>
-            <SelectItem value="central">Parte Central (C)</SelectItem>
-            <SelectItem value="direita">Lado Direito (D)</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       <div>

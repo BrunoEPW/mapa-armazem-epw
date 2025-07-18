@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Home } from 'lucide-react';
@@ -30,11 +31,9 @@ const ShelfView: React.FC = () => {
     return null;
   };
 
-  const getShelfStatus = (prateleira: number, posicao?: 'esquerda' | 'central' | 'direita') => {
+  const getShelfStatus = (prateleira: number) => {
     const shelfMaterials = materials.filter(
-      m => m.location.estante === estante && 
-           m.location.prateleira === prateleira &&
-           (posicao ? m.location.posicao === posicao : m.location.posicao === 'central' || !m.location.posicao)
+      m => m.location.estante === estante && m.location.prateleira === prateleira
     );
     
     if (shelfMaterials.length === 0) return 'empty';
@@ -45,41 +44,20 @@ const ShelfView: React.FC = () => {
     return 'stock';
   };
 
-  const getShelfClassName = (prateleira: number, posicao?: 'esquerda' | 'central' | 'direita') => {
-    const status = getShelfStatus(prateleira, posicao);
+  const getShelfClassName = (prateleira: number) => {
+    const status = getShelfStatus(prateleira);
     
-    const baseClasses = 'h-16 flex items-center justify-center transition-all duration-300 cursor-pointer text-lg font-bold text-white hover:scale-105 hover:shadow-lg transform border-2';
+    const baseClasses = 'h-16 flex items-center justify-center transition-all duration-300 cursor-pointer text-lg font-bold text-white hover:scale-105 hover:shadow-lg transform border-2 rounded-lg';
     
-    if (posicao === 'esquerda') {
-      return cn(baseClasses, {
-        'bg-[hsl(var(--shelf-left-empty))] border-[hsl(var(--shelf-left-empty))]': status === 'empty',
-        'bg-[hsl(var(--shelf-left-low))] border-[hsl(var(--shelf-left-low))]': status === 'low',
-        'bg-[hsl(var(--shelf-left-stock))] border-[hsl(var(--shelf-left-stock))]': status === 'stock',
-      });
-    } else if (posicao === 'central') {
-      return cn(baseClasses, {
-        'bg-[hsl(var(--shelf-central-empty))] border-[hsl(var(--shelf-central-empty))]': status === 'empty',
-        'bg-[hsl(var(--shelf-central-low))] border-[hsl(var(--shelf-central-low))]': status === 'low',
-        'bg-[hsl(var(--shelf-central-stock))] border-[hsl(var(--shelf-central-stock))]': status === 'stock',
-      });
-    } else if (posicao === 'direita') {
-      return cn(baseClasses, {
-        'bg-[hsl(var(--shelf-right-empty))] border-[hsl(var(--shelf-right-empty))]': status === 'empty',
-        'bg-[hsl(var(--shelf-right-low))] border-[hsl(var(--shelf-right-low))]': status === 'low',
-        'bg-[hsl(var(--shelf-right-stock))] border-[hsl(var(--shelf-right-stock))]': status === 'stock',
-      });
-    }
-    
-    // Fallback to central position style if no position specified
     return cn(baseClasses, {
-      'bg-[hsl(var(--shelf-central-empty))] border-[hsl(var(--shelf-central-empty))]': status === 'empty',
-      'bg-[hsl(var(--shelf-central-low))] border-[hsl(var(--shelf-central-low))]': status === 'low',
-      'bg-[hsl(var(--shelf-central-stock))] border-[hsl(var(--shelf-central-stock))]': status === 'stock',
+      'bg-red-600 border-red-600': status === 'empty',
+      'bg-yellow-600 border-yellow-600': status === 'low',
+      'bg-green-600 border-green-600': status === 'stock',
     });
   };
 
-  const handleShelfClick = (prateleira: number, posicao?: 'esquerda' | 'central' | 'direita') => {
-    setSelectedShelf({ estante, prateleira, posicao });
+  const handleShelfClick = (prateleira: number) => {
+    setSelectedShelf({ estante, prateleira });
     navigate(`/prateleira/${estante}/${prateleira}`);
   };
 
@@ -126,26 +104,12 @@ const ShelfView: React.FC = () => {
 
         <div className="space-y-3">
           {[...currentShelf.prateleiras].reverse().map((prateleira) => (
-            // Three-part view for all shelves
-            <div key={prateleira} className="flex gap-1">
-              <div
-                className={cn(getShelfClassName(prateleira, 'esquerda'), 'rounded-l-lg rounded-r-none flex-1')}
-                onClick={() => handleShelfClick(prateleira, 'esquerda')}
-              >
-                <span className="text-xl font-bold">P{prateleira} - E</span>
-              </div>
-              <div
-                className={cn(getShelfClassName(prateleira, 'central'), 'rounded-none flex-1')}
-                onClick={() => handleShelfClick(prateleira, 'central')}
-              >
-                <span className="text-xl font-bold">P{prateleira} - C</span>
-              </div>
-              <div
-                className={cn(getShelfClassName(prateleira, 'direita'), 'rounded-r-lg rounded-l-none flex-1')}
-                onClick={() => handleShelfClick(prateleira, 'direita')}
-              >
-                <span className="text-xl font-bold">P{prateleira} - D</span>
-              </div>
+            <div
+              key={prateleira}
+              className={getShelfClassName(prateleira)}
+              onClick={() => handleShelfClick(prateleira)}
+            >
+              <span className="text-xl font-bold">Prateleira {prateleira}</span>
             </div>
           ))}
         </div>
