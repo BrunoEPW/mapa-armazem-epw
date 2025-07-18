@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Material, Product, Movement, ShelfData, ShelfLocation } from '@/types/warehouse';
 import { useAuth } from '@/contexts/AuthContext';
@@ -69,18 +68,20 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return success;
   };
 
+  const contextValue: WarehouseContextType = {
+    materials,
+    products,
+    movements,
+    selectedShelf,
+    loading: loading || authLoading,
+    setSelectedShelf,
+    clearAllData,
+    clearAllMaterials: handleClearAllMaterials,
+    ...operations,
+  };
+
   return (
-    <WarehouseContext.Provider value={{
-      materials,
-      products,
-      movements,
-      selectedShelf,
-      loading: loading || authLoading,
-      setSelectedShelf,
-      clearAllData,
-      clearAllMaterials: handleClearAllMaterials,
-      ...operations,
-    }}>
+    <WarehouseContext.Provider value={contextValue}>
       {children}
     </WarehouseContext.Provider>
   );
