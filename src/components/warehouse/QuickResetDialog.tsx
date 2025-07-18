@@ -22,7 +22,8 @@ export const QuickResetDialog: React.FC<QuickResetDialogProps> = ({
   onClose,
 }) => {
   const [isResetting, setIsResetting] = useState(false);
-  const { clearAllData } = useWarehouse();
+  const [isClearingMaterials, setIsClearingMaterials] = useState(false);
+  const { clearAllData, clearAllMaterials } = useWarehouse();
 
   const handleConfirm = async () => {
     setIsResetting(true);
@@ -33,43 +34,60 @@ export const QuickResetDialog: React.FC<QuickResetDialogProps> = ({
     setIsResetting(false);
   };
 
+  const handleClearMaterials = async () => {
+    setIsClearingMaterials(true);
+    const success = await clearAllMaterials();
+    if (success) {
+      onClose();
+    }
+    setIsClearingMaterials(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="w-5 h-5" />
-            Limpar Todos os Dados
+            Opções de Limpeza
           </DialogTitle>
           <DialogDescription>
-            Esta ação irá remover todos os materiais das prateleiras e eliminar todos os produtos.
+            Escolha o que pretende limpar do armazém.
           </DialogDescription>
         </DialogHeader>
 
         <Alert className="border-destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            <strong>ATENÇÃO:</strong> Todos os dados serão eliminados:
-            <ul className="list-disc list-inside mt-2 text-sm">
-              <li>Todos os materiais das prateleiras</li>
-              <li>Todos os produtos</li>
-              <li>Todo o histórico de movimentos</li>
-            </ul>
+            <strong>Escolha uma opção:</strong>
           </AlertDescription>
         </Alert>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Cancelar
-          </Button>
+        <div className="space-y-3">
           <Button 
             variant="destructive" 
-            onClick={handleConfirm}
-            disabled={isResetting}
-            className="flex items-center gap-2"
+            onClick={handleClearMaterials}
+            disabled={isClearingMaterials || isResetting}
+            className="w-full flex items-center gap-2"
           >
             <Trash2 className="w-4 h-4" />
-            {isResetting ? 'A limpar...' : 'Limpar Tudo'}
+            {isClearingMaterials ? 'A remover materiais...' : 'Remover Apenas Materiais das Prateleiras'}
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={handleConfirm}
+            disabled={isResetting || isClearingMaterials}
+            className="w-full flex items-center gap-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+          >
+            <Trash2 className="w-4 h-4" />
+            {isResetting ? 'A limpar tudo...' : 'Limpar Tudo (Materiais + Produtos)'}
+          </Button>
+        </div>
+
+        <DialogFooter>
+          <Button variant="secondary" onClick={onClose} disabled={isResetting || isClearingMaterials}>
+            Cancelar
           </Button>
         </DialogFooter>
       </DialogContent>

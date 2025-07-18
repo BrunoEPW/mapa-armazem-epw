@@ -4,6 +4,7 @@ import { useSupabaseWarehouseData } from '@/hooks/useSupabaseWarehouseData';
 import { useSupabaseWarehouseOperations } from '@/hooks/useSupabaseWarehouseOperations';
 import { useRealTimeSync } from '@/hooks/useRealTimeSync';
 import { useDataReset } from '@/hooks/useDataReset';
+import { useSupabaseAdminOperations } from '@/hooks/useSupabaseAdminOperations';
 
 interface WarehouseContextType {
   materials: Material[];
@@ -23,6 +24,7 @@ interface WarehouseContextType {
   updateProduct: (productId: string, updates: Partial<Product>) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   clearAllData: () => Promise<boolean>;
+  clearAllMaterials: () => Promise<boolean>;
 }
 
 const WarehouseContext = createContext<WarehouseContextType | undefined>(undefined);
@@ -43,6 +45,16 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   });
 
   const { clearAllData } = useDataReset(setMaterials, setProducts, setMovements);
+  const { clearAllMaterials } = useSupabaseAdminOperations();
+
+  const handleClearAllMaterials = async () => {
+    const success = await clearAllMaterials();
+    if (success) {
+      // Refresh data to update the UI
+      await refreshData();
+    }
+    return success;
+  };
 
   // Enable real-time synchronization
   useRealTimeSync(refreshData, refreshData, refreshData);
@@ -56,6 +68,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       loading,
       setSelectedShelf,
       clearAllData,
+      clearAllMaterials: handleClearAllMaterials,
       ...operations,
     }}>
       {children}

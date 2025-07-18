@@ -114,8 +114,47 @@ export const useSupabaseAdminOperations = () => {
     }
   };
 
+  const clearAllMaterials = async () => {
+    if (!user || !hasPermission('canDelete')) {
+      toast.error('Não tem permissão para esta operação');
+      return false;
+    }
+
+    try {
+      // Delete movements first (they reference materials)
+      const { error: movementsError } = await supabase
+        .from('movements')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+      if (movementsError) {
+        console.error('Error deleting movements:', movementsError);
+        throw new Error('Erro ao eliminar movimentos');
+      }
+
+      // Delete materials
+      const { error: materialsError } = await supabase
+        .from('materials')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+      if (materialsError) {
+        console.error('Error deleting materials:', materialsError);
+        throw new Error('Erro ao eliminar materiais');
+      }
+
+      toast.success('Todos os materiais foram removidos das prateleiras!');
+      return true;
+    } catch (error) {
+      console.error('Error clearing materials:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao limpar materiais');
+      return false;
+    }
+  };
+
   return {
     clearDatabase,
+    clearAllMaterials,
     exportData,
     canManageDatabase: user && hasPermission('canManageUsers'),
   };
