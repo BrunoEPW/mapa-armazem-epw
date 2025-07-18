@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import EPWLogo from '@/components/ui/epw-logo';
 import InvertedTSeparator from '@/components/ui/inverted-t-separator';
 import { QuickResetDialog } from '@/components/warehouse/QuickResetDialog';
+import DebugConsole from '@/components/ui/debug-console';
 
 
 const Index = () => {
@@ -192,6 +193,8 @@ const Index = () => {
           onClose={() => setShowResetDialog(false)}
         />
       )}
+      
+      <DebugConsole />
     </div>
   );
 };
