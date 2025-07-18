@@ -121,28 +121,46 @@ export const useSupabaseAdminOperations = () => {
     }
 
     try {
-      // Delete movements first (they reference materials)
-      const { error: movementsError } = await supabase
-        .from('movements')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+      console.log('Starting to clear all materials...');
+      
+      // First get all materials to delete their movements
+      const { data: allMaterials, error: materialsQueryError } = await supabase
+        .from('materials')
+        .select('id');
 
-      if (movementsError) {
-        console.error('Error deleting movements:', movementsError);
-        throw new Error('Erro ao eliminar movimentos');
+      if (materialsQueryError) {
+        console.error('Error querying materials:', materialsQueryError);
+        throw new Error('Erro ao consultar materiais');
       }
 
-      // Delete materials
+      console.log('Found materials to delete:', allMaterials?.length || 0);
+
+      // Delete movements first (they reference materials)
+      if (allMaterials && allMaterials.length > 0) {
+        const { error: movementsError } = await supabase
+          .from('movements')
+          .delete()
+          .in('material_id', allMaterials.map(m => m.id));
+
+        if (movementsError) {
+          console.error('Error deleting movements:', movementsError);
+          throw new Error('Erro ao eliminar movimentos');
+        }
+        console.log('Movements deleted successfully');
+      }
+
+      // Delete all materials
       const { error: materialsError } = await supabase
         .from('materials')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+        .gt('created_at', '1900-01-01'); // Delete all by using a condition that matches all
 
       if (materialsError) {
         console.error('Error deleting materials:', materialsError);
         throw new Error('Erro ao eliminar materiais');
       }
 
+      console.log('All materials deleted successfully');
       toast.success('Todos os materiais foram removidos das prateleiras!');
       return true;
     } catch (error) {
