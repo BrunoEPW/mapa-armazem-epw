@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { UserProfile, UserRole, ROLE_PERMISSIONS } from '@/types/auth';
 import { toast } from 'sonner';
 
@@ -20,64 +21,71 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    getSession();
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        await loadUserProfile(session.user.id);
-      } else {
-        setUser(null);
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        if (session?.user) {
+          // Defer profile loading to avoid auth state deadlock
+          setTimeout(() => {
+            loadUserProfile(session.user);
+          }, 0);
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
       }
-      setLoading(false);
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        loadUserProfile(session.user);
+      } else {
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const getSession = async () => {
+  const loadUserProfile = async (user: User) => {
     try {
-      if (!isSupabaseConfigured) {
-        setLoading(false);
-        return;
-      }
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await loadUserProfile(session.user.id);
-      }
-    } catch (error) {
-      console.error('Error getting session:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadUserProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('user_id', user.id)
         .single();
 
-      if (error) throw error;
-      setUser(data);
+      if (error) {
+        console.error('Error loading user profile:', error);
+        return;
+      }
 
-      // Update last seen
-      await supabase
-        .from('profiles')
-        .update({ last_seen: new Date().toISOString() })
-        .eq('id', userId);
+      if (profile) {
+        setUser({
+          id: profile.id,
+          email: profile.email,
+          name: profile.name,
+          role: profile.role,
+          created_at: profile.created_at,
+          updated_at: profile.updated_at,
+          last_seen: profile.last_seen,
+        });
 
+        // Update last_seen timestamp
+        await supabase
+          .from('profiles')
+          .update({ last_seen: new Date().toISOString() })
+          .eq('user_id', user.id);
+      }
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      console.error('Error in loadUserProfile:', error);
     }
   };
 
@@ -107,50 +115,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signUp = async (email: string, password: string, name: string, role: UserRole = 'viewer'): Promise<boolean> => {
     try {
-      setLoading(true);
+      const redirectUrl = `${window.location.origin}/`;
       
-      // Check if user has permission to create accounts
-      if (!hasPermission('canManageUsers')) {
-        toast.error('Não tem permissão para criar utilizadores');
-        return false;
-      }
-
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: { name, role }
+        }
       });
 
       if (error) {
+        console.error('Sign up error:', error);
         toast.error(error.message);
         return false;
       }
 
       if (data.user) {
-        // Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email,
-            name,
-            role,
-          });
-
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
-          toast.error('Erro ao criar perfil do utilizador');
-          return false;
-        }
+        toast.success('Account created successfully! Please check your email to verify your account.');
+        return true;
       }
 
-      toast.success('Utilizador criado com sucesso');
-      return true;
-    } catch (error) {
-      console.error('Error signing up:', error);
-      toast.error('Erro ao criar utilizador');
       return false;
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Signup error:', error);
+      toast.error('Failed to create account');
+      return false;
     }
   };
 

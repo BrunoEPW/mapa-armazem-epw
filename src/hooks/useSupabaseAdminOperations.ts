@@ -1,12 +1,15 @@
 import { supabase, testSupabaseConnection } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 export const useSupabaseAdminOperations = () => {
   const { user, hasPermission } = useAuth();
 
-  const clearDatabase = async () => {
-    // Allow operation for now - remove auth check temporarily
+  const clearDatabase = async (): Promise<boolean> => {
+    if (!hasPermission('canDelete')) {
+      toast.error('You do not have permission to perform this action');
+      return false;
+    }
     try {
       // Delete in order to respect foreign key constraints
       // 1. Delete movements first
@@ -63,8 +66,11 @@ export const useSupabaseAdminOperations = () => {
     }
   };
 
-  const exportData = async () => {
-    // Allow operation for now - remove auth check temporarily
+  const exportData = async (): Promise<object | null> => {
+    if (!hasPermission('canViewReports')) {
+      toast.error('You do not have permission to perform this action');
+      return null;
+    }
     try {
       const [
         { data: products },
@@ -81,7 +87,7 @@ export const useSupabaseAdminOperations = () => {
         materials: materials || [],
         movements: movements || [],
         exportDate: new Date().toISOString(),
-        exportedBy: user.email
+        exportedBy: user?.email || 'unknown'
       };
 
       // Create download link
@@ -106,8 +112,11 @@ export const useSupabaseAdminOperations = () => {
     }
   };
 
-  const clearAllMaterials = async () => {
-    // Allow operation for now - remove auth check temporarily
+  const clearAllMaterials = async (): Promise<boolean> => {
+    if (!hasPermission('canDelete')) {
+      toast.error('You do not have permission to perform this action');
+      return false;
+    }
     try {
       console.log('Starting to clear all materials...');
       
@@ -183,6 +192,6 @@ export const useSupabaseAdminOperations = () => {
     clearDatabase,
     clearAllMaterials,
     exportData,
-    canManageDatabase: true, // Temporarily allow all operations
+    canManageDatabase: hasPermission('canDelete'),
   };
 };
