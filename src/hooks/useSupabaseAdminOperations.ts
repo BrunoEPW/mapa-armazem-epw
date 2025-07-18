@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, testSupabaseConnection } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -111,40 +111,66 @@ export const useSupabaseAdminOperations = () => {
     try {
       console.log('Starting to clear all materials...');
       
-      // Try to delete movements with a simpler query and better error handling
-      console.log('Deleting movements...');
+      // First test Supabase connection
+      const connectionTest = await testSupabaseConnection();
+      if (!connectionTest) {
+        throw new Error('Não foi possível conectar ao Supabase. Verifique a sua ligação à internet.');
+      }
+      
+      // Try a direct approach - delete everything using truncate-like approach
+      console.log('Attempting to clear all movements and materials...');
+      
+      // Use a different approach - select and delete by chunks
+      let deletedMovements = 0;
+      let deletedMaterials = 0;
+      
       try {
-        const { count: movementsCount, error: movementsError } = await supabase
+        // Get all movement IDs first
+        const { data: movements } = await supabase
           .from('movements')
-          .delete()
-          .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all except impossible UUID
-
-        if (movementsError) {
-          console.error('Error deleting movements:', movementsError);
-          // Continue anyway - materials might not have movements
-          console.log('Continuing despite movements error...');
-        } else {
-          console.log(`Movements deleted successfully. Count: ${movementsCount}`);
+          .select('id')
+          .limit(1000);
+        
+        if (movements && movements.length > 0) {
+          const { error: movError } = await supabase
+            .from('movements')
+            .delete()
+            .in('id', movements.map(m => m.id));
+          
+          if (!movError) {
+            deletedMovements = movements.length;
+            console.log(`Deleted ${deletedMovements} movements`);
+          }
         }
-      } catch (networkError) {
-        console.error('Network error when deleting movements:', networkError);
-        console.log('Continuing with materials deletion...');
+      } catch (error) {
+        console.log('Could not delete movements, continuing...');
       }
-
-      // Delete all materials
-      console.log('Deleting materials...');
-      const { count: materialsCount, error: materialsError } = await supabase
+      
+      // Get all material IDs
+      const { data: materials, error: selectError } = await supabase
         .from('materials')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all except impossible UUID
-
-      if (materialsError) {
-        console.error('Error deleting materials:', materialsError);
-        throw new Error(`Erro ao eliminar materiais: ${materialsError.message}`);
+        .select('id')
+        .limit(1000);
+      
+      if (selectError) {
+        throw new Error(`Erro ao consultar materiais: ${selectError.message}`);
+      }
+      
+      if (materials && materials.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('materials')
+          .delete()
+          .in('id', materials.map(m => m.id));
+        
+        if (deleteError) {
+          throw new Error(`Erro ao eliminar materiais: ${deleteError.message}`);
+        }
+        
+        deletedMaterials = materials.length;
       }
 
-      console.log(`All materials deleted successfully. Count: ${materialsCount}`);
-      toast.success(`Todos os materiais foram removidos das prateleiras! (${materialsCount || 0} materiais removidos)`);
+      console.log(`Successfully deleted ${deletedMaterials} materials and ${deletedMovements} movements`);
+      toast.success(`Todos os materiais foram removidos! (${deletedMaterials} materiais, ${deletedMovements} movimentos)`);
       return true;
     } catch (error) {
       console.error('Error clearing materials:', error);

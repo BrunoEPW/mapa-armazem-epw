@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export const useDataReset = (
@@ -13,12 +13,10 @@ export const useDataReset = (
     try {
       setIsResetting(true);
 
-      if (isSupabaseConfigured) {
-        // Clear Supabase data
-        await supabase.from('movements').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        await supabase.from('materials').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        await supabase.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      }
+      // Clear Supabase data
+      await supabase.from('movements').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('materials').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
       // Clear local state
       setMaterials([]);

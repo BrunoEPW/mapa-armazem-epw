@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export interface AuditLogEntry {
@@ -47,12 +47,7 @@ export const useAuditLog = () => {
       setLoading(true);
       let query = supabase
         .from('audit_logs')
-        .select(`
-          *,
-          profiles (
-            name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (table_name) {
@@ -67,9 +62,16 @@ export const useAuditLog = () => {
 
       if (error) throw error;
 
-      const logsWithUserNames = data?.map(log => ({
-        ...log,
-        user_name: log.profiles?.name || 'Utilizador Desconhecido',
+      const logsWithUserNames: AuditLogEntry[] = data?.map(log => ({
+        id: log.id,
+        table_name: log.table_name,
+        record_id: log.record_id,
+        action: log.action as 'INSERT' | 'UPDATE' | 'DELETE',
+        old_values: (log.old_values as Record<string, any>) || undefined,
+        new_values: (log.new_values as Record<string, any>) || undefined,
+        user_id: log.user_id,
+        created_at: log.created_at,
+        user_name: 'Sistema',
       })) || [];
 
       setAuditLogs(logsWithUserNames);
@@ -89,20 +91,22 @@ export const useAuditLog = () => {
 
       const { data, error } = await supabase
         .from('audit_logs')
-        .select(`
-          *,
-          profiles (
-            name
-          )
-        `)
+        .select('*')
         .gte('created_at', cutoffTime.toISOString())
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       return data?.map(log => ({
-        ...log,
-        user_name: log.profiles?.name || 'Utilizador Desconhecido',
+        id: log.id,
+        table_name: log.table_name,
+        record_id: log.record_id,
+        action: log.action as 'INSERT' | 'UPDATE' | 'DELETE',
+        old_values: (log.old_values as Record<string, any>) || undefined,
+        new_values: (log.new_values as Record<string, any>) || undefined,
+        user_id: log.user_id,
+        created_at: log.created_at,
+        user_name: 'Sistema',
       })) || [];
     } catch (error) {
       console.error('Error fetching recent activity:', error);

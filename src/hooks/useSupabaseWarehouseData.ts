@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Material, Product, Movement } from '@/types/warehouse';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { loadFromStorage, saveToStorage, STORAGE_KEYS } from '@/lib/storage';
 import { mockProducts, mockMaterials, mockMovements } from '@/data/mock-data';
 import { toast } from 'sonner';
@@ -62,8 +62,8 @@ export const useSupabaseWarehouseData = () => {
           modelo: product.modelo,
           acabamento: product.acabamento,
           cor: product.cor,
-          comprimento: product.comprimento,
-          foto: product.foto,
+          comprimento: String(product.comprimento), // Convert to string
+          foto: product.foto || null,
         });
       
       if (error) {
@@ -82,7 +82,7 @@ export const useSupabaseWarehouseData = () => {
           pecas: material.pecas,
           estante: material.location.estante,
           prateleira: material.location.prateleira,
-          posicao: material.location.posicao,
+          posicao: material.location.posicao || null,
         });
       
       if (error) {
@@ -169,14 +169,14 @@ export const useSupabaseWarehouseData = () => {
         location: {
           estante: m.estante,
           prateleira: m.prateleira,
-          posicao: m.posicao,
+          posicao: (m.posicao as "esquerda" | "central" | "direita") || "central",
         },
       })) || [];
 
       const transformedMovements: Movement[] = movementsData?.map(mov => ({
         id: mov.id,
         materialId: mov.material_id,
-        type: mov.type,
+        type: (mov.type as "entrada" | "saida"),
         pecas: mov.pecas,
         norc: mov.norc,
         date: mov.date,
@@ -203,34 +203,6 @@ export const useSupabaseWarehouseData = () => {
   // Load data on mount
   useEffect(() => {
     const initializeData = async () => {
-      if (!isSupabaseConfigured) {
-        // Load from localStorage if available, otherwise use mock data
-        const storedProducts = localStorage.getItem('warehouse-products');
-        const storedMaterials = localStorage.getItem('warehouse-materials');
-        const storedMovements = localStorage.getItem('warehouse-movements');
-        
-        if (storedProducts) {
-          setProducts(JSON.parse(storedProducts));
-        } else {
-          setProducts(mockProducts);
-        }
-        
-        if (storedMaterials) {
-          setMaterials(JSON.parse(storedMaterials));
-        } else {
-          setMaterials(mockMaterials);
-        }
-        
-        if (storedMovements) {
-          setMovements(JSON.parse(storedMovements));
-        } else {
-          setMovements(mockMovements);
-        }
-        
-        setLoading(false);
-        return;
-      }
-      
       try {
         await migrateLocalStorageData();
         await loadData();
