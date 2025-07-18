@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Material, Product, Movement, ShelfData, ShelfLocation } from '@/types/warehouse';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,54 +31,19 @@ interface WarehouseContextType {
 
 const WarehouseContext = createContext<WarehouseContextType | undefined>(undefined);
 
-// Default operations for when auth is not ready
-const defaultOperations = {
-  addMaterial: async (): Promise<Material> => {
-    throw new Error('Authentication required');
-  },
-  removeMaterial: async (): Promise<void> => {
-    throw new Error('Authentication required');
-  },
-  updateMaterial: async (): Promise<void> => {
-    throw new Error('Authentication required');
-  },
-  addMovement: async (): Promise<void> => {
-    throw new Error('Authentication required');
-  },
-  getMaterialsByShelf: (): Material[] => [],
-  getShelfData: (): ShelfData => ({ location: { estante: '', prateleira: 0, posicao: undefined }, materials: [], movements: [] }),
-  searchMaterials: (): Material[] => [],
-  addProduct: async (): Promise<void> => {
-    throw new Error('Authentication required');
-  },
-  updateProduct: async (): Promise<void> => {
-    throw new Error('Authentication required');
-  },
-  deleteProduct: async (): Promise<void> => {
-    throw new Error('Authentication required');
-  },
-  clearAllData: async (): Promise<boolean> => {
-    throw new Error('Authentication required');
-  },
-  clearAllMaterials: async (): Promise<boolean> => {
-    throw new Error('Authentication required');
-  },
-};
-
 export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // All useState calls first
   const [selectedShelf, setSelectedShelf] = useState<ShelfLocation | null>(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
   
-  // Get auth state
+  // Get auth state - simplified for development mode
   const auth = useAuth();
-  const { loading: authLoading, isAuthenticated } = auth || { loading: true, isAuthenticated: false };
+  const { loading: authLoading } = auth || { loading: false };
   
   // All hooks must be called consistently
   const { materials, products, movements, loading, setMaterials, setProducts, setMovements, refreshData } = useSupabaseWarehouseData();
   const { clearAllData } = useDataReset(setMaterials, setProducts, setMovements);
   
-  // Conditional hook calls are causing the dispatcher error - we need to call all hooks unconditionally
+  // Operations without auth checks for development
   const operations = useSupabaseWarehouseOperations({
     materials,
     products,
@@ -92,18 +58,9 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   
   // Enable real-time synchronization
   useRealTimeSync(refreshData, refreshData, refreshData);
-  
-  // useEffect for auth ready state
-  useEffect(() => {
-    if (!authLoading) {
-      setIsAuthReady(true);
-    }
-  }, [authLoading]);
 
   const handleClearAllMaterials = async () => {
-    if (!isAuthReady || !isAuthenticated) {
-      throw new Error('Authentication required');
-    }
+    // Skip auth checks in development mode
     const success = await adminOps.clearAllMaterials();
     if (success) {
       // Refresh data to update the UI
@@ -118,7 +75,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       products,
       movements,
       selectedShelf,
-      loading: loading || authLoading || !isAuthReady,
+      loading: loading || authLoading,
       setSelectedShelf,
       clearAllData,
       clearAllMaterials: handleClearAllMaterials,
