@@ -11,6 +11,7 @@ import InvertedTSeparator from '@/components/ui/inverted-t-separator';
 import { QuickResetDialog } from '@/components/warehouse/QuickResetDialog';
 import DebugConsole from '@/components/ui/debug-console';
 import Header from '@/components/Header';
+import { SyncStatusIndicator } from '@/components/warehouse/SyncStatusIndicator';
 
 
 const Index = () => {
@@ -170,7 +171,7 @@ const Index = () => {
           {renderSingleShelf('H')}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
           {menuItems.map((item) => (
             <Card
               key={item.path}
@@ -187,6 +188,11 @@ const Index = () => {
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        {/* Sync Status Indicator */}
+        <div className="max-w-md mx-auto">
+          <SyncStatusIndicator />
         </div>
         </div>
 

@@ -6,6 +6,7 @@ import { useSupabaseWarehouseOperations } from '@/hooks/useSupabaseWarehouseOper
 import { useRealTimeSync } from '@/hooks/useRealTimeSync';
 import { useDataReset } from '@/hooks/useDataReset';
 import { useSupabaseAdminOperations } from '@/hooks/useSupabaseAdminOperations';
+import { useProductWebService } from '@/hooks/useProductWebService';
 
 interface WarehouseContextType {
   materials: Material[];
@@ -26,6 +27,13 @@ interface WarehouseContextType {
   deleteProduct: (productId: string) => Promise<void>;
   clearAllData: () => Promise<boolean>;
   clearAllMaterials: () => Promise<boolean>;
+  syncProducts: () => Promise<boolean>;
+  syncStatus: {
+    isLoading: boolean;
+    lastSync: Date | null;
+    error: string | null;
+    totalSynced: number;
+  };
 }
 
 const WarehouseContext = createContext<WarehouseContextType | undefined>(undefined);
@@ -54,6 +62,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   });
   
   const adminOps = useSupabaseAdminOperations();
+  const { syncStatus, syncProducts } = useProductWebService();
   
   // Enable real-time synchronization
   useRealTimeSync(refreshData, refreshData, refreshData);
@@ -77,6 +86,8 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setSelectedShelf,
     clearAllData,
     clearAllMaterials: handleClearAllMaterials,
+    syncProducts,
+    syncStatus,
     ...operations,
   };
 

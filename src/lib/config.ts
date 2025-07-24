@@ -26,6 +26,15 @@ export const config = {
   supabase: {
     enabled: !isDevelopment || import.meta.env.VITE_FORCE_SUPABASE,
   },
+  
+  // External API settings
+  api: {
+    baseUrl: 'https://pituxa.epw.pt/api/artigos',
+    timeout: 10000, // 10 seconds
+    retryAttempts: 3,
+    cacheTimeout: 5 * 60 * 1000, // 5 minutes
+    syncInterval: 30 * 60 * 1000, // 30 minutes
+  },
 } as const;
 
 export default config;
