@@ -11,7 +11,7 @@ import InvertedTSeparator from '@/components/ui/inverted-t-separator';
 import { QuickResetDialog } from '@/components/warehouse/QuickResetDialog';
 import DebugConsole from '@/components/ui/debug-console';
 import Header from '@/components/Header';
-import { SyncStatusIndicator } from '@/components/warehouse/SyncStatusIndicator';
+
 
 
 const Index = () => {
@@ -190,10 +190,6 @@ const Index = () => {
           ))}
         </div>
 
-        {/* Sync Status Indicator */}
-        <div className="max-w-md mx-auto">
-          <SyncStatusIndicator />
-        </div>
         </div>
 
         {showResetDialog && (

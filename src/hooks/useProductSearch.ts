@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Product } from '@/types/warehouse';
 import { CombinedProduct } from './useCombinedProducts';
 
-export const useProductSearch = (products: Product[] | CombinedProduct[]) => {
+export const useProductSearch = <T extends Product | CombinedProduct>(products: T[]) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFamilia, setSelectedFamilia] = useState('');
   const [selectedSource, setSelectedSource] = useState<'all' | 'local' | 'api'>('all');
@@ -12,7 +12,7 @@ export const useProductSearch = (products: Product[] | CombinedProduct[]) => {
     return uniqueFamilias.sort();
   }, [products]);
 
-  const filteredProducts = useMemo(() => {
+  const filteredProducts = useMemo((): T[] => {
     let filtered = products;
     
     // Filter by source first
@@ -37,7 +37,7 @@ export const useProductSearch = (products: Product[] | CombinedProduct[]) => {
       );
     }
     
-    return filtered;
+    return filtered as T[];
   }, [products, searchQuery, selectedFamilia, selectedSource]);
 
   return {
