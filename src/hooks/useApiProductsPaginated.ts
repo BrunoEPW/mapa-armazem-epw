@@ -13,6 +13,8 @@ interface UseApiProductsPaginatedReturn {
   itemsPerPage: number;
   setCurrentPage: (page: number) => void;
   refresh: () => Promise<void>;
+  isConnected: boolean;
+  connectionStatus: string;
 }
 
 export const useApiProductsPaginated = (itemsPerPage: number = 20): UseApiProductsPaginatedReturn => {
@@ -23,6 +25,7 @@ export const useApiProductsPaginated = (itemsPerPage: number = 20): UseApiProduc
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [connectionStatus, setConnectionStatus] = useState('Desconectado');
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
@@ -57,6 +60,7 @@ export const useApiProductsPaginated = (itemsPerPage: number = 20): UseApiProduc
 
     try {
       console.log(`🔍 [useApiProductsPaginated] Fetching page ${page}...`);
+      setConnectionStatus('Conectando...');
       
       const start = (page - 1) * itemsPerPage;
       const apiResponse = await apiService.fetchArtigosWithTotal(1, start, itemsPerPage);
@@ -76,6 +80,7 @@ export const useApiProductsPaginated = (itemsPerPage: number = 20): UseApiProduc
       
       setProducts(mappedProducts);
       setTotalCount(apiResponse.recordsTotal || 0);
+      setConnectionStatus('Conectado via proxy CORS');
       
       if (config.isDevelopment) {
         console.log(`✅ [useApiProductsPaginated] Successfully loaded ${mappedProducts.length} products from API for page ${page}`);
@@ -103,6 +108,7 @@ export const useApiProductsPaginated = (itemsPerPage: number = 20): UseApiProduc
         }
         
         setError(errorMessage);
+        setConnectionStatus('Erro de conexão - múltiplos proxies falharam');
       }
     } finally {
       setLoading(false);
@@ -140,5 +146,7 @@ export const useApiProductsPaginated = (itemsPerPage: number = 20): UseApiProduc
     itemsPerPage,
     setCurrentPage: handlePageChange,
     refresh,
+    isConnected: !error && totalCount > 0,
+    connectionStatus,
   };
 };

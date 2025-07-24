@@ -21,6 +21,8 @@ const Products: React.FC = () => {
     itemsPerPage,
     setCurrentPage,
     refresh,
+    isConnected,
+    connectionStatus,
   } = useApiProductsPaginated(20);
 
   // Filter products based on search query (client-side filtering for current page)
@@ -64,15 +66,18 @@ const Products: React.FC = () => {
           {/* API Status and Search */}
           <div className="mb-6 space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col gap-2">
                 <div className="text-white text-sm flex items-center gap-1">
-                  <Wifi className="w-4 h-4" />
+                  <Wifi className={`w-4 h-4 ${isConnected ? 'text-green-400' : 'text-red-400'}`} />
                   <span className="font-medium">{totalCount}</span> produtos da API
                   {loading && <Loader2 className="w-4 h-4 animate-spin ml-1" />}
                 </div>
+                <div className="text-white/70 text-xs">
+                  Status: {connectionStatus}
+                </div>
                 {error && (
                   <div className="text-destructive text-sm">
-                    Erro: {error}
+                    {error}
                   </div>
                 )}
               </div>

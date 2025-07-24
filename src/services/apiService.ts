@@ -15,12 +15,17 @@ interface ApiResponse {
 }
 
 class ApiService {
-  // Use AllOrigins proxy for CORS bypass
-  private baseUrl = 'https://api.allorigins.win/get';
+  // Multiple CORS proxies with automatic fallback
+  private corsProxies = [
+    'https://api.allorigins.win/get',
+    'https://cors-anywhere.herokuapp.com/',
+    'https://corsproxy.io/?'
+  ];
   private originalApiUrl = 'https://pituxa.epw.pt/api/artigos';
   private cache = new Map<string, { data: ApiArtigo[]; timestamp: number; recordsTotal: number }>();
   private cacheTimeout = 5 * 60 * 1000; // 5 minutes
   private prefetchCache = new Map<string, Promise<ApiResponse>>();
+  private proxyHealthStatus = new Map<string, boolean>();
 
   async fetchArtigos(draw: number = 1, start: number = 0, length: number = 10): Promise<ApiArtigo[]> {
     const result = await this.fetchArtigosWithTotal(draw, start, length);
@@ -103,17 +108,76 @@ class ApiService {
     apiUrl.searchParams.set('start', start.toString());
     apiUrl.searchParams.set('length', length.toString());
     
-    // Use AllOrigins proxy
-    const proxyUrl = new URL(this.baseUrl);
-    proxyUrl.searchParams.set('url', apiUrl.toString());
+    // Try each proxy with fallback
+    for (let i = 0; i < this.corsProxies.length; i++) {
+      const proxyUrl = this.corsProxies[i];
+      
+      try {
+        console.log(`🔄 [ApiService] Trying proxy ${i + 1}/${this.corsProxies.length}: ${proxyUrl}`);
+        
+        const result = await this.tryProxy(proxyUrl, apiUrl, draw, start, length);
+        
+        console.log(`✅ [ApiService] Proxy ${i + 1} successful`);
+        this.proxyHealthStatus.set(proxyUrl, true);
+        
+        return result;
+      } catch (error) {
+        console.warn(`⚠️ [ApiService] Proxy ${i + 1} failed:`, error instanceof Error ? error.message : String(error));
+        this.proxyHealthStatus.set(proxyUrl, false);
+        
+        // If this is the last proxy and all failed, throw the error
+        if (i === this.corsProxies.length - 1) {
+          throw error;
+        }
+      }
+    }
     
-    const response = await fetch(proxyUrl.toString(), {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-      signal: AbortSignal.timeout(5000), // Reduced to 5 seconds
-    });
+    // This should never be reached, but just in case
+    throw new Error('All proxy attempts failed');
+  }
+
+  private async tryProxy(proxyUrl: string, apiUrl: URL, draw: number, start: number, length: number): Promise<ApiResponse> {
+    let finalUrl: string;
+    let fetchOptions: RequestInit;
+    
+    // Configure request based on proxy type
+    if (proxyUrl.includes('allorigins.win')) {
+      // AllOrigins proxy
+      const url = new URL(proxyUrl);
+      url.searchParams.set('url', apiUrl.toString());
+      finalUrl = url.toString();
+      fetchOptions = {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(8000), // Increased timeout
+      };
+    } else if (proxyUrl.includes('cors-anywhere')) {
+      // CORS Anywhere proxy
+      finalUrl = proxyUrl + apiUrl.toString();
+      fetchOptions = {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(8000),
+      };
+    } else if (proxyUrl.includes('corsproxy.io')) {
+      // CorsProxy.io
+      finalUrl = proxyUrl + apiUrl.toString();
+      fetchOptions = {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(8000),
+      };
+    } else {
+      // Default fallback
+      finalUrl = proxyUrl + apiUrl.toString();
+      fetchOptions = {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(8000),
+      };
+    }
+    
+    const response = await fetch(finalUrl, fetchOptions);
     
     console.log('📡 [ApiService] Response status:', response.status, response.statusText);
 
@@ -121,14 +185,21 @@ class ApiService {
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
-    const proxyResponse = await response.json();
+    let result: ApiResponse;
     
-    if (!proxyResponse.contents) {
-      throw new Error(`Proxy failed: ${proxyResponse.status?.http_code || 'unknown error'}`);
+    if (proxyUrl.includes('allorigins.win')) {
+      // AllOrigins wraps the response
+      const proxyResponse = await response.json();
+      
+      if (!proxyResponse.contents) {
+        throw new Error(`Proxy failed: ${proxyResponse.status?.http_code || 'unknown error'}`);
+      }
+      
+      result = JSON.parse(proxyResponse.contents);
+    } else {
+      // Other proxies return the response directly
+      result = await response.json();
     }
-    
-    // Parse the actual API response from the proxy
-    const result: ApiResponse = JSON.parse(proxyResponse.contents);
     
     console.log('📋 [ApiService] API response:', {
       draw: result.draw,
@@ -182,6 +253,31 @@ class ApiService {
   clearCache(): void {
     this.cache.clear();
     this.prefetchCache.clear();
+  }
+
+  getProxyHealthStatus(): Map<string, boolean> {
+    return new Map(this.proxyHealthStatus);
+  }
+
+  async testProxyHealth(): Promise<{ [key: string]: boolean }> {
+    const healthStatus: { [key: string]: boolean } = {};
+    
+    for (const proxy of this.corsProxies) {
+      try {
+        // Test with a simple request
+        const testUrl = new URL(this.originalApiUrl);
+        testUrl.searchParams.set('draw', '1');
+        testUrl.searchParams.set('start', '0');
+        testUrl.searchParams.set('length', '1');
+        
+        await this.tryProxy(proxy, testUrl, 1, 0, 1);
+        healthStatus[proxy] = true;
+      } catch (error) {
+        healthStatus[proxy] = false;
+      }
+    }
+    
+    return healthStatus;
   }
 }
 
