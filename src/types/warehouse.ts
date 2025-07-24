@@ -6,6 +6,14 @@ export interface Product {
   cor: string;
   comprimento: number | string;
   foto?: string;
+  // EPW decoded fields (when available from API)
+  epwTipo?: { l: string; d: string };
+  epwCertificacao?: { l: string; d: string };
+  epwModelo?: { l: string; d: string };
+  epwComprimento?: { l: string; d: string };
+  epwCor?: { l: string; d: string };
+  epwAcabamento?: { l: string; d: string };
+  epwOriginalCode?: string; // Original API reference code
 }
 
 export interface Material {

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Product } from '@/types/warehouse';
 import { apiService } from '@/services/apiService';
 import { config } from '@/lib/config';
+import { decodeEPWReference, getEPWFamilia, getEPWModelo, getEPWAcabamento, getEPWCor, getEPWComprimento } from '@/utils/epwCodeDecoder';
 
 interface UseApiProductsPaginatedReturn {
   products: Product[];
@@ -34,19 +35,53 @@ export const useApiProductsPaginated = (itemsPerPage: number = 20): UseApiProduc
     const description = apiProduct.strDescricao || 'Sem descrição';
     const codigo = apiProduct.strCodigo || 'Sem código';
     
+    // Try to decode EPW reference if available
+    const epwDecodeResult = decodeEPWReference(codigo, config.isDevelopment);
+    
     if (config.isDevelopment) {
-      console.log('Mapping API product:', { Id: apiProduct.Id, strCodigo: codigo, strDescricao: description });
+      console.log('Mapping API product:', { 
+        Id: apiProduct.Id, 
+        strCodigo: codigo, 
+        strDescricao: description,
+        epwDecoded: epwDecodeResult.success,
+        epwData: epwDecodeResult.decoded
+      });
     }
     
-    return {
-      id: `api_${apiProduct.Id}`,
-      familia: 'API',
-      modelo: codigo,
-      acabamento: description,
-      cor: 'N/A',
-      comprimento: 0,
-      foto: apiProduct.strFoto || undefined,
-    };
+    // Use EPW decoded data if successful, otherwise fallback to API data
+    if (epwDecodeResult.success && epwDecodeResult.decoded) {
+      const decoded = epwDecodeResult.decoded;
+      
+      return {
+        id: `api_${apiProduct.Id}`,
+        familia: getEPWFamilia(decoded),
+        modelo: getEPWModelo(decoded),
+        acabamento: getEPWAcabamento(decoded),
+        cor: getEPWCor(decoded),
+        comprimento: getEPWComprimento(decoded),
+        foto: apiProduct.strFoto || undefined,
+        // Store EPW decoded details
+        epwTipo: decoded.tipo,
+        epwCertificacao: decoded.certif,
+        epwModelo: decoded.modelo,
+        epwComprimento: decoded.comprim,
+        epwCor: decoded.cor,
+        epwAcabamento: decoded.acabamento,
+        epwOriginalCode: codigo,
+      };
+    } else {
+      // Fallback to original mapping for non-EPW products
+      return {
+        id: `api_${apiProduct.Id}`,
+        familia: 'API',
+        modelo: codigo,
+        acabamento: description,
+        cor: 'N/A',
+        comprimento: 0,
+        foto: apiProduct.strFoto || undefined,
+        epwOriginalCode: codigo,
+      };
+    }
   };
 
   const fetchPageData = async (page: number) => {
