@@ -67,7 +67,9 @@ export const useApiProductsPaginated = (itemsPerPage: number = 20): UseApiProduc
       
       console.log('📊 [useApiProductsPaginated] API response:', {
         dataLength: apiResponse.data?.length || 0,
-        totalCount: apiResponse.recordsTotal,
+        recordsTotal: apiResponse.recordsTotal,
+        recordsFiltered: apiResponse.recordsFiltered,
+        totalCountUsed: apiResponse.recordsFiltered || apiResponse.recordsTotal || 0,
         start,
         length: itemsPerPage
       });
@@ -79,7 +81,7 @@ export const useApiProductsPaginated = (itemsPerPage: number = 20): UseApiProduc
       const mappedProducts = apiResponse.data.map(mapApiProductToProduct);
       
       setProducts(mappedProducts);
-      setTotalCount(apiResponse.recordsTotal || 0);
+      setTotalCount(apiResponse.recordsFiltered || apiResponse.recordsTotal || 0); // Use filtered count as priority
       setConnectionStatus('Conectado via proxy CORS');
       
       if (config.isDevelopment) {

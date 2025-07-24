@@ -41,8 +41,8 @@ class ApiService {
       console.log('📦 [ApiService] Using cached data:', cached.data.length, 'items');
       return {
         draw,
-        recordsTotal: cached.recordsTotal, // Use stored total count
-        recordsFiltered: cached.recordsTotal,
+        recordsTotal: cached.recordsTotal,
+        recordsFiltered: cached.recordsTotal, // Cache uses filtered count
         data: cached.data
       };
     }
@@ -65,7 +65,7 @@ class ApiService {
       this.cache.set(cacheKey, {
         data: result.data || [],
         timestamp: Date.now(),
-        recordsTotal: result.recordsTotal || 0
+        recordsTotal: result.recordsFiltered || result.recordsTotal || 0 // Use filtered count as priority
       });
 
       // Prefetch next page in background
