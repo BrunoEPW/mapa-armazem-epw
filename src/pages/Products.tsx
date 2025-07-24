@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { Button } from '@/components/ui/button';
+import { SyncStatusIndicator } from '@/components/warehouse/SyncStatusIndicator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Home, LogOut, Search, Package, Users, Database } from 'lucide-react';
@@ -126,8 +127,9 @@ const Products: React.FC = () => {
           </div>
         </div>
 
-        {/* Pesquisa rápida */}
-        <div className="mb-6">
+        {/* Indicador de sincronização e pesquisa */}
+        <div className="mb-6 space-y-4">
+          <SyncStatusIndicator />
           <div className="relative max-w-full sm:max-w-md">
             <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
             <Input
