@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { draw = 1, start = 0, length = 1000 } = await req.json().catch(() => ({}))
+    const { draw = 1, start = 0, length = 3000 } = await req.json().catch(() => ({}))
     
     console.log('🌐 [Edge Function] Making request to pituxa.epw.pt API')
     
