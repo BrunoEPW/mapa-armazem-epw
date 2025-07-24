@@ -41,6 +41,17 @@ const Products: React.FC = () => {
     }));
   };
 
+  const clearEpwFilters = () => {
+    setEpwFilters({
+      tipo: '',
+      certificacao: '',
+      modelo: '',
+      comprimento: '',
+      cor: '',
+      acabamento: '',
+    });
+  };
+
   // Enhanced filtering logic including EPW filters
   const filteredProducts = products.filter(product => {
     // Basic search filter
