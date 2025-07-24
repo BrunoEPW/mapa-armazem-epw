@@ -15,7 +15,7 @@ interface ApiResponse {
 }
 
 class ApiService {
-  private baseUrl = 'https://pituxa.epw.pt/api/artigos';
+  private baseUrl = 'https://okesbnfvadhagjmtdevx.supabase.co/functions/v1/fetch-artigos';
   private cache = new Map<string, { data: ApiArtigo[]; timestamp: number }>();
   private cacheTimeout = 5 * 60 * 1000; // 5 minutes
 
@@ -30,21 +30,20 @@ class ApiService {
     }
 
     try {
-      console.log('🌐 [ApiService] Making API request to:', this.baseUrl);
-      
-      const url = new URL(this.baseUrl);
-      url.searchParams.set('draw', draw.toString());
-      url.searchParams.set('start', start.toString());
-      url.searchParams.set('length', length.toString());
-      
-      console.log('🔗 [ApiService] Full URL:', url.toString());
+      console.log('🌐 [ApiService] Making API request via Edge Function to:', this.baseUrl);
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
+      const response = await fetch(this.baseUrl, {
+        method: 'POST',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rZXNibmZ2YWRoYWdqbXRkZXZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5ODMyOTUsImV4cCI6MjA2NzU1OTI5NX0.OZGWJ1cuQmZg1b-L9_Cfk0CD6os0ifawIE95reoXJ4U'}`,
         },
+        body: JSON.stringify({
+          draw,
+          start,
+          length,
+        }),
         signal: AbortSignal.timeout(10000), // 10 second timeout
       });
       
