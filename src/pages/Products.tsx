@@ -34,23 +34,11 @@ const Products: React.FC = () => {
     connectionStatus,
   } = useApiProductsPaginated(20);
 
-  // Handle EPW filter changes
   const handleEpwFilterChange = (field: string, value: string) => {
     setEpwFilters(prev => ({
       ...prev,
       [field]: value,
     }));
-  };
-
-  const clearEpwFilters = () => {
-    setEpwFilters({
-      tipo: '',
-      certificacao: '',
-      modelo: '',
-      comprimento: '',
-      cor: '',
-      acabamento: '',
-    });
   };
 
   // Enhanced filtering logic including EPW filters
@@ -158,7 +146,6 @@ const Products: React.FC = () => {
             products={products}
             filters={epwFilters}
             onFilterChange={handleEpwFilterChange}
-            onClearFilters={clearEpwFilters}
           />
 
           {/* Products Table */}

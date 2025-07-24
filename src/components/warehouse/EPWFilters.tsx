@@ -15,14 +15,12 @@ interface EPWFiltersProps {
     acabamento: string;
   };
   onFilterChange: (field: string, value: string) => void;
-  onClearFilters: () => void;
 }
 
 export const EPWFilters: React.FC<EPWFiltersProps> = ({
   products,
   filters,
   onFilterChange,
-  onClearFilters,
 }) => {
   // Extract unique values for each EPW field from available products
   const filterOptions = useMemo(() => {
@@ -62,7 +60,14 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
         <h3 className="text-white font-medium">Filtros EPW</h3>
         {hasActiveFilters && (
           <Button
-            onClick={onClearFilters}
+            onClick={() => {
+              onFilterChange('tipo', '');
+              onFilterChange('certificacao', '');
+              onFilterChange('modelo', '');
+              onFilterChange('comprimento', '');
+              onFilterChange('cor', '');
+              onFilterChange('acabamento', '');
+            }}
             variant="outline"
             size="sm"
             className="text-white border-white hover:bg-white hover:text-black"
@@ -87,7 +92,6 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               <SelectValue placeholder="Todos os tipos" />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="">Todos os tipos</SelectItem>
               {filterOptions.tipo.map((option) => (
                 <SelectItem key={option} value={option.split(' - ')[0]}>
                   {option}
@@ -110,7 +114,6 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               <SelectValue placeholder="Todas certificações" />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="">Todas certificações</SelectItem>
               {filterOptions.certificacao.map((option) => (
                 <SelectItem key={option} value={option.split(' - ')[0]}>
                   {option}
@@ -133,7 +136,6 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               <SelectValue placeholder="Todos os modelos" />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="">Todos os modelos</SelectItem>
               {filterOptions.modelo.map((option) => (
                 <SelectItem key={option} value={option.split(' - ')[0]}>
                   {option}
@@ -156,7 +158,6 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               <SelectValue placeholder="Todos comprimentos" />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="">Todos comprimentos</SelectItem>
               {filterOptions.comprimento.map((option) => (
                 <SelectItem key={option} value={option.split(' - ')[0]}>
                   {option}
@@ -179,7 +180,6 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               <SelectValue placeholder="Todas as cores" />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="">Todas as cores</SelectItem>
               {filterOptions.cor.map((option) => (
                 <SelectItem key={option} value={option.split(' - ')[0]}>
                   {option}
@@ -202,7 +202,6 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               <SelectValue placeholder="Todos acabamentos" />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="">Todos acabamentos</SelectItem>
               {filterOptions.acabamento.map((option) => (
                 <SelectItem key={option} value={option.split(' - ')[0]}>
                   {option}
