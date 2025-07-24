@@ -58,14 +58,15 @@ const Products: React.FC = () => {
     }
   };
 
-  const groupedProducts = filteredProducts.reduce((acc, product) => {
+  // Group products by modelo
+  const groupedProducts: Record<string, CombinedProduct[]> = {};
+  filteredProducts.forEach(product => {
     const modelo = product.modelo;
-    if (!acc[modelo]) {
-      acc[modelo] = [];
+    if (!groupedProducts[modelo]) {
+      groupedProducts[modelo] = [];
     }
-    acc[modelo].push(product);
-    return acc;
-  }, {} as Record<string, CombinedProduct[]>);
+    groupedProducts[modelo].push(product);
+  });
 
   return (
     <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8">
