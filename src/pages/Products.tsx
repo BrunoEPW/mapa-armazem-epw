@@ -271,7 +271,7 @@ const Products: React.FC = () => {
                                          variant="outline"
                                          size="sm"
                                          onClick={() => {
-                                           setEditingProduct(product);
+                                           setEditingProduct(product as Product);
                                            setShowDialog(true);
                                          }}
                                        >

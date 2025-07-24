@@ -16,15 +16,28 @@ export const useApiProducts = (): UseApiProductsReturn => {
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const mapApiProductToProduct = (apiProduct: any): Product => ({
-    id: `api_${apiProduct.id}`,
-    familia: apiProduct.familia || '',
-    modelo: apiProduct.modelo || '',
-    acabamento: apiProduct.acabamento || '',
-    cor: apiProduct.cor || '',
-    comprimento: apiProduct.comprimento || 0,
-    foto: apiProduct.foto || undefined,
-  });
+  const mapApiProductToProduct = (apiProduct: any): Product => {
+    // Parse the description to extract familia, modelo, acabamento, cor and comprimento
+    const description = apiProduct.strDescricao || '';
+    
+    // Basic parsing - you may need to adjust this based on actual data patterns
+    const parts = description.split(' ');
+    const familia = parts[0] || 'API';
+    const modelo = parts.slice(1, 3).join(' ') || apiProduct.strCodigo || '';
+    const acabamento = 'Standard';
+    const cor = 'Natural';
+    const comprimento = 2000; // Default value
+    
+    return {
+      id: `api_${apiProduct.Id}`,
+      familia,
+      modelo,
+      acabamento,
+      cor,
+      comprimento,
+      foto: undefined,
+    };
+  };
 
   const fetchApiProducts = async () => {
     // Cancel any ongoing request
@@ -47,7 +60,14 @@ export const useApiProducts = (): UseApiProductsReturn => {
       }
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
-        setError('Erro ao carregar produtos da API');
+        let errorMessage = 'Erro ao carregar produtos da API';
+        
+        // Check if it's a CORS or network error
+        if (err.message.includes('fetch') || err.name === 'TypeError') {
+          errorMessage = 'Erro de CORS: A API não permite acesso direto do browser. Configure CORS no servidor ou use um proxy.';
+        }
+        
+        setError(errorMessage);
         console.error('Failed to fetch API products:', err);
       }
     } finally {
