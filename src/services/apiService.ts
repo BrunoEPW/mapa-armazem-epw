@@ -25,14 +25,19 @@ class ApiService {
     
     // Return cached data if still valid
     if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+      console.log('📦 [ApiService] Using cached data:', cached.data.length, 'items');
       return cached.data;
     }
 
     try {
+      console.log('🌐 [ApiService] Making API request to:', this.baseUrl);
+      
       const url = new URL(this.baseUrl);
       url.searchParams.set('draw', draw.toString());
       url.searchParams.set('start', start.toString());
       url.searchParams.set('length', length.toString());
+      
+      console.log('🔗 [ApiService] Full URL:', url.toString());
 
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -42,12 +47,23 @@ class ApiService {
         },
         signal: AbortSignal.timeout(10000), // 10 second timeout
       });
+      
+      console.log('📡 [ApiService] Response status:', response.status, response.statusText);
+      console.log('📡 [ApiService] Response ok:', response.ok);
 
       if (!response.ok) {
         throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
 
       const result: ApiResponse = await response.json();
+      
+      console.log('📋 [ApiService] JSON response:', {
+        draw: result.draw,
+        recordsTotal: result.recordsTotal,
+        recordsFiltered: result.recordsFiltered,
+        dataLength: result.data?.length || 0,
+        firstItem: result.data?.[0] || null
+      });
       
       // Cache the data
       this.cache.set(cacheKey, {
@@ -56,16 +72,21 @@ class ApiService {
       });
 
       if (config.isDevelopment) {
-        console.log(`Fetched ${result.data?.length || 0} artigos from API`);
+        console.log(`✅ [ApiService] Fetched ${result.data?.length || 0} artigos from API`);
       }
 
       return result.data || [];
     } catch (error) {
-      console.error('Failed to fetch artigos:', error);
+      console.error('❌ [ApiService] Fetch error:', {
+        error,
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        url: this.baseUrl
+      });
       
       // Return cached data if available, even if expired
       if (cached) {
-        console.warn('Using expired cache data due to API failure');
+        console.warn('⚠️ [ApiService] Using expired cache data due to API failure');
         return cached.data;
       }
       
