@@ -27,6 +27,7 @@ interface WarehouseContextType {
   deleteProduct: (productId: string) => Promise<void>;
   clearAllData: () => Promise<boolean>;
   clearAllMaterials: () => Promise<boolean>;
+  createProductFromApi: (apiProduct: any) => Promise<Product>;
   syncProducts: () => Promise<boolean>;
   syncStatus: {
     isLoading: boolean;
@@ -67,6 +68,39 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Enable real-time synchronization
   useRealTimeSync(refreshData, refreshData, refreshData);
 
+  const createProductFromApi = async (apiProduct: any): Promise<Product> => {
+    // Create product data without the 'api_' prefix
+    const newProduct: Omit<Product, 'id'> = {
+      familia: apiProduct.familia,
+      modelo: apiProduct.modelo,
+      acabamento: apiProduct.acabamento,
+      cor: apiProduct.cor,
+      comprimento: apiProduct.comprimento,
+      foto: apiProduct.foto,
+    };
+
+    // Add the product (this updates the local state)
+    await operations.addProduct(newProduct);
+    
+    // Find the newly created product in the local state
+    // We need to wait a moment for the state to update
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const createdProduct = products.find(p => 
+      p.familia === newProduct.familia &&
+      p.modelo === newProduct.modelo &&
+      p.acabamento === newProduct.acabamento &&
+      p.cor === newProduct.cor &&
+      p.comprimento === newProduct.comprimento
+    );
+
+    if (!createdProduct) {
+      throw new Error('Failed to create product from API');
+    }
+
+    return createdProduct;
+  };
+
   const handleClearAllMaterials = async () => {
     // Skip auth checks in development mode
     const success = await adminOps.clearAllMaterials();
@@ -86,6 +120,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setSelectedShelf,
     clearAllData,
     clearAllMaterials: handleClearAllMaterials,
+    createProductFromApi,
     syncProducts,
     syncStatus,
     ...operations,

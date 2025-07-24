@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useWarehouse } from '@/contexts/WarehouseContext';
-import { ShelfLocation } from '@/types/warehouse';
+import { ShelfLocation, Product } from '@/types/warehouse';
 import { ProductSelector } from './ProductSelector';
 import { useProductSearch } from '@/hooks/useProductSearch';
+import { useCombinedProducts } from '@/hooks/useCombinedProducts';
 import { toast } from 'sonner';
 
 interface AddMaterialFormProps {
@@ -20,12 +21,13 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
   onSuccess,
   onCancel,
 }) => {
-  const { products, addMaterial, addMovement } = useWarehouse();
+  const { products, addMaterial, addMovement, createProductFromApi } = useWarehouse();
   const [selectedProductId, setSelectedProductId] = useState('');
   const [pecas, setPecas] = useState('');
   const [norc, setNorc] = useState('');
 
-  const productSearch = useProductSearch(products);
+  const { combinedProducts, loading } = useCombinedProducts(products);
+  const productSearch = useProductSearch(combinedProducts);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,16 +44,30 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
       return;
     }
 
-    const product = products.find(p => p.id === selectedProductId);
+    let product = combinedProducts.find(p => p.id === selectedProductId);
     if (!product) {
       toast.error('Produto não encontrado');
       return;
     }
 
     try {
+      let finalProduct: Product;
+      let finalProductId: string;
+
+      // If it's an API product, create it locally first
+      if ('isFromApi' in product && product.isFromApi) {
+        console.log('Creating local product from API product:', product);
+        finalProduct = await createProductFromApi(product);
+        finalProductId = finalProduct.id;
+        toast.success('Produto da API adicionado ao sistema local');
+      } else {
+        finalProduct = product;
+        finalProductId = selectedProductId;
+      }
+
       const newMaterial = {
-        productId: selectedProductId,
-        product,
+        productId: finalProductId,
+        product: finalProduct,
         pecas: parseInt(pecas),
         location,
       };
@@ -84,6 +100,8 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
         {...productSearch}
         selectedProductId={selectedProductId}
         setSelectedProductId={setSelectedProductId}
+        loading={loading}
+        showSourceFilter={true}
       />
 
       <div>
