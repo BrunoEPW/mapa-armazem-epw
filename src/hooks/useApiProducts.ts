@@ -19,47 +19,20 @@ export const useApiProducts = (): UseApiProductsReturn => {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const mapApiProductToProduct = (apiProduct: any): Product => {
-    const description = apiProduct.strDescricao || '';
-    const codigo = apiProduct.strCodigo || '';
+    const description = apiProduct.strDescricao || 'Sem descrição';
+    const codigo = apiProduct.strCodigo || 'Sem código';
     
     if (config.isDevelopment) {
       console.log('Mapping API product:', { Id: apiProduct.Id, strCodigo: codigo, strDescricao: description });
     }
     
-    // Enhanced parsing logic for description
-    const descParts = description.trim().split(/\s+/);
-    let familia = 'API';
-    let modelo = codigo;
-    let acabamento = 'Standard';
-    let cor = 'Natural';
-    let comprimento: number | string = 2000;
-    
-    // Try to extract familia from first part of description
-    if (descParts.length > 0 && descParts[0]) {
-      familia = descParts[0];
-    }
-    
-    // Try to extract modelo from description or use codigo
-    if (descParts.length > 1) {
-      modelo = descParts.slice(1, 4).join(' ') || codigo;
-    }
-    
-    // Look for numeric values that might be comprimento
-    const numericMatches = description.match(/(\d+(?:mm|cm|m)?)/gi);
-    if (numericMatches && numericMatches.length > 0) {
-      const firstNumeric = parseInt(numericMatches[0].replace(/[^\d]/g, ''));
-      if (firstNumeric > 100) { // Likely a length measurement
-        comprimento = firstNumeric;
-      }
-    }
-    
     return {
       id: `api_${apiProduct.Id}`,
-      familia: familia || 'API',
-      modelo: modelo || codigo || 'Sem Nome',
-      acabamento,
-      cor,
-      comprimento,
+      familia: 'API',
+      modelo: codigo,  // strCodigo da API
+      acabamento: description,  // strDescricao da API
+      cor: 'N/A',
+      comprimento: 0,
       foto: apiProduct.strFoto || undefined,
     };
   };

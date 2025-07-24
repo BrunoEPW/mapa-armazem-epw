@@ -165,7 +165,12 @@ const Products: React.FC = () => {
             </div>
             
             <Button
-              onClick={refresh}
+              onClick={() => {
+                // Clear API cache and refresh
+                const apiService = require('@/services/apiService').apiService;
+                apiService.clearCache();
+                refresh();
+              }}
               variant="outline"
               size="sm"
               disabled={loading}
