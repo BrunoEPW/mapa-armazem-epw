@@ -21,7 +21,7 @@ class ApiService {
   private cache = new Map<string, { data: ApiArtigo[]; timestamp: number }>();
   private cacheTimeout = 5 * 60 * 1000; // 5 minutes
 
-  async fetchArtigos(draw: number = 1, start: number = 0, length: number = 1000): Promise<ApiArtigo[]> {
+  async fetchArtigos(draw: number = 1, start: number = 0, length: number = 10): Promise<ApiArtigo[]> {
     const cacheKey = `${start}-${length}`;
     const cached = this.cache.get(cacheKey);
     
