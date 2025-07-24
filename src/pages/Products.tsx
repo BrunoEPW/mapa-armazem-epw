@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+
 import { useCombinedProducts } from '@/hooks/useCombinedProducts';
 import { useProductSearch } from '@/hooks/useProductSearch';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import EPWLogo from '@/components/ui/epw-logo';
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, signOut, user, hasPermission } = useAuth();
+  // No authentication needed
   // Temporarily use empty array to test API products without warehouse context
   const products: Product[] = [];
   const { combinedProducts, localCount, apiCount, loading, error, refresh } = useCombinedProducts(products);
@@ -35,22 +35,7 @@ const Products: React.FC = () => {
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<CombinedProduct | null>(null);
 
-  // Remove authentication check for testing phase
-  // useEffect(() => {
-  //   if (!isAuthenticated) {
-  //     navigate('/login');
-  //   }
-  // }, [isAuthenticated, navigate]);
-
-  // Remove authentication guard for testing phase
-  // if (!isAuthenticated) {
-  //   return null;
-  // }
-
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/');
-  };
+  // No authentication required - direct access
 
   const handleDeleteProduct = (productId: string) => {
     // Temporarily disabled for testing
@@ -134,16 +119,14 @@ const Products: React.FC = () => {
               <Users className="w-4 h-4" />
               Gestão de Famílias
             </Button>
-            {hasPermission('canManageUsers') && (
-              <Button
-                onClick={() => setShowResetDialog(true)}
-                variant="destructive"
-                className="flex items-center gap-2 justify-center"
-              >
-                <Database className="w-4 h-4" />
-                Limpar BD
-              </Button>
-            )}
+            <Button
+              onClick={() => setShowResetDialog(true)}
+              variant="destructive"
+              className="flex items-center gap-2 justify-center"
+            >
+              <Database className="w-4 h-4" />
+              Limpar BD
+            </Button>
             <Button
               onClick={() => setShowDialog(true)}
               className="flex items-center gap-2 justify-center"

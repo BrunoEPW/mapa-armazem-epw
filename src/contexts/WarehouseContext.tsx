@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Material, Product, Movement, ShelfData, ShelfLocation } from '@/types/warehouse';
-import { useAuth } from '@/contexts/AuthContext';
+
 import { useSupabaseWarehouseData } from '@/hooks/useSupabaseWarehouseData';
 import { useSupabaseWarehouseOperations } from '@/hooks/useSupabaseWarehouseOperations';
 import { useRealTimeSync } from '@/hooks/useRealTimeSync';
@@ -43,9 +43,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // All useState calls first
   const [selectedShelf, setSelectedShelf] = useState<ShelfLocation | null>(null);
   
-  // Get auth state - simplified for development mode
-  const auth = useAuth();
-  const { loading: authLoading } = auth || { loading: false };
+  // No authentication required
   
   // All hooks must be called consistently
   const { materials, products, movements, loading, setMaterials, setProducts, setMovements, refreshData } = useSupabaseWarehouseData();
@@ -116,7 +114,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     products,
     movements,
     selectedShelf,
-    loading: loading || authLoading,
+    loading,
     setSelectedShelf,
     clearAllData,
     clearAllMaterials: handleClearAllMaterials,
