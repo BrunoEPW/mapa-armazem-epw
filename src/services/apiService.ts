@@ -15,8 +15,9 @@ interface ApiResponse {
 }
 
 class ApiService {
-  // Use Supabase Edge Function instead of slow AllOrigins proxy
-  private baseUrl = 'https://gfkjyedksmjsllgfpstd.supabase.co/functions/v1/fetch-artigos';
+  // Use AllOrigins proxy for CORS bypass
+  private baseUrl = 'https://api.allorigins.win/get';
+  private originalApiUrl = 'https://pituxa.epw.pt/api/artigos';
   private cache = new Map<string, { data: ApiArtigo[]; timestamp: number; recordsTotal: number }>();
   private cacheTimeout = 5 * 60 * 1000; // 5 minutes
   private prefetchCache = new Map<string, Promise<ApiResponse>>();
@@ -96,13 +97,21 @@ class ApiService {
   private async makeRequest(draw: number, start: number, length: number): Promise<ApiResponse> {
     console.log(`🌐 [ApiService] Fetching page data - start: ${start}, length: ${length}`);
     
-    const response = await fetch(this.baseUrl, {
-      method: 'POST',
+    // Build the original API URL with parameters
+    const apiUrl = new URL(this.originalApiUrl);
+    apiUrl.searchParams.set('draw', draw.toString());
+    apiUrl.searchParams.set('start', start.toString());
+    apiUrl.searchParams.set('length', length.toString());
+    
+    // Use AllOrigins proxy
+    const proxyUrl = new URL(this.baseUrl);
+    proxyUrl.searchParams.set('url', apiUrl.toString());
+    
+    const response = await fetch(proxyUrl.toString(), {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify({ draw, start, length }),
       signal: AbortSignal.timeout(5000), // Reduced to 5 seconds
     });
     
@@ -112,7 +121,14 @@ class ApiService {
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
-    const result: ApiResponse = await response.json();
+    const proxyResponse = await response.json();
+    
+    if (!proxyResponse.contents) {
+      throw new Error(`Proxy failed: ${proxyResponse.status?.http_code || 'unknown error'}`);
+    }
+    
+    // Parse the actual API response from the proxy
+    const result: ApiResponse = JSON.parse(proxyResponse.contents);
     
     console.log('📋 [ApiService] API response:', {
       draw: result.draw,
