@@ -131,9 +131,8 @@ const Products: React.FC = () => {
           </div>
         </div>
 
-        {/* Indicador de sincronização e pesquisa */}
+        {/* Contadores e status da API */}
         <div className="mb-6 space-y-4">
-          <SyncStatusIndicator />
           
           {/* Contadores e status da API */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
