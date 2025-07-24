@@ -2,27 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWarehouse } from '@/contexts/WarehouseContext';
+import { useCombinedProducts } from '@/hooks/useCombinedProducts';
+import { useProductSearch } from '@/hooks/useProductSearch';
 import { Button } from '@/components/ui/button';
 import { SyncStatusIndicator } from '@/components/warehouse/SyncStatusIndicator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Home, LogOut, Search, Package, Users, Database } from 'lucide-react';
+import { Plus, Edit, Trash2, Home, LogOut, Search, Package, Users, Database, Wifi, Loader2 } from 'lucide-react';
 import { ProductDialog } from '@/components/warehouse/ProductDialog';
 import { FamilyManagementDialog } from '@/components/warehouse/FamilyManagementDialog';
 import { DatabaseResetDialog } from '@/components/warehouse/DatabaseResetDialog';
 import { Product } from '@/types/warehouse';
+import { CombinedProduct } from '@/hooks/useCombinedProducts';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import EPWLogo from '@/components/ui/epw-logo';
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, signOut, user, hasPermission } = useAuth();
   const { products, deleteProduct } = useWarehouse();
+  const { combinedProducts, localCount, apiCount, loading, error, refresh } = useCombinedProducts(products);
+  const {
+    searchQuery,
+    setSearchQuery,
+    selectedSource,
+    setSelectedSource,
+    filteredProducts,
+  } = useProductSearch(combinedProducts);
   const [showDialog, setShowDialog] = useState(false);
   const [showFamilyDialog, setShowFamilyDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
 
   // Remove authentication check for testing phase
   // useEffect(() => {
@@ -47,14 +58,6 @@ const Products: React.FC = () => {
     }
   };
 
-  const filteredProducts = products
-    .filter(product => 
-      product.modelo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.acabamento.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.cor.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => a.modelo.localeCompare(b.modelo));
-
   const groupedProducts = filteredProducts.reduce((acc, product) => {
     const modelo = product.modelo;
     if (!acc[modelo]) {
@@ -62,7 +65,7 @@ const Products: React.FC = () => {
     }
     acc[modelo].push(product);
     return acc;
-  }, {} as Record<string, Product[]>);
+  }, {} as Record<string, CombinedProduct[]>);
 
   return (
     <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8">
@@ -130,14 +133,58 @@ const Products: React.FC = () => {
         {/* Indicador de sincronização e pesquisa */}
         <div className="mb-6 space-y-4">
           <SyncStatusIndicator />
-          <div className="relative max-w-full sm:max-w-md">
-            <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Pesquisar por modelo, acabamento ou cor..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          
+          {/* Contadores e status da API */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="text-white text-sm">
+                <span className="font-medium">{localCount}</span> produtos locais
+              </div>
+              <div className="text-white text-sm flex items-center gap-1">
+                <Wifi className="w-4 h-4" />
+                <span className="font-medium">{apiCount}</span> produtos da API
+                {loading && <Loader2 className="w-4 h-4 animate-spin ml-1" />}
+              </div>
+              {error && (
+                <div className="text-destructive text-sm">
+                  Erro: {error}
+                </div>
+              )}
+            </div>
+            
+            <Button
+              onClick={refresh}
+              variant="outline"
+              size="sm"
+              disabled={loading}
+              className="text-white border-white hover:bg-white hover:text-black"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Refresh API'}
+            </Button>
+          </div>
+          
+          {/* Filtros e pesquisa */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1 max-w-full sm:max-w-md">
+              <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Pesquisar por modelo, acabamento ou cor..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <Select value={selectedSource} onValueChange={(value) => setSelectedSource(value as "all" | "local" | "api")}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Filtrar por origem" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os produtos</SelectItem>
+                <SelectItem value="local">Apenas locais</SelectItem>
+                <SelectItem value="api">Apenas da API</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -164,13 +211,14 @@ const Products: React.FC = () => {
                       <table className="w-full min-w-[600px]">
                         <thead>
                           <tr className="border-b">
-                            <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Foto</th>
-                            <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Família</th>
-                            <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Modelo</th>
-                            <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Acabamento</th>
-                            <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Cor</th>
-                            <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Comprimento</th>
-                            <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Ações</th>
+                           <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Foto</th>
+                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Família</th>
+                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Modelo</th>
+                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Acabamento</th>
+                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Cor</th>
+                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Comprimento</th>
+                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Origem</th>
+                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Ações</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -199,28 +247,52 @@ const Products: React.FC = () => {
                               <td className="p-3 sm:p-4">
                                 <Badge variant="outline" className="text-xs sm:text-sm">{product.cor}</Badge>
                               </td>
-                              <td className="p-3 sm:p-4 text-sm sm:text-base">{product.comprimento}mm</td>
-                              <td className="p-3 sm:p-4">
-                                <div className="flex gap-1">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setEditingProduct(product);
-                                      setShowDialog(true);
-                                    }}
-                                  >
-                                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => handleDeleteProduct(product.id)}
-                                  >
-                                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                                  </Button>
-                                </div>
-                              </td>
+                               <td className="p-3 sm:p-4 text-sm sm:text-base">{product.comprimento}mm</td>
+                               <td className="p-3 sm:p-4">
+                                 <Badge 
+                                   variant={product.source === 'api' ? 'default' : 'secondary'}
+                                   className="text-xs sm:text-sm flex items-center gap-1"
+                                 >
+                                   {product.source === 'api' ? (
+                                     <>
+                                       <Wifi className="w-3 h-3" />
+                                       API
+                                     </>
+                                   ) : (
+                                     'Local'
+                                   )}
+                                 </Badge>
+                               </td>
+                               <td className="p-3 sm:p-4">
+                                 <div className="flex gap-1">
+                                   {product.source === 'local' && (
+                                     <>
+                                       <Button
+                                         variant="outline"
+                                         size="sm"
+                                         onClick={() => {
+                                           setEditingProduct(product);
+                                           setShowDialog(true);
+                                         }}
+                                       >
+                                         <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                       </Button>
+                                       <Button
+                                         variant="destructive"
+                                         size="sm"
+                                         onClick={() => handleDeleteProduct(product.id)}
+                                       >
+                                         <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                       </Button>
+                                     </>
+                                   )}
+                                   {product.source === 'api' && (
+                                     <div className="text-xs text-muted-foreground">
+                                       Produto da API
+                                     </div>
+                                   )}
+                                 </div>
+                               </td>
                             </tr>
                           ))}
                         </tbody>
