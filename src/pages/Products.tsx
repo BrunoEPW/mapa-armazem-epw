@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { SyncStatusIndicator } from '@/components/warehouse/SyncStatusIndicator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Home, LogOut, Search, Package, Users, Database, Wifi, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Home, LogOut, Search, Package, Users, Database, Wifi, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ProductDialog } from '@/components/warehouse/ProductDialog';
 import { FamilyManagementDialog } from '@/components/warehouse/FamilyManagementDialog';
 import { DatabaseResetDialog } from '@/components/warehouse/DatabaseResetDialog';
@@ -34,8 +34,15 @@ const Products: React.FC = () => {
   const [showFamilyDialog, setShowFamilyDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<CombinedProduct | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   // No authentication required - direct access
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedSource]);
 
   const handleDeleteProduct = (productId: string) => {
     // Temporarily disabled for testing
@@ -43,9 +50,16 @@ const Products: React.FC = () => {
     alert('Funcionalidade temporariamente desativada para teste da API');
   };
 
-  // Group products by modelo
+  // Calculate pagination
+  const totalItems = filteredProducts.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
+  // Group paginated products by modelo
   const groupedProducts: Record<string, CombinedProduct[]> = {};
-  filteredProducts.forEach(product => {
+  paginatedProducts.forEach(product => {
     const modelo = product.modelo;
     if (!groupedProducts[modelo]) {
       groupedProducts[modelo] = [];
@@ -63,6 +77,8 @@ const Products: React.FC = () => {
             <div><span className="text-yellow-400">Local Products:</span> {products.length}</div>
             <div><span className="text-yellow-400">Combined Products:</span> {combinedProducts.length}</div>
             <div><span className="text-yellow-400">Filtered Products:</span> {filteredProducts.length}</div>
+            <div><span className="text-yellow-400">Paginated Products:</span> {paginatedProducts.length}</div>
+            <div><span className="text-yellow-400">Current Page:</span> {currentPage} of {totalPages}</div>
             <div><span className="text-yellow-400">Local Count:</span> {localCount}</div>
             <div><span className="text-yellow-400">API Count:</span> {apiCount}</div>
             <div><span className="text-yellow-400">Loading:</span> {loading ? 'true' : 'false'}</div>
@@ -308,6 +324,66 @@ const Products: React.FC = () => {
                 </Card>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 p-4 bg-card/20 rounded-lg">
+            <div className="text-white text-sm">
+              Mostrando {startIndex + 1}-{Math.min(endIndex, totalItems)} de {totalItems} produtos
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="text-white border-white hover:bg-white hover:text-black"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Anterior
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={currentPage === pageNum ? "" : "text-white border-white hover:bg-white hover:text-black"}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="text-white border-white hover:bg-white hover:text-black"
+              >
+                Próxima
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         )}
 
