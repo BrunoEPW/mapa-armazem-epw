@@ -6,10 +6,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Search, Home, Wifi, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
+import { EPWFilters } from '@/components/warehouse/EPWFilters';
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [epwFilters, setEpwFilters] = useState({
+    tipo: '',
+    certificacao: '',
+    modelo: '',
+    comprimento: '',
+    cor: '',
+    acabamento: '',
+  });
   
   const {
     products,
@@ -25,11 +34,44 @@ const Products: React.FC = () => {
     connectionStatus,
   } = useApiProductsPaginated(20);
 
-  // Filter products based on search query (client-side filtering for current page)
-  const filteredProducts = products.filter(product =>
-    product.modelo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.acabamento.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Handle EPW filter changes
+  const handleEpwFilterChange = (field: string, value: string) => {
+    setEpwFilters(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const clearEpwFilters = () => {
+    setEpwFilters({
+      tipo: '',
+      certificacao: '',
+      modelo: '',
+      comprimento: '',
+      cor: '',
+      acabamento: '',
+    });
+  };
+
+  // Enhanced filtering logic including EPW filters
+  const filteredProducts = products.filter(product => {
+    // Basic search filter
+    const matchesSearch = !searchQuery || 
+      product.modelo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.acabamento.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.epwOriginalCode && product.epwOriginalCode.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    // EPW filters
+    const matchesEpwFilters = 
+      (!epwFilters.tipo || product.epwTipo?.l === epwFilters.tipo) &&
+      (!epwFilters.certificacao || product.epwCertificacao?.l === epwFilters.certificacao) &&
+      (!epwFilters.modelo || product.epwModelo?.l === epwFilters.modelo) &&
+      (!epwFilters.comprimento || product.epwComprimento?.l === epwFilters.comprimento) &&
+      (!epwFilters.cor || product.epwCor?.l === epwFilters.cor) &&
+      (!epwFilters.acabamento || product.epwAcabamento?.l === epwFilters.acabamento);
+
+    return matchesSearch && matchesEpwFilters;
+  });
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + filteredProducts.length;
@@ -112,6 +154,14 @@ const Products: React.FC = () => {
             </div>
           </div>
 
+          {/* EPW Filters */}
+          <EPWFilters
+            products={products}
+            filters={epwFilters}
+            onFilterChange={handleEpwFilterChange}
+            onClearFilters={clearEpwFilters}
+          />
+
           {/* Products Table */}
           {filteredProducts.length === 0 ? (
             <Card>
@@ -127,18 +177,38 @@ const Products: React.FC = () => {
             <Card>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[400px]">
+                  <table className="w-full min-w-[800px]">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Código</th>
-                        <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Descrição</th>
+                        <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Código EPW</th>
+                        <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Tipo</th>
+                        <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Modelo</th>
+                        <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Comprimento</th>
+                        <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Cor</th>
+                        <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Acabamento</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredProducts.map((product) => (
                         <tr key={product.id} className="border-b hover:bg-muted/50">
-                          <td className="p-3 sm:p-4 font-medium text-sm sm:text-base font-mono">{product.modelo}</td>
-                          <td className="p-3 sm:p-4 text-sm sm:text-base">{product.acabamento}</td>
+                          <td className="p-3 sm:p-4 font-medium text-sm sm:text-base font-mono">
+                            {product.epwOriginalCode || product.modelo}
+                          </td>
+                          <td className="p-3 sm:p-4 text-sm sm:text-base">
+                            {product.epwTipo ? `${product.epwTipo.l} - ${product.epwTipo.d}` : '-'}
+                          </td>
+                          <td className="p-3 sm:p-4 text-sm sm:text-base">
+                            {product.epwModelo ? `${product.epwModelo.l} - ${product.epwModelo.d}` : product.modelo}
+                          </td>
+                          <td className="p-3 sm:p-4 text-sm sm:text-base">
+                            {product.epwComprimento ? `${product.epwComprimento.l} - ${product.epwComprimento.d}` : product.comprimento}
+                          </td>
+                          <td className="p-3 sm:p-4 text-sm sm:text-base">
+                            {product.epwCor ? `${product.epwCor.l} - ${product.epwCor.d}` : product.cor}
+                          </td>
+                          <td className="p-3 sm:p-4 text-sm sm:text-base">
+                            {product.epwAcabamento ? `${product.epwAcabamento.l} - ${product.epwAcabamento.d}` : product.acabamento}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -153,7 +223,8 @@ const Products: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 p-4 bg-card/20 rounded-lg">
               <div className="text-white text-sm">
                 Página {currentPage} de {totalPages} ({totalCount} produtos total)
-                {searchQuery && ` - ${filteredProducts.length} resultados na página`}
+                {(searchQuery || Object.values(epwFilters).some(f => f !== '')) && 
+                  ` - ${filteredProducts.length} resultados filtrados`}
               </div>
               
               <div className="flex items-center gap-2">
