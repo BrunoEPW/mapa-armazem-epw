@@ -24,12 +24,12 @@ export const useProductWebService = () => {
 
   const mapApiArtigoToProduct = (artigo: ApiArtigo): Omit<Product, 'id'> => {
     return {
-      familia: artigo.familia || 'Sem família',
-      modelo: artigo.modelo || 'Sem modelo',
-      acabamento: artigo.acabamento || 'Sem acabamento',
-      cor: artigo.cor || 'Sem cor',
-      comprimento: artigo.comprimento || 0,
-      foto: artigo.foto || undefined,
+      familia: 'API',
+      modelo: artigo.strCodigo || 'Sem modelo',
+      acabamento: 'Standard',
+      cor: 'Natural',
+      comprimento: 2000,
+      foto: artigo.strFoto || undefined,
     };
   };
 

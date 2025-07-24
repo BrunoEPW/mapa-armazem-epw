@@ -1,13 +1,10 @@
 import { config } from '@/lib/config';
 
 interface ApiArtigo {
-  id: string;
-  familia: string;
-  modelo: string;
-  acabamento: string;
-  cor: string;
-  comprimento: number | string;
-  foto?: string;
+  Id: number;
+  strCodigo: string;
+  strDescricao: string;
+  strFoto?: string;
 }
 
 interface ApiResponse {
