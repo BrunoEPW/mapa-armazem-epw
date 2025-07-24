@@ -219,15 +219,15 @@ const Products: React.FC = () => {
                 <table className="w-full min-w-[500px]">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Código</th>
-                      <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Descrição</th>
+                      <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Código (strCodigo)</th>
+                      <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Descrição (strDescricao)</th>
                       <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Origem</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedProducts.map((product) => (
                       <tr key={product.id} className="border-b hover:bg-muted/50">
-                        <td className="p-3 sm:p-4 font-medium text-sm sm:text-base">{product.modelo}</td>
+                        <td className="p-3 sm:p-4 font-medium text-sm sm:text-base font-mono">{product.modelo}</td>
                         <td className="p-3 sm:p-4 text-sm sm:text-base">{product.acabamento}</td>
                         <td className="p-3 sm:p-4">
                           <Badge 

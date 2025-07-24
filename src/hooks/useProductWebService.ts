@@ -29,7 +29,7 @@ export const useProductWebService = () => {
       acabamento: artigo.strDescricao || 'Sem descrição',
       cor: 'N/A',
       comprimento: 0,
-      foto: artigo.strFoto || undefined,
+      foto: undefined,
     };
   };
 
