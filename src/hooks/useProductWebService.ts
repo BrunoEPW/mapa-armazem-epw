@@ -25,10 +25,10 @@ export const useProductWebService = () => {
   const mapApiArtigoToProduct = (artigo: ApiArtigo): Omit<Product, 'id'> => {
     return {
       familia: 'API',
-      modelo: artigo.strCodigo || 'Sem modelo',
-      acabamento: 'Standard',
-      cor: 'Natural',
-      comprimento: 2000,
+      modelo: artigo.strCodigo || 'Sem código',
+      acabamento: artigo.strDescricao || 'Sem descrição',
+      cor: 'N/A',
+      comprimento: 0,
       foto: artigo.strFoto || undefined,
     };
   };

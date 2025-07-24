@@ -57,16 +57,6 @@ const Products: React.FC = () => {
   const endIndex = startIndex + itemsPerPage;
   const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
-  // Group paginated products by modelo
-  const groupedProducts: Record<string, CombinedProduct[]> = {};
-  paginatedProducts.forEach(product => {
-    const modelo = product.modelo;
-    if (!groupedProducts[modelo]) {
-      groupedProducts[modelo] = [];
-    }
-    groupedProducts[modelo].push(product);
-  });
-
   return (
     <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8">
       {/* Debug Console */}
@@ -210,7 +200,7 @@ const Products: React.FC = () => {
           </div>
         </div>
 
-        {Object.keys(groupedProducts).length === 0 ? (
+        {filteredProducts.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <p className="text-muted-foreground text-lg mb-4">
@@ -223,108 +213,44 @@ const Products: React.FC = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
-            {Object.entries(groupedProducts).map(([modelo, modeloProducts]) => (
-              <div key={modelo}>
-                <h2 className="text-xl font-semibold text-white mb-3">{modelo}</h2>
-                <Card>
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[600px]">
-                        <thead>
-                          <tr className="border-b">
-                           <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Foto</th>
-                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Família</th>
-                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Modelo</th>
-                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Acabamento</th>
-                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Cor</th>
-                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Comprimento</th>
-                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Origem</th>
-                             <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Ações</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {modeloProducts.map((product) => (
-                            <tr key={product.id} className="border-b hover:bg-muted/50">
-                               <td className="p-3 sm:p-4">
-                                 {product.foto ? (
-                                   <img 
-                                     src={product.foto} 
-                                     alt={product.modelo}
-                                     className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded border"
-                                   />
-                                 ) : (
-                                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted rounded border flex items-center justify-center">
-                                     <Package className="w-4 h-4 sm:w-6 sm:h-6 text-muted-foreground" />
-                                   </div>
-                                 )}
-                               </td>
-                               <td className="p-3 sm:p-4">
-                                 <Badge variant="secondary" className="text-xs sm:text-sm">{product.familia}</Badge>
-                               </td>
-                               <td className="p-3 sm:p-4 font-medium text-sm sm:text-base">{product.modelo}</td>
-                              <td className="p-3 sm:p-4">
-                                <Badge variant="secondary" className="text-xs sm:text-sm">{product.acabamento}</Badge>
-                              </td>
-                              <td className="p-3 sm:p-4">
-                                <Badge variant="outline" className="text-xs sm:text-sm">{product.cor}</Badge>
-                              </td>
-                               <td className="p-3 sm:p-4 text-sm sm:text-base">{product.comprimento}mm</td>
-                               <td className="p-3 sm:p-4">
-                                 <Badge 
-                                   variant={product.source === 'api' ? 'default' : 'secondary'}
-                                   className="text-xs sm:text-sm flex items-center gap-1"
-                                 >
-                                   {product.source === 'api' ? (
-                                     <>
-                                       <Wifi className="w-3 h-3" />
-                                       API
-                                     </>
-                                   ) : (
-                                     'Local'
-                                   )}
-                                 </Badge>
-                               </td>
-                               <td className="p-3 sm:p-4">
-                                 <div className="flex gap-1">
-                                   {product.source === 'local' && (
-                                     <>
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => {
-                                            setEditingProduct(product);
-                                            setShowDialog(true);
-                                          }}
-                                       >
-                                         <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                                       </Button>
-                                       <Button
-                                         variant="destructive"
-                                         size="sm"
-                                         onClick={() => handleDeleteProduct(product.id)}
-                                       >
-                                         <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                                       </Button>
-                                     </>
-                                   )}
-                                   {product.source === 'api' && (
-                                     <div className="text-xs text-muted-foreground">
-                                       Produto da API
-                                     </div>
-                                   )}
-                                 </div>
-                               </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </CardContent>
-                </Card>
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[500px]">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Código</th>
+                      <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Descrição</th>
+                      <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Origem</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedProducts.map((product) => (
+                      <tr key={product.id} className="border-b hover:bg-muted/50">
+                        <td className="p-3 sm:p-4 font-medium text-sm sm:text-base">{product.modelo}</td>
+                        <td className="p-3 sm:p-4 text-sm sm:text-base">{product.acabamento}</td>
+                        <td className="p-3 sm:p-4">
+                          <Badge 
+                            variant={product.source === 'api' ? 'default' : 'secondary'}
+                            className="text-xs sm:text-sm flex items-center gap-1"
+                          >
+                            {product.source === 'api' ? (
+                              <>
+                                <Wifi className="w-3 h-3" />
+                                API
+                              </>
+                            ) : (
+                              'Local'
+                            )}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Pagination Controls */}
