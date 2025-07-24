@@ -111,7 +111,7 @@ export const useApiProductsPaginated = (itemsPerPage: number = 20): UseApiProduc
   };
 
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages && page !== currentPage) {
+    if (page >= 1 && page <= totalPages && page !== currentPage && !loading) {
       setCurrentPage(page);
     }
   };

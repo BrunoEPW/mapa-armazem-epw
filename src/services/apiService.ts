@@ -15,11 +15,11 @@ interface ApiResponse {
 }
 
 class ApiService {
-  // Temporary proxy to test if API works
-  private baseUrl = 'https://api.allorigins.win/get';
-  private originalApiUrl = 'https://pituxa.epw.pt/api/artigos';
-  private cache = new Map<string, { data: ApiArtigo[]; timestamp: number }>();
+  // Use Supabase Edge Function instead of slow AllOrigins proxy
+  private baseUrl = 'https://gfkjyedksmjsllgfpstd.supabase.co/functions/v1/fetch-artigos';
+  private cache = new Map<string, { data: ApiArtigo[]; timestamp: number; recordsTotal: number }>();
   private cacheTimeout = 5 * 60 * 1000; // 5 minutes
+  private prefetchCache = new Map<string, Promise<ApiResponse>>();
 
   async fetchArtigos(draw: number = 1, start: number = 0, length: number = 10): Promise<ApiArtigo[]> {
     const result = await this.fetchArtigosWithTotal(draw, start, length);
@@ -35,77 +35,37 @@ class ApiService {
       console.log('📦 [ApiService] Using cached data:', cached.data.length, 'items');
       return {
         draw,
-        recordsTotal: cached.data.length, // This would need to be stored separately for real total
-        recordsFiltered: cached.data.length,
+        recordsTotal: cached.recordsTotal, // Use stored total count
+        recordsFiltered: cached.recordsTotal,
         data: cached.data
       };
     }
 
+    // Check if request is already in progress
+    const pendingRequest = this.prefetchCache.get(cacheKey);
+    if (pendingRequest) {
+      console.log('⏳ [ApiService] Using pending request for', cacheKey);
+      return pendingRequest;
+    }
+
+    // Create and cache the request promise
+    const requestPromise = this.makeRequest(draw, start, length);
+    this.prefetchCache.set(cacheKey, requestPromise);
+
     try {
-      console.log(`🌐 [ApiService] Fetching page data - start: ${start}, length: ${length}`);
+      const result = await requestPromise;
       
-      // Build the original API URL with parameters
-      const apiUrl = new URL(this.originalApiUrl);
-      apiUrl.searchParams.set('draw', draw.toString());
-      apiUrl.searchParams.set('start', start.toString());
-      apiUrl.searchParams.set('length', length.toString());
-      
-      console.log('🔗 [ApiService] Target API URL:', apiUrl.toString());
-      
-      // Use AllOrigins proxy
-      const proxyUrl = new URL(this.baseUrl);
-      proxyUrl.searchParams.set('url', apiUrl.toString());
-      
-      console.log('🔗 [ApiService] Proxy URL:', proxyUrl.toString());
-
-      const response = await fetch(proxyUrl.toString(), {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-        signal: AbortSignal.timeout(10000), // 10 second timeout
-      });
-      
-      console.log('📡 [ApiService] Response status:', response.status, response.statusText);
-
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-      }
-
-      const proxyResponse = await response.json();
-      
-      if (!proxyResponse.contents) {
-        throw new Error(`Proxy failed: ${proxyResponse.status?.http_code || 'unknown error'}`);
-      }
-      
-      // Parse the actual API response from the proxy
-      const result: ApiResponse = JSON.parse(proxyResponse.contents);
-      
-      console.log('📋 [ApiService] Parsed API response:', {
-        draw: result.draw,
-        recordsTotal: result.recordsTotal,
-        recordsFiltered: result.recordsFiltered,
-        dataLength: result.data?.length || 0,
-        start,
-        length
-      });
-      
-      // Cache the data
+      // Cache the successful result
       this.cache.set(cacheKey, {
         data: result.data || [],
         timestamp: Date.now(),
+        recordsTotal: result.recordsTotal || 0
       });
 
-      if (config.isDevelopment) {
-        console.log(`✅ [ApiService] Fetched ${result.data?.length || 0} artigos from API (page ${Math.floor(start / length) + 1})`);
-      }
+      // Prefetch next page in background
+      this.prefetchNextPage(start, length);
 
-      return {
-        draw: result.draw,
-        recordsTotal: result.recordsTotal || 0,
-        recordsFiltered: result.recordsFiltered || 0,
-        data: result.data || []
-      };
+      return result;
     } catch (error) {
       console.error('❌ [ApiService] Fetch error:', {
         error,
@@ -120,13 +80,73 @@ class ApiService {
         console.warn('⚠️ [ApiService] Using expired cache data due to API failure');
         return {
           draw,
-          recordsTotal: cached.data.length,
-          recordsFiltered: cached.data.length,
+          recordsTotal: cached.recordsTotal,
+          recordsFiltered: cached.recordsTotal,
           data: cached.data
         };
       }
       
       throw error;
+    } finally {
+      // Clean up the pending request
+      this.prefetchCache.delete(cacheKey);
+    }
+  }
+
+  private async makeRequest(draw: number, start: number, length: number): Promise<ApiResponse> {
+    console.log(`🌐 [ApiService] Fetching page data - start: ${start}, length: ${length}`);
+    
+    const response = await fetch(this.baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ draw, start, length }),
+      signal: AbortSignal.timeout(5000), // Reduced to 5 seconds
+    });
+    
+    console.log('📡 [ApiService] Response status:', response.status, response.statusText);
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const result: ApiResponse = await response.json();
+    
+    console.log('📋 [ApiService] API response:', {
+      draw: result.draw,
+      recordsTotal: result.recordsTotal,
+      recordsFiltered: result.recordsFiltered,
+      dataLength: result.data?.length || 0,
+      start,
+      length
+    });
+
+    if (config.isDevelopment) {
+      console.log(`✅ [ApiService] Fetched ${result.data?.length || 0} artigos from API (page ${Math.floor(start / length) + 1})`);
+    }
+
+    return {
+      draw: result.draw,
+      recordsTotal: result.recordsTotal || 0,
+      recordsFiltered: result.recordsFiltered || 0,
+      data: result.data || []
+    };
+  }
+
+  private prefetchNextPage(currentStart: number, length: number): void {
+    const nextStart = currentStart + length;
+    const nextCacheKey = `${nextStart}-${length}`;
+    
+    // Only prefetch if not already cached or pending
+    if (!this.cache.has(nextCacheKey) && !this.prefetchCache.has(nextCacheKey)) {
+      console.log('🔮 [ApiService] Prefetching next page:', nextStart);
+      
+      // Start prefetch in background (don't await)
+      this.fetchArtigosWithTotal(1, nextStart, length).catch(error => {
+        console.log('⚠️ [ApiService] Prefetch failed (silent):', error.message);
+      });
     }
   }
 
@@ -145,6 +165,7 @@ class ApiService {
 
   clearCache(): void {
     this.cache.clear();
+    this.prefetchCache.clear();
   }
 }
 
