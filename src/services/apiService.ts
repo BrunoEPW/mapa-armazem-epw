@@ -15,7 +15,9 @@ interface ApiResponse {
 }
 
 class ApiService {
-  private baseUrl = 'https://okesbnfvadhagjmtdevx.supabase.co/functions/v1/fetch-artigos';
+  // Temporary proxy to test if API works
+  private baseUrl = 'https://api.allorigins.win/get';
+  private originalApiUrl = 'https://pituxa.epw.pt/api/artigos';
   private cache = new Map<string, { data: ApiArtigo[]; timestamp: number }>();
   private cacheTimeout = 5 * 60 * 1000; // 5 minutes
 
@@ -30,20 +32,27 @@ class ApiService {
     }
 
     try {
-      console.log('🌐 [ApiService] Making API request via Edge Function to:', this.baseUrl);
+      console.log('🌐 [ApiService] Testing API with CORS proxy');
+      
+      // Build the original API URL with parameters
+      const apiUrl = new URL(this.originalApiUrl);
+      apiUrl.searchParams.set('draw', draw.toString());
+      apiUrl.searchParams.set('start', start.toString());
+      apiUrl.searchParams.set('length', length.toString());
+      
+      console.log('🔗 [ApiService] Target API URL:', apiUrl.toString());
+      
+      // Use AllOrigins proxy
+      const proxyUrl = new URL(this.baseUrl);
+      proxyUrl.searchParams.set('url', apiUrl.toString());
+      
+      console.log('🔗 [ApiService] Proxy URL:', proxyUrl.toString());
 
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
+      const response = await fetch(proxyUrl.toString(), {
+        method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rZXNibmZ2YWRoYWdqbXRkZXZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5ODMyOTUsImV4cCI6MjA2NzU1OTI5NX0.OZGWJ1cuQmZg1b-L9_Cfk0CD6os0ifawIE95reoXJ4U'}`,
         },
-        body: JSON.stringify({
-          draw,
-          start,
-          length,
-        }),
         signal: AbortSignal.timeout(10000), // 10 second timeout
       });
       
@@ -54,9 +63,17 @@ class ApiService {
         throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
 
-      const result: ApiResponse = await response.json();
+      const proxyResponse = await response.json();
+      console.log('📋 [ApiService] Proxy response:', proxyResponse);
       
-      console.log('📋 [ApiService] JSON response:', {
+      if (!proxyResponse.contents) {
+        throw new Error(`Proxy failed: ${proxyResponse.status?.http_code || 'unknown error'}`);
+      }
+      
+      // Parse the actual API response from the proxy
+      const result: ApiResponse = JSON.parse(proxyResponse.contents);
+      
+      console.log('📋 [ApiService] Parsed API response:', {
         draw: result.draw,
         recordsTotal: result.recordsTotal,
         recordsFiltered: result.recordsFiltered,

@@ -11,6 +11,8 @@ interface UseApiProductsReturn {
 }
 
 export const useApiProducts = (): UseApiProductsReturn => {
+  console.log('🔍 [useApiProducts] Hook inicializado');
+  
   const [apiProducts, setApiProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

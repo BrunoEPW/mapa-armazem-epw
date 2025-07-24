@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useWarehouse } from '@/contexts/WarehouseContext';
 import { useCombinedProducts } from '@/hooks/useCombinedProducts';
 import { useProductSearch } from '@/hooks/useProductSearch';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,8 @@ import EPWLogo from '@/components/ui/epw-logo';
 const Products: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, signOut, user, hasPermission } = useAuth();
-  const { products, deleteProduct } = useWarehouse();
+  // Temporarily use empty array to test API products without warehouse context
+  const products: Product[] = [];
   const { combinedProducts, localCount, apiCount, loading, error, refresh } = useCombinedProducts(products);
   const {
     searchQuery,
@@ -33,7 +33,7 @@ const Products: React.FC = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [showFamilyDialog, setShowFamilyDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<CombinedProduct | null>(null);
 
   // Remove authentication check for testing phase
   // useEffect(() => {
@@ -53,9 +53,9 @@ const Products: React.FC = () => {
   };
 
   const handleDeleteProduct = (productId: string) => {
-    if (confirm('Tem certeza que deseja eliminar este produto? Isto também removerá todos os materiais relacionados.')) {
-      deleteProduct(productId);
-    }
+    // Temporarily disabled for testing
+    console.log('Delete product:', productId);
+    alert('Funcionalidade temporariamente desativada para teste da API');
   };
 
   // Group products by modelo
@@ -290,13 +290,13 @@ const Products: React.FC = () => {
                                  <div className="flex gap-1">
                                    {product.source === 'local' && (
                                      <>
-                                       <Button
-                                         variant="outline"
-                                         size="sm"
-                                         onClick={() => {
-                                           setEditingProduct(product as Product);
-                                           setShowDialog(true);
-                                         }}
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            setEditingProduct(product);
+                                            setShowDialog(true);
+                                          }}
                                        >
                                          <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                                        </Button>
