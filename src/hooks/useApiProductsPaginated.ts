@@ -78,7 +78,11 @@ export const useApiProductsPaginated = (itemsPerPage: number = 20): UseApiProduc
         throw new Error('API retornou dados inválidos ou nulos');
       }
       
-      const mappedProducts = apiResponse.data.map(mapApiProductToProduct);
+      // Filter out products starting with "zzz"
+      const filteredData = apiResponse.data.filter(item => 
+        !item.strCodigo?.toLowerCase().startsWith('zzz')
+      );
+      const mappedProducts = filteredData.map(mapApiProductToProduct);
       
       setProducts(mappedProducts);
       setTotalCount(apiResponse.recordsFiltered || apiResponse.recordsTotal || 0); // Use filtered count as priority
