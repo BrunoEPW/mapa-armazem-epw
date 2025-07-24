@@ -61,16 +61,15 @@ const Products: React.FC = () => {
       product.acabamento.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.epwOriginalCode && product.epwOriginalCode.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    // EPW filters
-    const matchesEpwFilters = 
-      (!epwFilters.tipo || product.epwTipo?.l === epwFilters.tipo) &&
-      (!epwFilters.certificacao || product.epwCertificacao?.l === epwFilters.certificacao) &&
-      (!epwFilters.modelo || product.epwModelo?.l === epwFilters.modelo) &&
-      (!epwFilters.comprimento || product.epwComprimento?.l === epwFilters.comprimento) &&
-      (!epwFilters.cor || product.epwCor?.l === epwFilters.cor) &&
-      (!epwFilters.acabamento || product.epwAcabamento?.l === epwFilters.acabamento);
+    // EPW filters - handle missing EPW data gracefully
+    const matchesTipo = !epwFilters.tipo || (product.epwTipo?.l === epwFilters.tipo);
+    const matchesCertificacao = !epwFilters.certificacao || (product.epwCertificacao?.l === epwFilters.certificacao);
+    const matchesModelo = !epwFilters.modelo || (product.epwModelo?.l === epwFilters.modelo);
+    const matchesComprimento = !epwFilters.comprimento || (product.epwComprimento?.l === epwFilters.comprimento);
+    const matchesCor = !epwFilters.cor || (product.epwCor?.l === epwFilters.cor);
+    const matchesAcabamento = !epwFilters.acabamento || (product.epwAcabamento?.l === epwFilters.acabamento);
 
-    return matchesSearch && matchesEpwFilters;
+    return matchesSearch && matchesTipo && matchesCertificacao && matchesModelo && matchesComprimento && matchesCor && matchesAcabamento;
   });
 
   const startIndex = (currentPage - 1) * itemsPerPage;

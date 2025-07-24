@@ -83,10 +83,10 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             value={filters.tipo}
             onValueChange={(value) => onFilterChange('tipo', value)}
           >
-            <SelectTrigger className="bg-background/50 border-white/20 text-white">
+            <SelectTrigger className="bg-card border-border text-white">
               <SelectValue placeholder="Todos os tipos" />
             </SelectTrigger>
-            <SelectContent className="bg-background border-white/20 z-50">
+            <SelectContent className="bg-card border-border text-foreground z-50">
               <SelectItem value="">Todos os tipos</SelectItem>
               {filterOptions.tipo.map((option) => (
                 <SelectItem key={option} value={option.split(' - ')[0]}>
@@ -106,10 +106,10 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             value={filters.certificacao}
             onValueChange={(value) => onFilterChange('certificacao', value)}
           >
-            <SelectTrigger className="bg-background/50 border-white/20 text-white">
+            <SelectTrigger className="bg-card border-border text-white">
               <SelectValue placeholder="Todas certificações" />
             </SelectTrigger>
-            <SelectContent className="bg-background border-white/20 z-50">
+            <SelectContent className="bg-card border-border text-foreground z-50">
               <SelectItem value="">Todas certificações</SelectItem>
               {filterOptions.certificacao.map((option) => (
                 <SelectItem key={option} value={option.split(' - ')[0]}>
@@ -129,10 +129,10 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             value={filters.modelo}
             onValueChange={(value) => onFilterChange('modelo', value)}
           >
-            <SelectTrigger className="bg-background/50 border-white/20 text-white">
+            <SelectTrigger className="bg-card border-border text-white">
               <SelectValue placeholder="Todos os modelos" />
             </SelectTrigger>
-            <SelectContent className="bg-background border-white/20 z-50">
+            <SelectContent className="bg-card border-border text-foreground z-50">
               <SelectItem value="">Todos os modelos</SelectItem>
               {filterOptions.modelo.map((option) => (
                 <SelectItem key={option} value={option.split(' - ')[0]}>
@@ -152,10 +152,10 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             value={filters.comprimento}
             onValueChange={(value) => onFilterChange('comprimento', value)}
           >
-            <SelectTrigger className="bg-background/50 border-white/20 text-white">
+            <SelectTrigger className="bg-card border-border text-white">
               <SelectValue placeholder="Todos comprimentos" />
             </SelectTrigger>
-            <SelectContent className="bg-background border-white/20 z-50">
+            <SelectContent className="bg-card border-border text-foreground z-50">
               <SelectItem value="">Todos comprimentos</SelectItem>
               {filterOptions.comprimento.map((option) => (
                 <SelectItem key={option} value={option.split(' - ')[0]}>
@@ -175,10 +175,10 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             value={filters.cor}
             onValueChange={(value) => onFilterChange('cor', value)}
           >
-            <SelectTrigger className="bg-background/50 border-white/20 text-white">
+            <SelectTrigger className="bg-card border-border text-white">
               <SelectValue placeholder="Todas as cores" />
             </SelectTrigger>
-            <SelectContent className="bg-background border-white/20 z-50">
+            <SelectContent className="bg-card border-border text-foreground z-50">
               <SelectItem value="">Todas as cores</SelectItem>
               {filterOptions.cor.map((option) => (
                 <SelectItem key={option} value={option.split(' - ')[0]}>
@@ -198,10 +198,10 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             value={filters.acabamento}
             onValueChange={(value) => onFilterChange('acabamento', value)}
           >
-            <SelectTrigger className="bg-background/50 border-white/20 text-white">
+            <SelectTrigger className="bg-card border-border text-white">
               <SelectValue placeholder="Todos acabamentos" />
             </SelectTrigger>
-            <SelectContent className="bg-background border-white/20 z-50">
+            <SelectContent className="bg-card border-border text-foreground z-50">
               <SelectItem value="">Todos acabamentos</SelectItem>
               {filterOptions.acabamento.map((option) => (
                 <SelectItem key={option} value={option.split(' - ')[0]}>
