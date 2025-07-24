@@ -70,7 +70,39 @@ const Products: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto">
+      {/* Debug Console */}
+      <div className="max-w-6xl mx-auto mb-6">
+        <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm">
+          <h3 className="text-white font-bold mb-2">🐛 DEBUG CONSOLE</h3>
+          <div className="space-y-1">
+            <div><span className="text-yellow-400">Local Products:</span> {products.length}</div>
+            <div><span className="text-yellow-400">Combined Products:</span> {combinedProducts.length}</div>
+            <div><span className="text-yellow-400">Filtered Products:</span> {filteredProducts.length}</div>
+            <div><span className="text-yellow-400">Local Count:</span> {localCount}</div>
+            <div><span className="text-yellow-400">API Count:</span> {apiCount}</div>
+            <div><span className="text-yellow-400">Loading:</span> {loading ? 'true' : 'false'}</div>
+            <div><span className="text-yellow-400">Error:</span> {error || 'none'}</div>
+            <div><span className="text-yellow-400">Selected Source:</span> {selectedSource}</div>
+            <div><span className="text-yellow-400">Search Query:</span> "{searchQuery}"</div>
+            {combinedProducts.length > 0 && (
+              <div>
+                <span className="text-yellow-400">Sample Combined Product:</span>
+                <pre className="text-xs mt-1 text-gray-300 overflow-auto max-h-32">
+                  {JSON.stringify(combinedProducts[0], null, 2)}
+                </pre>
+              </div>
+            )}
+            {error && (
+              <div className="text-red-400 mt-2">
+                <span className="text-yellow-400">Full Error Details:</span>
+                <div className="whitespace-pre-wrap">{error}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
           <Button
             variant="outline"
@@ -119,15 +151,6 @@ const Products: React.FC = () => {
               <Plus className="w-4 h-4" />
               Novo Produto
             </Button>
-            {/* Remove logout button for testing phase */}
-            {/* <Button
-              variant="destructive"
-              onClick={handleLogout}
-              className="flex items-center gap-2 justify-center"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </Button> */}
           </div>
         </div>
 
