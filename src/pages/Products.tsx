@@ -1,38 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCombinedProducts } from '@/hooks/useCombinedProducts';
-import { useProductSearch } from '@/hooks/useProductSearch';
+import { useApiProductsPaginated } from '@/hooks/useApiProductsPaginated';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Search, Home, Wifi, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Product } from '@/types/warehouse';
 import Header from '@/components/Header';
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
-  // Use empty array for local products since we only want API data
-  const products: Product[] = [];
-  const { combinedProducts, apiCount, loading, error, refresh } = useCombinedProducts(products);
+  const [searchQuery, setSearchQuery] = useState('');
+  
   const {
-    searchQuery,
-    setSearchQuery,
-    filteredProducts,
-  } = useProductSearch(combinedProducts);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+    products,
+    loading,
+    error,
+    currentPage,
+    totalPages,
+    totalCount,
+    itemsPerPage,
+    setCurrentPage,
+    refresh,
+  } = useApiProductsPaginated(20);
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+  // Filter products based on search query (client-side filtering for current page)
+  const filteredProducts = products.filter(product =>
+    product.modelo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    product.acabamento.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  // Calculate pagination
-  const totalItems = filteredProducts.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+  const endIndex = startIndex + filteredProducts.length;
 
   return (
     <div className="min-h-screen bg-warehouse-bg">
@@ -69,7 +67,7 @@ const Products: React.FC = () => {
               <div className="flex items-center gap-4">
                 <div className="text-white text-sm flex items-center gap-1">
                   <Wifi className="w-4 h-4" />
-                  <span className="font-medium">{apiCount}</span> produtos da API
+                  <span className="font-medium">{totalCount}</span> produtos da API
                   {loading && <Loader2 className="w-4 h-4 animate-spin ml-1" />}
                 </div>
                 {error && (
@@ -80,9 +78,9 @@ const Products: React.FC = () => {
               </div>
               
               <Button
-                onClick={() => {
+                onClick={async () => {
                   // Clear API cache and refresh
-                  const apiService = require('@/services/apiService').apiService;
+                  const { apiService } = await import('@/services/apiService');
                   apiService.clearCache();
                   refresh();
                 }}
@@ -114,7 +112,9 @@ const Products: React.FC = () => {
             <Card>
               <CardContent className="p-8 text-center">
                 <p className="text-muted-foreground text-lg">
-                  {loading ? 'Carregando produtos da API...' : 'Nenhum produto encontrado na API'}
+                  {loading ? 'Carregando produtos da API...' : 
+                   searchQuery ? 'Nenhum produto encontrado para a pesquisa' : 
+                   'Nenhum produto encontrado na página atual'}
                 </p>
               </CardContent>
             </Card>
@@ -130,7 +130,7 @@ const Products: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedProducts.map((product) => (
+                      {filteredProducts.map((product) => (
                         <tr key={product.id} className="border-b hover:bg-muted/50">
                           <td className="p-3 sm:p-4 font-medium text-sm sm:text-base font-mono">{product.modelo}</td>
                           <td className="p-3 sm:p-4 text-sm sm:text-base">{product.acabamento}</td>
@@ -147,15 +147,16 @@ const Products: React.FC = () => {
           {totalPages > 1 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 p-4 bg-card/20 rounded-lg">
               <div className="text-white text-sm">
-                Mostrando {startIndex + 1}-{Math.min(endIndex, totalItems)} de {totalItems} produtos
+                Página {currentPage} de {totalPages} ({totalCount} produtos total)
+                {searchQuery && ` - ${filteredProducts.length} resultados na página`}
               </div>
               
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1 || loading}
                   className="text-white border-white hover:bg-white hover:text-black"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -181,6 +182,7 @@ const Products: React.FC = () => {
                         variant={currentPage === pageNum ? "default" : "outline"}
                         size="sm"
                         onClick={() => setCurrentPage(pageNum)}
+                        disabled={loading}
                         className={currentPage === pageNum ? "" : "text-white border-white hover:bg-white hover:text-black"}
                       >
                         {pageNum}
@@ -192,8 +194,8 @@ const Products: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages || loading}
                   className="text-white border-white hover:bg-white hover:text-black"
                 >
                   Próxima

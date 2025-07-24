@@ -22,17 +22,27 @@ class ApiService {
   private cacheTimeout = 5 * 60 * 1000; // 5 minutes
 
   async fetchArtigos(draw: number = 1, start: number = 0, length: number = 10): Promise<ApiArtigo[]> {
+    const result = await this.fetchArtigosWithTotal(draw, start, length);
+    return result.data;
+  }
+
+  async fetchArtigosWithTotal(draw: number = 1, start: number = 0, length: number = 10): Promise<ApiResponse> {
     const cacheKey = `${start}-${length}`;
     const cached = this.cache.get(cacheKey);
     
     // Return cached data if still valid
     if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
       console.log('📦 [ApiService] Using cached data:', cached.data.length, 'items');
-      return cached.data;
+      return {
+        draw,
+        recordsTotal: cached.data.length, // This would need to be stored separately for real total
+        recordsFiltered: cached.data.length,
+        data: cached.data
+      };
     }
 
     try {
-      console.log('🌐 [ApiService] Testing API with CORS proxy');
+      console.log(`🌐 [ApiService] Fetching page data - start: ${start}, length: ${length}`);
       
       // Build the original API URL with parameters
       const apiUrl = new URL(this.originalApiUrl);
@@ -57,14 +67,12 @@ class ApiService {
       });
       
       console.log('📡 [ApiService] Response status:', response.status, response.statusText);
-      console.log('📡 [ApiService] Response ok:', response.ok);
 
       if (!response.ok) {
         throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
 
       const proxyResponse = await response.json();
-      console.log('📋 [ApiService] Proxy response:', proxyResponse);
       
       if (!proxyResponse.contents) {
         throw new Error(`Proxy failed: ${proxyResponse.status?.http_code || 'unknown error'}`);
@@ -78,7 +86,8 @@ class ApiService {
         recordsTotal: result.recordsTotal,
         recordsFiltered: result.recordsFiltered,
         dataLength: result.data?.length || 0,
-        firstItem: result.data?.[0] || null
+        start,
+        length
       });
       
       // Cache the data
@@ -88,22 +97,33 @@ class ApiService {
       });
 
       if (config.isDevelopment) {
-        console.log(`✅ [ApiService] Fetched ${result.data?.length || 0} artigos from API`);
+        console.log(`✅ [ApiService] Fetched ${result.data?.length || 0} artigos from API (page ${Math.floor(start / length) + 1})`);
       }
 
-      return result.data || [];
+      return {
+        draw: result.draw,
+        recordsTotal: result.recordsTotal || 0,
+        recordsFiltered: result.recordsFiltered || 0,
+        data: result.data || []
+      };
     } catch (error) {
       console.error('❌ [ApiService] Fetch error:', {
         error,
         name: error instanceof Error ? error.name : 'Unknown',
         message: error instanceof Error ? error.message : String(error),
-        url: this.baseUrl
+        start,
+        length
       });
       
       // Return cached data if available, even if expired
       if (cached) {
         console.warn('⚠️ [ApiService] Using expired cache data due to API failure');
-        return cached.data;
+        return {
+          draw,
+          recordsTotal: cached.data.length,
+          recordsFiltered: cached.data.length,
+          data: cached.data
+        };
       }
       
       throw error;
