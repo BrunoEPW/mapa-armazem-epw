@@ -115,8 +115,8 @@ class ApiService {
       // Start with a small request to get total count
       const initialData = await this.fetchArtigos(1, 0, 10);
       
-      // Fetch all records (2922 total)
-      return await this.fetchArtigos(1, 0, 3000);
+      // Fetch all records (up to 4000)
+      return await this.fetchArtigos(1, 0, 4000);
     } catch (error) {
       console.error('Failed to fetch all artigos:', error);
       return [];
