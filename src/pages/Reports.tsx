@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, TrendingUp, Package, ArrowUpDown, Calendar as CalendarIcon, Search, Download } from 'lucide-react';
+import { TrendingUp, Package, ArrowUpDown, Calendar as CalendarIcon, Search, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -154,29 +154,20 @@ const Reports = () => {
   return (
     <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
-          <Button
-            variant="outline"
+        <div className="flex flex-col items-center mb-6 sm:mb-8">
+          <button
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-white border-white hover:bg-white hover:text-black order-2 sm:order-1"
+            className="transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg mb-4"
           >
-            <Home className="w-4 h-4" />
-            Home
-          </Button>
-          
-          
-          <div className="flex flex-col items-center order-1 sm:order-2">
             <img 
               src="/lovable-uploads/ce6ad3d6-6728-414c-b327-428c5cd38f81.png" 
-              alt="EPW Logo" 
-              className="h-16 sm:h-20 lg:h-24 drop-shadow-lg mb-4"
+              alt="EPW Logo - Voltar para página inicial" 
+              className="h-16 sm:h-20 lg:h-24 drop-shadow-lg cursor-pointer"
             />
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider">
-              RELATÓRIOS
-            </h1>
-          </div>
-          
-          <div className="hidden sm:block order-3"></div>
+          </button>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider">
+            RELATÓRIOS
+          </h1>
         </div>
 
         {/* Statistics Cards */}

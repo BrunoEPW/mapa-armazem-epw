@@ -6,7 +6,7 @@ import { useExclusions } from '@/contexts/ExclusionsContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Search, Home, Wifi, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Wifi, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import { EPWFilters } from '@/components/warehouse/EPWFilters';
 import { config } from '@/lib/config';
@@ -130,17 +130,6 @@ const Products: React.FC = () => {
             </div>
           </div>
 
-          {/* Navigation */}
-          <div className="flex justify-center mb-6">
-            <Button
-              onClick={() => navigate('/')}
-              variant="outline"
-              className="flex items-center gap-2 text-white border-white hover:bg-white hover:text-black"
-            >
-              <Home className="w-4 h-4" />
-              Página Inicial
-            </Button>
-          </div>
 
           {/* API Status and Search */}
           <div className="mb-6 space-y-4">
