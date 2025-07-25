@@ -32,7 +32,7 @@ const ShelfDetail = () => {
               <img 
                 src="/lovable-uploads/ce6ad3d6-6728-414c-b327-428c5cd38f81.png" 
                 alt="EPW Logo - Voltar para página inicial" 
-                className="h-32 sm:h-40 opacity-90 mix-blend-overlay"
+                className="h-32 sm:h-40"
               />
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-wider drop-shadow-lg transition-all duration-300">
                 PRATELEIRA {estante}{prateleira}
