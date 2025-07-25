@@ -186,15 +186,16 @@ export const decodeEPWReference = (ref: string, debug: boolean = false): EPWDeco
   if (refLength === 11) {
     try {
       // Analyzing pattern: csxr32clt01
-      // c = Tipo (position 0)
-      // s = Certif (position 1) 
-      // x = ? (position 2)
-      // r = Modelo (position 3)
-      // 32 = Comprimento (positions 4-5)
-      // c = Cor (position 6)
-      // l = Acabamento (position 7)
-      // t = ? (position 8)
-      // 01 = Variant/Serie (positions 9-10)
+      // Based on EPW structure analysis:
+      // Position 0: Tipo (c)
+      // Position 1: Certificação (s) 
+      // Position 2: Unknown/Extra (x)
+      // Position 3: Modelo (r)
+      // Position 4-5: Comprimento (32)
+      // Position 6: Cor (c)
+      // Position 7: Acabamento (l)
+      // Position 8: Unknown/Extra (t)
+      // Position 9-10: Variant/Serie (01)
       
       const tipo = refUpper.charAt(0);
       const certif = refUpper.charAt(1);

@@ -27,8 +27,10 @@ export const extractCodesFromProducts = (products: any[]): {
   const comprimentos = new Map<string, CodeMapping>();
 
   products.forEach(product => {
-    if (product.produto_codigo) {
-      const decoded = decodeEPWReference(product.produto_codigo);
+    // Check for both produto_codigo and strCodigo properties
+    const codigo = product.produto_codigo || product.strCodigo;
+    if (codigo) {
+      const decoded = decodeEPWReference(codigo);
       if (decoded.success && decoded.decoded) {
         const { tipo, modelo, cor, acabamento, comprim } = decoded.decoded;
         
@@ -51,25 +53,26 @@ export const extractCodesFromProducts = (products: any[]): {
   };
 };
 
-// Test function to validate filter codes work
+// Test function to validate filter codes work using our API service
 export const testFilterCode = async (filterType: string, code: string): Promise<boolean> => {
   try {
-    const testUrl = new URL('https://epw.ddns.net/epw/api/artigos');
-    testUrl.searchParams.append('draw', '1');
-    testUrl.searchParams.append('start', '0');
-    testUrl.searchParams.append('length', '1');
-    testUrl.searchParams.append(filterType, code);
-
-    console.log(`🧪 [FilterCodeMapper] Testing ${filterType}=${code} at:`, testUrl.toString());
-
-    const response = await fetch(testUrl.toString());
-    const data = await response.json();
+    // Import the API service dynamically to avoid circular dependencies
+    const { apiService } = await import('@/services/apiService');
     
-    const isValid = data.recordsFiltered !== undefined && data.recordsFiltered >= 0;
-    console.log(`🧪 [FilterCodeMapper] Test result for ${filterType}=${code}:`, {
+    const filters: any = {};
+    // Map filter type to API parameter name (capitalize first letter)
+    const apiParamName = filterType.charAt(0).toUpperCase() + filterType.slice(1);
+    filters[apiParamName] = code;
+    
+    console.log(`🧪 [FilterCodeMapper] Testing ${apiParamName}=${code}`);
+    
+    const result = await apiService.fetchArtigosWithTotal(1, 0, 1, filters);
+    const isValid = result.recordsFiltered > 0;
+    
+    console.log(`🧪 [FilterCodeMapper] Test result for ${apiParamName}=${code}:`, {
       isValid,
-      recordsFiltered: data.recordsFiltered,
-      recordsTotal: data.recordsTotal
+      recordsFiltered: result.recordsFiltered,
+      recordsTotal: result.recordsTotal
     });
 
     return isValid;

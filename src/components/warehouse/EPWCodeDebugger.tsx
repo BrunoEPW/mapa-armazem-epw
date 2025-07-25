@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { decodeEPWReference } from '@/utils/epwCodeDecoder';
-import { Search, CheckCircle, XCircle, Info } from 'lucide-react';
+import { attributesApiService } from '@/services/attributesApiService';
+import { Search, CheckCircle, XCircle, Info, Loader2, Globe } from 'lucide-react';
 
 interface EPWCodeDebuggerProps {
   show?: boolean;
@@ -17,6 +18,8 @@ export const EPWCodeDebugger: React.FC<EPWCodeDebuggerProps> = ({
 }) => {
   const [testCode, setTestCode] = useState('csxr32clt01');
   const [decodeResult, setDecodeResult] = useState<any>(null);
+  const [apiAttributes, setApiAttributes] = useState<any>({});
+  const [loadingApi, setLoadingApi] = useState(false);
 
   const handleDecode = () => {
     const result = decodeEPWReference(testCode, true);
@@ -24,11 +27,46 @@ export const EPWCodeDebugger: React.FC<EPWCodeDebuggerProps> = ({
     console.log('🔍 EPW Decode Result:', result);
   };
 
+  const fetchApiAttributes = async () => {
+    setLoadingApi(true);
+    try {
+      const [tipos, modelos, cores, acabamentos, comprimentos] = await Promise.all([
+        attributesApiService.fetchTipos(),
+        attributesApiService.fetchModelos(),
+        attributesApiService.fetchCores(),
+        attributesApiService.fetchAcabamentos(),
+        attributesApiService.fetchComprimentos()
+      ]);
+      
+      setApiAttributes({
+        tipos,
+        modelos,
+        cores,
+        acabamentos,
+        comprimentos
+      });
+      
+      console.log('🌐 API Attributes fetched:', { tipos, modelos, cores, acabamentos, comprimentos });
+    } catch (error) {
+      console.error('❌ Failed to fetch API attributes:', error);
+    } finally {
+      setLoadingApi(false);
+    }
+  };
+
+  useEffect(() => {
+    if (show && Object.keys(apiAttributes).length === 0) {
+      fetchApiAttributes();
+    }
+  }, [show]);
+
   const testCodes = [
     'csxr32clt01', // 11 chars - example from website
     'RSC23CL01',   // 8 chars - current format
     'RSC23CL',     // 7 chars - short format
-    'OSACAN001'    // Special case
+    'OSACAN001',   // Special case
+    'CSR23CL01',   // Test variation
+    'TSR30CI02'    // Another test variation
   ];
 
   if (!show) {
@@ -60,6 +98,27 @@ export const EPWCodeDebugger: React.FC<EPWCodeDebuggerProps> = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* API Attributes Status */}
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Status da API:</span>
+          <div className="flex items-center gap-2">
+            {loadingApi ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Carregando...</>
+            ) : Object.keys(apiAttributes).length > 0 ? (
+              <><CheckCircle className="w-4 h-4 text-green-500" /> Conectado</>
+            ) : (
+              <>
+                <XCircle className="w-4 h-4 text-red-500" /> 
+                Desconectado
+                <Button onClick={fetchApiAttributes} size="sm" variant="outline">
+                  <Globe className="w-4 h-4 mr-1" />
+                  Conectar
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
         {/* Manual Test Input */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Testar Código EPW:</label>
@@ -116,31 +175,57 @@ export const EPWCodeDebugger: React.FC<EPWCodeDebuggerProps> = ({
             </div>
 
             {decodeResult.success && decodeResult.decoded && (
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <span className="font-medium text-muted-foreground">Tipo:</span>
-                  <div>{decodeResult.decoded.tipo.l} → {decodeResult.decoded.tipo.d}</div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="font-medium text-muted-foreground">Tipo:</span>
+                    <div>{decodeResult.decoded.tipo.l} → {decodeResult.decoded.tipo.d}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">Certificação:</span>
+                    <div>{decodeResult.decoded.certif.l} → {decodeResult.decoded.certif.d}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">Modelo:</span>
+                    <div>{decodeResult.decoded.modelo.l} → {decodeResult.decoded.modelo.d}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">Comprimento:</span>
+                    <div>{decodeResult.decoded.comprim.l} → {decodeResult.decoded.comprim.d}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">Cor:</span>
+                    <div>{decodeResult.decoded.cor.l} → {decodeResult.decoded.cor.d}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">Acabamento:</span>
+                    <div>{decodeResult.decoded.acabamento.l} → {decodeResult.decoded.acabamento.d}</div>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-medium text-muted-foreground">Certificação:</span>
-                  <div>{decodeResult.decoded.certif.l} → {decodeResult.decoded.certif.d}</div>
-                </div>
-                <div>
-                  <span className="font-medium text-muted-foreground">Modelo:</span>
-                  <div>{decodeResult.decoded.modelo.l} → {decodeResult.decoded.modelo.d}</div>
-                </div>
-                <div>
-                  <span className="font-medium text-muted-foreground">Comprimento:</span>
-                  <div>{decodeResult.decoded.comprim.l} → {decodeResult.decoded.comprim.d}</div>
-                </div>
-                <div>
-                  <span className="font-medium text-muted-foreground">Cor:</span>
-                  <div>{decodeResult.decoded.cor.l} → {decodeResult.decoded.cor.d}</div>
-                </div>
-                <div>
-                  <span className="font-medium text-muted-foreground">Acabamento:</span>
-                  <div>{decodeResult.decoded.acabamento.l} → {decodeResult.decoded.acabamento.d}</div>
-                </div>
+
+                {/* API Comparison */}
+                {Object.keys(apiAttributes).length > 0 && (
+                  <div className="border-t pt-3">
+                    <div className="text-sm font-medium mb-2">Comparação com API:</div>
+                    <div className="grid grid-cols-1 gap-2 text-xs">
+                      {['tipos', 'modelos', 'cores', 'acabamentos', 'comprimentos'].map((attr) => {
+                        const apiData = apiAttributes[attr] || [];
+                        const decodedValue = getDecodedAttributeCode(decodeResult.decoded, attr);
+                        const found = apiData.find((item: any) => item.l === decodedValue);
+                        return (
+                          <div key={attr} className="flex items-center gap-2">
+                            <span className="capitalize min-w-[80px]">{attr.slice(0, -1)}:</span>
+                            {found ? (
+                              <Badge variant="default" className="text-xs">✓ {found.l} = {found.d}</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs">? {decodedValue} (não encontrado)</Badge>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -166,4 +251,16 @@ export const EPWCodeDebugger: React.FC<EPWCodeDebuggerProps> = ({
       </CardContent>
     </Card>
   );
+};
+
+// Helper function to get the decoded attribute code for comparison
+const getDecodedAttributeCode = (decoded: any, attribute: string): string => {
+  switch (attribute) {
+    case 'tipos': return decoded.tipo.l;
+    case 'modelos': return decoded.modelo.l;
+    case 'cores': return decoded.cor.l;
+    case 'acabamentos': return decoded.acabamento.l;
+    case 'comprimentos': return decoded.comprim.l;
+    default: return '';
+  }
 };

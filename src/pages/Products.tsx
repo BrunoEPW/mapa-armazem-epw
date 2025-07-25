@@ -12,6 +12,7 @@ import Header from '@/components/Header';
 import { EPWFilters } from '@/components/warehouse/EPWFilters';
 import { FilterDebugPanel } from '@/components/warehouse/FilterDebugPanel';
 import { EPWCodeDebugger } from '@/components/warehouse/EPWCodeDebugger';
+import { FilterCodeTester } from '@/components/warehouse/FilterCodeTester';
 import { config } from '@/lib/config';
 import productsBanner from '@/assets/epw-products-banner.jpg';
 
@@ -269,6 +270,7 @@ const Products: React.FC = () => {
                     show={showEpwDebugger}
                     onToggle={() => setShowEpwDebugger(!showEpwDebugger)}
                   />
+                  <FilterCodeTester />
                 </div>
               )}
            </div>
