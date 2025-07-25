@@ -5,12 +5,15 @@ interface UseApiAttributesReturn {
   modelos: ApiAttribute[];
   tipos: ApiAttribute[];
   acabamentos: ApiAttribute[];
+  comprimentos: ApiAttribute[];
   modelosLoading: boolean;
   tiposLoading: boolean;
   acabamentosLoading: boolean;
+  comprimentosLoading: boolean;
   modelosError: string | null;
   tiposError: string | null;
   acabamentosError: string | null;
+  comprimentosError: string | null;
   refresh: () => Promise<void>;
 }
 
@@ -18,12 +21,15 @@ export const useApiAttributes = (): UseApiAttributesReturn => {
   const [modelos, setModelos] = useState<ApiAttribute[]>([]);
   const [tipos, setTipos] = useState<ApiAttribute[]>([]);
   const [acabamentos, setAcabamentos] = useState<ApiAttribute[]>([]);
+  const [comprimentos, setComprimentos] = useState<ApiAttribute[]>([]);
   const [modelosLoading, setModelosLoading] = useState(true);
   const [tiposLoading, setTiposLoading] = useState(true);
   const [acabamentosLoading, setAcabamentosLoading] = useState(true);
+  const [comprimentosLoading, setComprimentosLoading] = useState(true);
   const [modelosError, setModelosError] = useState<string | null>(null);
   const [tiposError, setTiposError] = useState<string | null>(null);
   const [acabamentosError, setAcabamentosError] = useState<string | null>(null);
+  const [comprimentosError, setComprimentosError] = useState<string | null>(null);
 
   const fetchModelos = async () => {
     try {
@@ -124,27 +130,64 @@ export const useApiAttributes = (): UseApiAttributesReturn => {
     }
   };
 
+  const fetchComprimentos = async () => {
+    try {
+      setComprimentosLoading(true);
+      setComprimentosError(null);
+      
+      console.log('🔄 [useApiAttributes] Starting to fetch comprimentos...');
+      
+      const data = await attributesApiService.fetchComprimentos();
+      setComprimentos(data);
+      
+      console.log('✅ [useApiAttributes] Successfully loaded comprimentos:', {
+        count: data.length,
+        firstItem: data[0] || 'No items',
+        sampleItems: data.slice(0, 3)
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch comprimentos';
+      setComprimentosError(errorMessage);
+      console.error('❌ [useApiAttributes] Error fetching comprimentos:', {
+        error: errorMessage,
+        originalError: err,
+        existingData: comprimentos.length
+      });
+      
+      // Keep existing data if available
+      if (comprimentos.length === 0) {
+        setComprimentos([]);
+      }
+    } finally {
+      setComprimentosLoading(false);
+    }
+  };
+
   const refresh = async () => {
     attributesApiService.clearCache();
-    await Promise.all([fetchModelos(), fetchTipos(), fetchAcabamentos()]);
+    await Promise.all([fetchModelos(), fetchTipos(), fetchAcabamentos(), fetchComprimentos()]);
   };
 
   useEffect(() => {
     fetchModelos();
     fetchTipos();
     fetchAcabamentos();
+    fetchComprimentos();
   }, []);
 
   return {
     modelos,
     tipos,
     acabamentos,
+    comprimentos,
     modelosLoading,
     tiposLoading,
     acabamentosLoading,
+    comprimentosLoading,
     modelosError,
     tiposError,
     acabamentosError,
+    comprimentosError,
     refresh,
   };
 };

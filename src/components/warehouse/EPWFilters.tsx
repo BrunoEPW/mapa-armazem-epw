@@ -21,12 +21,15 @@ interface EPWFiltersProps {
   apiModelos?: ApiAttribute[];
   apiTipos?: ApiAttribute[];
   apiAcabamentos?: ApiAttribute[];
+  apiComprimentos?: ApiAttribute[];
   modelosLoading?: boolean;
   tiposLoading?: boolean;
   acabamentosLoading?: boolean;
+  comprimentosLoading?: boolean;
   modelosError?: string | null;
   tiposError?: string | null;
   acabamentosError?: string | null;
+  comprimentosError?: string | null;
   // Exclusions count for display
   excludedCount?: number;
 }
@@ -38,12 +41,15 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
   apiModelos = [],
   apiTipos = [],
   apiAcabamentos = [],
+  apiComprimentos = [],
   modelosLoading = false,
   tiposLoading = false,
   acabamentosLoading = false,
+  comprimentosLoading = false,
   modelosError = null,
   tiposError = null,
   acabamentosError = null,
+  comprimentosError = null,
   excludedCount = 0,
 }) => {
   // Extract unique values for each EPW field from available products
@@ -132,6 +138,26 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
       .map(([l, d]) => ({ l, d }))
       .sort((a, b) => a.d.localeCompare(b.d));
   }, [apiAcabamentos, products]);
+
+  // Comprimento options from API (with fallback to products)
+  const comprimentoOptions = useMemo(() => {
+    if (apiComprimentos.length > 0) {
+      // Use API data - return objects for easy mapping
+      return apiComprimentos;
+    }
+    
+    // Fallback to products data - convert to same format
+    const productComprimentos = new Map<string, string>();
+    products.forEach(product => {
+      if (product.epwComprimento?.l) {
+        productComprimentos.set(product.epwComprimento.l, product.epwComprimento.d);
+      }
+    });
+    
+    return Array.from(productComprimentos.entries())
+      .map(([l, d]) => ({ l, d }))
+      .sort((a, b) => a.d.localeCompare(b.d));
+  }, [apiComprimentos, products]);
 
   const hasActiveFilters = Object.values(filters).some(filter => filter !== '');
 
@@ -253,20 +279,31 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
 
         {/* Comprimento Filter */}
         <div>
-          <label className="text-white text-sm font-medium mb-2 block">
+          <label className="text-white text-sm font-medium mb-2 block flex items-center gap-2">
             Comprimento
+            {comprimentosLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+            {comprimentosError && <span className="text-red-400 text-xs">(API erro)</span>}
           </label>
           <Select
             value={filters.comprimento}
             onValueChange={(value) => onFilterChange('comprimento', value)}
           >
             <SelectTrigger className="bg-card border-border text-white">
-              <SelectValue placeholder="Todos comprimentos" />
+              <SelectValue placeholder={
+                comprimentosLoading ? "Carregando comprimentos da API..." :
+                comprimentosError ? "Erro na API - usando dados locais" :
+                "Todos comprimentos"
+              } />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              {filterOptions.comprimento.map((option) => (
-                <SelectItem key={option} value={option.split(' - ')[0]}>
-                  {option}
+              {comprimentosError && (
+                <SelectItem value="" disabled className="text-muted-foreground">
+                  ⚠️ API EPW indisponível - usando dados locais
+                </SelectItem>
+              )}
+              {comprimentoOptions.map((comprimento) => (
+                <SelectItem key={comprimento.l} value={comprimento.l}>
+                  {comprimento.d}
                 </SelectItem>
               ))}
             </SelectContent>

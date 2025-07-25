@@ -43,12 +43,15 @@ const Products: React.FC = () => {
     modelos: apiModelos,
     tipos: apiTipos,
     acabamentos: apiAcabamentos,
+    comprimentos: apiComprimentos,
     modelosLoading,
     tiposLoading,
     acabamentosLoading,
+    comprimentosLoading,
     modelosError,
     tiposError,
     acabamentosError,
+    comprimentosError,
     refresh: refreshAttributes,
   } = useApiAttributes();
 
@@ -182,12 +185,15 @@ const Products: React.FC = () => {
           apiModelos={apiModelos}
           apiTipos={apiTipos}
           apiAcabamentos={apiAcabamentos}
+          apiComprimentos={apiComprimentos}
           modelosLoading={modelosLoading}
           tiposLoading={tiposLoading}
           acabamentosLoading={acabamentosLoading}
+          comprimentosLoading={comprimentosLoading}
           modelosError={modelosError}
           tiposError={tiposError}
           acabamentosError={acabamentosError}
+          comprimentosError={comprimentosError}
               excludedCount={excludedCount}
             />
             {config.isDevelopment && (
