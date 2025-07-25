@@ -10,6 +10,7 @@ import { Search, Home, Wifi, Loader2, ChevronLeft, ChevronRight } from 'lucide-r
 import Header from '@/components/Header';
 import { EPWFilters } from '@/components/warehouse/EPWFilters';
 import { config } from '@/lib/config';
+import productsBanner from '@/assets/products-banner.jpg';
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
@@ -110,8 +111,13 @@ const Products: React.FC = () => {
               alt="EPW Logo" 
               className="h-16 sm:h-20 lg:h-24 drop-shadow-lg mb-4"
             />
+            <img 
+              src={productsBanner} 
+              alt="Products Banner" 
+              className="w-full max-w-2xl h-24 sm:h-32 object-cover rounded-lg shadow-lg mb-4"
+            />
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider">
-              PRODUTOS DA API
+              PRODUTOS
             </h1>
           </div>
 
