@@ -105,30 +105,28 @@ const Products: React.FC = () => {
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex flex-col items-center mb-6 sm:mb-8">
-            <button
-              onClick={() => navigate('/')}
-              className="transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg mb-4"
-            >
+        <div className="flex flex-col items-center mb-6 sm:mb-8">
+          <button
+            onClick={() => navigate('/')}
+            className="relative w-full max-w-2xl transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg"
+          >
+            <img 
+              src={productsBanner} 
+              alt="Products Banner" 
+              className="w-full h-32 sm:h-40 object-cover rounded-lg shadow-lg"
+            />
+            <div className="absolute inset-0 flex items-center justify-between bg-black/30 rounded-lg px-4 sm:px-6">
               <img 
                 src="/lovable-uploads/ce6ad3d6-6728-414c-b327-428c5cd38f81.png" 
                 alt="EPW Logo - Voltar para página inicial" 
-                className="h-16 sm:h-20 lg:h-24 drop-shadow-lg cursor-pointer"
+                className="h-12 sm:h-16 lg:h-20 drop-shadow-lg"
               />
-            </button>
-            <div className="relative w-full max-w-2xl">
-              <img 
-                src={productsBanner} 
-                alt="Products Banner" 
-                className="w-full h-32 sm:h-40 object-cover rounded-lg shadow-lg"
-              />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider drop-shadow-lg">
-                  PRODUTOS
-                </h1>
-              </div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-wider drop-shadow-lg">
+                PRODUTOS
+              </h1>
             </div>
-          </div>
+          </button>
+        </div>
 
 
           {/* API Status and Search */}
