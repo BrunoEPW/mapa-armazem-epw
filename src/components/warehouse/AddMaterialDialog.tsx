@@ -2,7 +2,6 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ShelfLocation } from '@/types/warehouse';
 import { AddMaterialForm } from './AddMaterialForm';
-import DebugConsole from '@/components/ui/debug-console';
 
 interface AddMaterialDialogProps {
   location: ShelfLocation;
@@ -32,11 +31,6 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
           onSuccess={onClose}
           onCancel={onClose}
         />
-        
-        <div className="mt-4 border-t pt-4">
-          <h3 className="text-sm font-medium mb-2">Debug Console</h3>
-          <DebugConsole />
-        </div>
       </DialogContent>
     </Dialog>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -18,21 +18,21 @@ const DebugConsole = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isVisible, setIsVisible] = useState(false);
   const { toast } = useToast();
+  const isCapturingRef = useRef(false);
 
-  useEffect(() => {
-    // Capture console errors
-    const originalError = console.error;
-    const originalWarn = console.warn;
-    const originalLog = console.log;
-    const originalInfo = console.info;
-
-    const addLog = (level: LogEntry['level'], args: any[]) => {
+  const addLog = useCallback((level: LogEntry['level'], args: any[]) => {
+    // Prevent infinite loops by checking if we're already capturing
+    if (isCapturingRef.current) return;
+    
+    try {
+      isCapturingRef.current = true;
+      
       const message = args.map(arg => 
         typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
       ).join(' ');
 
       const logEntry: LogEntry = {
-        id: Date.now().toString(),
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
         timestamp: new Date().toLocaleTimeString(),
         level,
         message,
@@ -40,7 +40,19 @@ const DebugConsole = () => {
       };
 
       setLogs(prev => [logEntry, ...prev].slice(0, 100)); // Keep last 100 logs
-    };
+    } catch (error) {
+      // Silently ignore errors to prevent infinite loops
+    } finally {
+      isCapturingRef.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
+    // Capture console errors
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    const originalLog = console.log;
+    const originalInfo = console.info;
 
     console.error = (...args) => {
       originalError(...args);
@@ -82,7 +94,7 @@ const DebugConsole = () => {
       window.removeEventListener('error', handleError);
       window.removeEventListener('unhandledrejection', handleRejection);
     };
-  }, []);
+  }, [addLog]);
 
   const copyLog = (log: LogEntry) => {
     const text = `[${log.timestamp}] ${log.level.toUpperCase()}: ${log.message}${log.stack ? '\nStack: ' + log.stack : ''}`;
