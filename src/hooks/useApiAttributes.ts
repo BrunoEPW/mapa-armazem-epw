@@ -176,33 +176,16 @@ export const useApiAttributes = (): UseApiAttributesReturn => {
   };
 
   const fetchCores = async () => {
+    setCoresLoading(true);
+    setCoresError(null);
     try {
-      setCoresLoading(true);
-      setCoresError(null);
-      
-      console.log('🔄 [useApiAttributes] Starting to fetch cores...');
-      
       const data = await attributesApiService.fetchCores();
+      console.log('🎨 [useApiAttributes] Cores fetched from API:', data);
       setCores(data);
-      
-      console.log('✅ [useApiAttributes] Successfully loaded cores:', {
-        count: data.length,
-        firstItem: data[0] || 'No items',
-        sampleItems: data.slice(0, 3)
-      });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch cores';
-      setCoresError(errorMessage);
-      console.error('❌ [useApiAttributes] Error fetching cores:', {
-        error: errorMessage,
-        originalError: err,
-        existingData: cores.length
-      });
-      
-      // Keep existing data if available
-      if (cores.length === 0) {
-        setCores([]);
-      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setCoresError(message);
+      console.error('Error fetching cores:', error);
     } finally {
       setCoresLoading(false);
     }

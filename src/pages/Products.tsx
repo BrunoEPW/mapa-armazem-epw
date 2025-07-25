@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Search, Wifi, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import { EPWFilters } from '@/components/warehouse/EPWFilters';
+import { FilterDebugPanel } from '@/components/warehouse/FilterDebugPanel';
 import { config } from '@/lib/config';
 import productsBanner from '@/assets/epw-products-banner.jpg';
 
@@ -31,6 +32,7 @@ const Products: React.FC = () => {
     cor: 'all',
     acabamento: 'all',
   });
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
   
   const { shouldExcludeProduct } = useExclusions();
   
@@ -125,6 +127,15 @@ const Products: React.FC = () => {
   const hasActiveFilters = Object.values(epwFilters).some(value => value !== 'all') || searchQuery.length > 0;
   const hasServerFilters = Object.values(epwFilters).some(value => value !== 'all');
   const hasLocalSearchFilter = searchQuery.length > 0;
+
+  // Debug current filter state
+  console.log('🎯 [Products] Current filter state:', {
+    epwFilters,
+    hasActiveFilters,
+    hasServerFilters,
+    hasLocalSearchFilter,
+    activeApiFilters: activeFilters
+  });
 
   // For display purposes - use filtered products when search is active, otherwise use all products
   const displayProducts = hasLocalSearchFilter ? filteredProducts : products;
@@ -239,10 +250,22 @@ const Products: React.FC = () => {
                   <div>Primeiro modelo: {JSON.stringify(apiModelos[0])}</div>
                 )}
               </div>
-            )}
-          </div>
+             )}
 
-          {/* Products Table */}
+             {/* Debug Panel for Development */}
+             {config.isDevelopment && (
+               <FilterDebugPanel
+                 show={showDebugPanel}
+                 onToggle={() => setShowDebugPanel(!showDebugPanel)}
+                 apiCores={apiCores}
+                 apiTipos={apiTipos}
+                 apiAcabamentos={apiAcabamentos}
+                 apiComprimentos={apiComprimentos}
+               />
+             )}
+           </div>
+
+           {/* Products Table */}
           {displayProducts.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">

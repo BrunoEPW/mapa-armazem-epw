@@ -122,13 +122,16 @@ class ApiService {
     
     // Add filter parameters if provided
     if (filters) {
+      console.log('🔍 [ApiService] Making request with filters:', filters);
       Object.entries(filters).forEach(([key, value]) => {
-        if (value && value !== 'all' && value !== '') {
-          apiUrl.searchParams.set(key, value);
-          console.log(`🔍 [ApiService] Adding filter: ${key}=${value}`);
+        if (value !== undefined) {
+          apiUrl.searchParams.append(key, value);
+          console.log(`🔍 [ApiService] Added filter parameter: ${key}=${value}`);
         }
       });
     }
+
+    console.log('🔍 [ApiService] Final API URL:', apiUrl.toString());
     
     // Try each proxy with fallback
     for (let i = 0; i < this.corsProxies.length; i++) {

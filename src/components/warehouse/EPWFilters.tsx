@@ -321,10 +321,10 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             {coresLoading && <Loader2 className="w-3 h-3 animate-spin" />}
             {coresError && <span className="text-red-400 text-xs">(API erro)</span>}
           </label>
-          <Select
-            value={filters.cor}
-            onValueChange={(value) => onFilterChange('cor', value)}
-          >
+          <Select value={filters.cor} onValueChange={(value) => {
+            console.log('🎨 [EPWFilters] Cor filter changed:', { selectedValue: value, availableOptions: corOptions });
+            onFilterChange('cor', value);
+          }}>
             <SelectTrigger className="bg-card border-border text-white">
               <SelectValue placeholder={
                 coresLoading ? "Carregando cores da API..." :
@@ -341,7 +341,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               )}
               {corOptions.map((cor) => (
                 <SelectItem key={cor.l} value={cor.l}>
-                  {cor.d}
+                  {cor.d} (código: {cor.l})
                 </SelectItem>
               ))}
             </SelectContent>

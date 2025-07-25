@@ -104,6 +104,8 @@ export const useApiProductsWithFilters = (
     setError(null);
     abortControllerRef.current = new AbortController();
 
+    console.log('🔍 [useApiProductsWithFilters] Fetching with filters:', filters);
+
     try {
       console.log(`🔍 [useApiProductsWithFilters] Fetching page ${page} with filters:`, filters);
       setConnectionStatus('Conectando...');
@@ -119,6 +121,13 @@ export const useApiProductsWithFilters = (
       });
       
       const apiResponse = await apiService.fetchArtigosWithTotal(1, start, itemsPerPage, apiFilters);
+
+      console.log('📊 [useApiProductsWithFilters] API Response:', {
+        recordsTotal: apiResponse.recordsTotal,
+        recordsFiltered: apiResponse.recordsFiltered,
+        dataLength: apiResponse.data?.length || 0,
+        filters: apiFilters
+      });
       
       console.log('📊 [useApiProductsWithFilters] API response:', {
         dataLength: apiResponse.data?.length || 0,
