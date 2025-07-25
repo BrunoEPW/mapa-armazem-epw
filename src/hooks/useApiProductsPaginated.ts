@@ -120,11 +120,17 @@ export const useApiProductsPaginated = (
       }
       
       // Apply exclusions filter if provided
+      console.log(`🔍 [useApiProductsPaginated] Processing ${apiResponse.data.length} products, exclusionFilter available: ${!!exclusionFilter}`);
+      
       const filteredData = exclusionFilter 
         ? apiResponse.data.filter(item => {
-            const shouldExclude = exclusionFilter(item.strCodigo || '');
+            const codigo = item.strCodigo || '';
+            const shouldExclude = exclusionFilter(codigo);
             if (config.isDevelopment && shouldExclude) {
-              console.log(`🚫 [Exclusions] Excluding product: ${item.strCodigo}`);
+              console.log(`🚫 [Exclusions] Excluding product: ${codigo}`);
+            }
+            if (config.isDevelopment && !shouldExclude && codigo.toUpperCase().includes('DIV')) {
+              console.log(`✅ [Exclusions] Keeping product with DIV: ${codigo} (exclusion check returned: ${shouldExclude})`);
             }
             return !shouldExclude;
           })
@@ -132,11 +138,28 @@ export const useApiProductsPaginated = (
       
       if (config.isDevelopment && exclusionFilter) {
         console.log(`📊 [Exclusions] Original: ${apiResponse.data.length}, Filtered: ${filteredData.length}`);
+        if (apiResponse.data.length > 0) {
+          console.log('📝 [Exclusions] Sample codes:', apiResponse.data.slice(0, 3).map(item => item.strCodigo));
+        }
       }
       const mappedProducts = filteredData.map(mapApiProductToProduct);
       
       setProducts(mappedProducts);
-      setTotalCount(apiResponse.recordsFiltered || apiResponse.recordsTotal || 0); // Use filtered count as priority
+      
+      // Detect actual end of data and adjust pagination
+      if (apiResponse.data.length === 0 && page > 1) {
+        // If we get no data on a page beyond 1, we've reached the end
+        const actualTotalCount = (page - 1) * itemsPerPage;
+        setTotalCount(actualTotalCount);
+        setCurrentPage(1); // Auto-redirect to page 1 where data exists
+        console.log(`📊 [useApiProductsPaginated] Detected end of data at page ${page}, redirecting to page 1`);
+        return; // Exit early to avoid processing empty data
+      } else {
+        // Use filtered count if available, otherwise use records total but cap it based on actual data availability
+        const baseCount = apiResponse.recordsFiltered || apiResponse.recordsTotal || 0;
+        setTotalCount(baseCount);
+      }
+      
       setConnectionStatus('Conectado via proxy CORS');
       
       if (config.isDevelopment) {
