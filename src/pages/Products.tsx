@@ -25,22 +25,22 @@ const Products: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [epwFilters, setEpwFilters] = useState<EPWFilters>({
-    tipo: '',
-    modelo: '',
-    comprimento: '',
-    cor: '',
-    acabamento: '',
+    tipo: 'all',
+    modelo: 'all',
+    comprimento: 'all',
+    cor: 'all',
+    acabamento: 'all',
   });
   
   const { shouldExcludeProduct } = useExclusions();
   
   // Convert EPW filters to API filters
   const convertToApiFilters = (filters: EPWFilters): ApiFilters => ({
-    Tipo: filters.tipo !== '' ? filters.tipo : undefined,
-    Modelo: filters.modelo !== '' ? filters.modelo : undefined,
-    Comprimento: filters.comprimento !== '' ? filters.comprimento : undefined,
-    Cor: filters.cor !== '' ? filters.cor : undefined,
-    Acabamento: filters.acabamento !== '' ? filters.acabamento : undefined,
+    Tipo: filters.tipo !== 'all' ? filters.tipo : undefined,
+    Modelo: filters.modelo !== 'all' ? filters.modelo : undefined,
+    Comprimento: filters.comprimento !== 'all' ? filters.comprimento : undefined,
+    Cor: filters.cor !== 'all' ? filters.cor : undefined,
+    Acabamento: filters.acabamento !== 'all' ? filters.acabamento : undefined,
   });
 
   const {
@@ -80,24 +80,26 @@ const Products: React.FC = () => {
   } = useApiAttributes();
 
   const handleEpwFilterChange = (field: string, value: string) => {
+    console.log('🎯 [Products] Filter change:', { field, value });
     const newEpwFilters = {
       ...epwFilters,
       [field]: value,
     };
     setEpwFilters(newEpwFilters);
     
-    // Apply API filters immediately with debounce effect
+    // Apply API filters immediately
     const apiFilters = convertToApiFilters(newEpwFilters);
+    console.log('🎯 [Products] Converted API filters:', apiFilters);
     setFilters(apiFilters);
   };
 
   const clearEpwFilters = () => {
     setEpwFilters({
-      tipo: '',
-      modelo: '',
-      comprimento: '',
-      cor: '',
-      acabamento: '',
+      tipo: 'all',
+      modelo: 'all',
+      comprimento: 'all',
+      cor: 'all',
+      acabamento: 'all',
     });
     clearApiFilters();
   };
@@ -120,8 +122,8 @@ const Products: React.FC = () => {
     });
   }, [products, searchQuery]);
 
-  const hasActiveFilters = Object.values(epwFilters).some(value => value !== '') || searchQuery.length > 0;
-  const hasServerFilters = Object.values(epwFilters).some(value => value !== '');
+  const hasActiveFilters = Object.values(epwFilters).some(value => value !== 'all') || searchQuery.length > 0;
+  const hasServerFilters = Object.values(epwFilters).some(value => value !== 'all');
   const hasLocalSearchFilter = searchQuery.length > 0;
 
   // For display purposes - use filtered products when search is active, otherwise use all products
