@@ -20,6 +20,10 @@ class AttributesApiService {
     return this.fetchAttribute('modelo');
   }
 
+  async fetchTipos(): Promise<ApiAttribute[]> {
+    return this.fetchAttribute('tipo');
+  }
+
   private async fetchAttribute(attributeType: string): Promise<ApiAttribute[]> {
     const cacheKey = attributeType;
     const cached = this.cache.get(cacheKey);

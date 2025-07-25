@@ -3,20 +3,26 @@ import { attributesApiService, type ApiAttribute } from '@/services/attributesAp
 
 interface UseApiAttributesReturn {
   modelos: ApiAttribute[];
-  loading: boolean;
-  error: string | null;
+  tipos: ApiAttribute[];
+  modelosLoading: boolean;
+  tiposLoading: boolean;
+  modelosError: string | null;
+  tiposError: string | null;
   refresh: () => Promise<void>;
 }
 
 export const useApiAttributes = (): UseApiAttributesReturn => {
   const [modelos, setModelos] = useState<ApiAttribute[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [tipos, setTipos] = useState<ApiAttribute[]>([]);
+  const [modelosLoading, setModelosLoading] = useState(true);
+  const [tiposLoading, setTiposLoading] = useState(true);
+  const [modelosError, setModelosError] = useState<string | null>(null);
+  const [tiposError, setTiposError] = useState<string | null>(null);
 
   const fetchModelos = async () => {
     try {
-      setLoading(true);
-      setError(null);
+      setModelosLoading(true);
+      setModelosError(null);
       
       console.log('🔄 [useApiAttributes] Starting to fetch modelos...');
       
@@ -30,7 +36,7 @@ export const useApiAttributes = (): UseApiAttributesReturn => {
       });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch modelos';
-      setError(errorMessage);
+      setModelosError(errorMessage);
       console.error('❌ [useApiAttributes] Error fetching modelos:', {
         error: errorMessage,
         originalError: err,
@@ -42,23 +48,60 @@ export const useApiAttributes = (): UseApiAttributesReturn => {
         setModelos([]);
       }
     } finally {
-      setLoading(false);
+      setModelosLoading(false);
+    }
+  };
+
+  const fetchTipos = async () => {
+    try {
+      setTiposLoading(true);
+      setTiposError(null);
+      
+      console.log('🔄 [useApiAttributes] Starting to fetch tipos...');
+      
+      const data = await attributesApiService.fetchTipos();
+      setTipos(data);
+      
+      console.log('✅ [useApiAttributes] Successfully loaded tipos:', {
+        count: data.length,
+        firstItem: data[0] || 'No items',
+        sampleItems: data.slice(0, 3)
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch tipos';
+      setTiposError(errorMessage);
+      console.error('❌ [useApiAttributes] Error fetching tipos:', {
+        error: errorMessage,
+        originalError: err,
+        existingData: tipos.length
+      });
+      
+      // Keep existing data if available
+      if (tipos.length === 0) {
+        setTipos([]);
+      }
+    } finally {
+      setTiposLoading(false);
     }
   };
 
   const refresh = async () => {
     attributesApiService.clearCache();
-    await fetchModelos();
+    await Promise.all([fetchModelos(), fetchTipos()]);
   };
 
   useEffect(() => {
     fetchModelos();
+    fetchTipos();
   }, []);
 
   return {
     modelos,
-    loading,
-    error,
+    tipos,
+    modelosLoading,
+    tiposLoading,
+    modelosError,
+    tiposError,
     refresh,
   };
 };

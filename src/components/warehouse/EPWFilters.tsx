@@ -17,10 +17,13 @@ interface EPWFiltersProps {
     acabamento: string;
   };
   onFilterChange: (field: string, value: string) => void;
-  // API attributes for modelo filter
+  // API attributes for filters
   apiModelos?: ApiAttribute[];
+  apiTipos?: ApiAttribute[];
   modelosLoading?: boolean;
+  tiposLoading?: boolean;
   modelosError?: string | null;
+  tiposError?: string | null;
   // Exclusions count for display
   excludedCount?: number;
 }
@@ -30,8 +33,11 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
   filters,
   onFilterChange,
   apiModelos = [],
+  apiTipos = [],
   modelosLoading = false,
+  tiposLoading = false,
   modelosError = null,
+  tiposError = null,
   excludedCount = 0,
 }) => {
   // Extract unique values for each EPW field from available products
@@ -81,6 +87,26 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
       .sort((a, b) => a.d.localeCompare(b.d));
   }, [apiModelos, products]);
 
+  // Tipo options from API (with fallback to products)
+  const tipoOptions = useMemo(() => {
+    if (apiTipos.length > 0) {
+      // Use API data - return objects for easy mapping
+      return apiTipos;
+    }
+    
+    // Fallback to products data - convert to same format
+    const productTipos = new Map<string, string>();
+    products.forEach(product => {
+      if (product.epwTipo?.l) {
+        productTipos.set(product.epwTipo.l, product.epwTipo.d);
+      }
+    });
+    
+    return Array.from(productTipos.entries())
+      .map(([l, d]) => ({ l, d }))
+      .sort((a, b) => a.d.localeCompare(b.d));
+  }, [apiTipos, products]);
+
   const hasActiveFilters = Object.values(filters).some(filter => filter !== '');
 
   return (
@@ -113,20 +139,31 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {/* Tipo Filter */}
         <div>
-          <label className="text-white text-sm font-medium mb-2 block">
+          <label className="text-white text-sm font-medium mb-2 block flex items-center gap-2">
             Tipo
+            {tiposLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+            {tiposError && <span className="text-red-400 text-xs">(API erro)</span>}
           </label>
           <Select
             value={filters.tipo}
             onValueChange={(value) => onFilterChange('tipo', value)}
           >
             <SelectTrigger className="bg-card border-border text-white">
-              <SelectValue placeholder="Todos os tipos" />
+              <SelectValue placeholder={
+                tiposLoading ? "Carregando tipos da API..." :
+                tiposError ? "Erro na API - usando dados locais" :
+                "Todos os tipos"
+              } />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              {filterOptions.tipo.map((option) => (
-                <SelectItem key={option} value={option.split(' - ')[0]}>
-                  {option}
+              {tiposError && (
+                <SelectItem value="" disabled className="text-muted-foreground">
+                  ⚠️ API EPW indisponível - usando dados locais
+                </SelectItem>
+              )}
+              {tipoOptions.map((tipo) => (
+                <SelectItem key={tipo.l} value={tipo.l}>
+                  {tipo.d}
                 </SelectItem>
               ))}
             </SelectContent>
