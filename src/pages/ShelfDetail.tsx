@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ShelfDetailView from '@/components/warehouse/ShelfDetailView';
-import EPWLogo from '@/components/ui/epw-logo';
+import shelfDetailsBanner from '@/assets/shelf-details-banner.jpg';
 
 const ShelfDetail = () => {
   const { estante, prateleira } = useParams<{ estante: string; prateleira: string }>();
@@ -29,9 +29,18 @@ const ShelfDetail = () => {
               className="h-16 sm:h-20 lg:h-24 drop-shadow-lg cursor-pointer"
             />
           </button>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider">
-            PRATELEIRA {estante}{prateleira}
-          </h1>
+          <div className="relative w-full max-w-2xl">
+            <img 
+              src={shelfDetailsBanner} 
+              alt="Shelf Details Banner" 
+              className="w-full h-32 sm:h-40 object-cover rounded-lg shadow-lg"
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider drop-shadow-lg">
+                PRATELEIRA {estante}{prateleira}
+              </h1>
+            </div>
+          </div>
         </div>
 
         <ShelfDetailView />

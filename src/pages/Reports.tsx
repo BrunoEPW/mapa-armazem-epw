@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { TrendingUp, Package, ArrowUpDown, Calendar as CalendarIcon, Search, Download } from 'lucide-react';
+import reportsBanner from '@/assets/reports-banner.jpg';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -165,9 +166,18 @@ const Reports = () => {
               className="h-16 sm:h-20 lg:h-24 drop-shadow-lg cursor-pointer"
             />
           </button>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider">
-            RELATÓRIOS
-          </h1>
+          <div className="relative w-full max-w-2xl">
+            <img 
+              src={reportsBanner} 
+              alt="Reports Banner" 
+              className="w-full h-32 sm:h-40 object-cover rounded-lg shadow-lg"
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider drop-shadow-lg">
+                RELATÓRIOS
+              </h1>
+            </div>
+          </div>
         </div>
 
         {/* Statistics Cards */}

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ShelfView from '@/components/warehouse/ShelfView';
-import EPWLogo from '@/components/ui/epw-logo';
+import shelvesBanner from '@/assets/shelves-banner.jpg';
 
 const Shelf = () => {
   const { estante } = useParams<{ estante: string }>();
@@ -28,9 +28,18 @@ const Shelf = () => {
               className="h-16 sm:h-20 lg:h-24 drop-shadow-lg cursor-pointer"
             />
           </button>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider">
-            ESTANTE {estante}
-          </h1>
+          <div className="relative w-full max-w-2xl">
+            <img 
+              src={shelvesBanner} 
+              alt="Shelves Banner" 
+              className="w-full h-32 sm:h-40 object-cover rounded-lg shadow-lg"
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider drop-shadow-lg">
+                ESTANTE {estante}
+              </h1>
+            </div>
+          </div>
           
           <div className="flex gap-2 mt-4">
             {canGoPrevious && (

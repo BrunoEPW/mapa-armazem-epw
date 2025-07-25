@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchPanel from '@/components/warehouse/SearchPanel';
-import EPWLogo from '@/components/ui/epw-logo';
+import searchBanner from '@/assets/search-banner.jpg';
 
 const Search = () => {
   const navigate = useNavigate();
@@ -20,9 +20,18 @@ const Search = () => {
               className="h-16 sm:h-20 lg:h-24 drop-shadow-lg cursor-pointer"
             />
           </button>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider">
-            PESQUISA
-          </h1>
+          <div className="relative w-full max-w-2xl">
+            <img 
+              src={searchBanner} 
+              alt="Search Banner" 
+              className="w-full h-32 sm:h-40 object-cover rounded-lg shadow-lg"
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider drop-shadow-lg">
+                PESQUISA
+              </h1>
+            </div>
+          </div>
         </div>
 
         <SearchPanel />
