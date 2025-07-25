@@ -23,16 +23,19 @@ interface EPWFiltersProps {
   apiAcabamentos?: ApiAttribute[];
   apiComprimentos?: ApiAttribute[];
   apiCores?: ApiAttribute[];
+  apiCertificacoes?: ApiAttribute[];
   modelosLoading?: boolean;
   tiposLoading?: boolean;
   acabamentosLoading?: boolean;
   comprimentosLoading?: boolean;
   coresLoading?: boolean;
+  certificacoesLoading?: boolean;
   modelosError?: string | null;
   tiposError?: string | null;
   acabamentosError?: string | null;
   comprimentosError?: string | null;
   coresError?: string | null;
+  certificacoesError?: string | null;
   // Exclusions count for display
   excludedCount?: number;
 }
@@ -46,16 +49,19 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
   apiAcabamentos = [],
   apiComprimentos = [],
   apiCores = [],
+  apiCertificacoes = [],
   modelosLoading = false,
   tiposLoading = false,
   acabamentosLoading = false,
   comprimentosLoading = false,
   coresLoading = false,
+  certificacoesLoading = false,
   modelosError = null,
   tiposError = null,
   acabamentosError = null,
   comprimentosError = null,
   coresError = null,
+  certificacoesError = null,
   excludedCount = 0,
 }) => {
   // Extract unique values for each EPW field from available products
@@ -185,6 +191,26 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
       .sort((a, b) => a.d.localeCompare(b.d));
   }, [apiCores, products]);
 
+  // Certificacao options from API (with fallback to products)
+  const certificacaoOptions = useMemo(() => {
+    if (apiCertificacoes.length > 0) {
+      // Use API data - return objects for easy mapping
+      return apiCertificacoes;
+    }
+    
+    // Fallback to products data - convert to same format
+    const productCertificacoes = new Map<string, string>();
+    products.forEach(product => {
+      if (product.epwCertificacao?.l) {
+        productCertificacoes.set(product.epwCertificacao.l, product.epwCertificacao.d);
+      }
+    });
+    
+    return Array.from(productCertificacoes.entries())
+      .map(([l, d]) => ({ l, d }))
+      .sort((a, b) => a.d.localeCompare(b.d));
+  }, [apiCertificacoes, products]);
+
   const hasActiveFilters = Object.values(filters).some(filter => filter !== '');
 
   return (
@@ -250,20 +276,31 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
 
         {/* Certificação Filter */}
         <div>
-          <label className="text-white text-sm font-medium mb-2 block">
+          <label className="text-white text-sm font-medium mb-2 block flex items-center gap-2">
             Certificação
+            {certificacoesLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+            {certificacoesError && <span className="text-red-400 text-xs">(API erro)</span>}
           </label>
           <Select
             value={filters.certificacao}
             onValueChange={(value) => onFilterChange('certificacao', value)}
           >
             <SelectTrigger className="bg-card border-border text-white">
-              <SelectValue placeholder="Todas certificações" />
+              <SelectValue placeholder={
+                certificacoesLoading ? "Carregando certificações da API..." :
+                certificacoesError ? "Erro na API - usando dados locais" :
+                "Todas certificações"
+              } />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              {filterOptions.certificacao.map((option) => (
-                <SelectItem key={option} value={option.split(' - ')[0]}>
-                  {option}
+              {certificacoesError && (
+                <SelectItem value="" disabled className="text-muted-foreground">
+                  ⚠️ API EPW indisponível - usando dados locais
+                </SelectItem>
+              )}
+              {certificacaoOptions.map((certificacao) => (
+                <SelectItem key={certificacao.l} value={certificacao.l}>
+                  {certificacao.d}
                 </SelectItem>
               ))}
             </SelectContent>

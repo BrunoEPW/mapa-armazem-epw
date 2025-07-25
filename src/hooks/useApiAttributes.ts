@@ -7,16 +7,19 @@ interface UseApiAttributesReturn {
   acabamentos: ApiAttribute[];
   comprimentos: ApiAttribute[];
   cores: ApiAttribute[];
+  certificacoes: ApiAttribute[];
   modelosLoading: boolean;
   tiposLoading: boolean;
   acabamentosLoading: boolean;
   comprimentosLoading: boolean;
   coresLoading: boolean;
+  certificacoesLoading: boolean;
   modelosError: string | null;
   tiposError: string | null;
   acabamentosError: string | null;
   comprimentosError: string | null;
   coresError: string | null;
+  certificacoesError: string | null;
   refresh: () => Promise<void>;
 }
 
@@ -26,16 +29,19 @@ export const useApiAttributes = (): UseApiAttributesReturn => {
   const [acabamentos, setAcabamentos] = useState<ApiAttribute[]>([]);
   const [comprimentos, setComprimentos] = useState<ApiAttribute[]>([]);
   const [cores, setCores] = useState<ApiAttribute[]>([]);
+  const [certificacoes, setCertificacoes] = useState<ApiAttribute[]>([]);
   const [modelosLoading, setModelosLoading] = useState(true);
   const [tiposLoading, setTiposLoading] = useState(true);
   const [acabamentosLoading, setAcabamentosLoading] = useState(true);
   const [comprimentosLoading, setComprimentosLoading] = useState(true);
   const [coresLoading, setCoresLoading] = useState(true);
+  const [certificacoesLoading, setCertificacoesLoading] = useState(true);
   const [modelosError, setModelosError] = useState<string | null>(null);
   const [tiposError, setTiposError] = useState<string | null>(null);
   const [acabamentosError, setAcabamentosError] = useState<string | null>(null);
   const [comprimentosError, setComprimentosError] = useState<string | null>(null);
   const [coresError, setCoresError] = useState<string | null>(null);
+  const [certificacoesError, setCertificacoesError] = useState<string | null>(null);
 
   const fetchModelos = async () => {
     try {
@@ -202,9 +208,42 @@ export const useApiAttributes = (): UseApiAttributesReturn => {
     }
   };
 
+  const fetchCertificacoes = async () => {
+    try {
+      setCertificacoesLoading(true);
+      setCertificacoesError(null);
+      
+      console.log('🔄 [useApiAttributes] Starting to fetch certificacoes...');
+      
+      const data = await attributesApiService.fetchCertificacoes();
+      setCertificacoes(data);
+      
+      console.log('✅ [useApiAttributes] Successfully loaded certificacoes:', {
+        count: data.length,
+        firstItem: data[0] || 'No items',
+        sampleItems: data.slice(0, 3)
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch certificacoes';
+      setCertificacoesError(errorMessage);
+      console.error('❌ [useApiAttributes] Error fetching certificacoes:', {
+        error: errorMessage,
+        originalError: err,
+        existingData: certificacoes.length
+      });
+      
+      // Keep existing data if available
+      if (certificacoes.length === 0) {
+        setCertificacoes([]);
+      }
+    } finally {
+      setCertificacoesLoading(false);
+    }
+  };
+
   const refresh = async () => {
     attributesApiService.clearCache();
-    await Promise.all([fetchModelos(), fetchTipos(), fetchAcabamentos(), fetchComprimentos(), fetchCores()]);
+    await Promise.all([fetchModelos(), fetchTipos(), fetchAcabamentos(), fetchComprimentos(), fetchCores(), fetchCertificacoes()]);
   };
 
   useEffect(() => {
@@ -213,6 +252,7 @@ export const useApiAttributes = (): UseApiAttributesReturn => {
     fetchAcabamentos();
     fetchComprimentos();
     fetchCores();
+    fetchCertificacoes();
   }, []);
 
   return {
@@ -221,16 +261,19 @@ export const useApiAttributes = (): UseApiAttributesReturn => {
     acabamentos,
     comprimentos,
     cores,
+    certificacoes,
     modelosLoading,
     tiposLoading,
     acabamentosLoading,
     comprimentosLoading,
     coresLoading,
+    certificacoesLoading,
     modelosError,
     tiposError,
     acabamentosError,
     comprimentosError,
     coresError,
+    certificacoesError,
     refresh,
   };
 };
