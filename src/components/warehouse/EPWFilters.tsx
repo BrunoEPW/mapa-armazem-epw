@@ -64,16 +64,21 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
   // Modelo options from API (with fallback to products)
   const modeloOptions = useMemo(() => {
     if (apiModelos.length > 0) {
-      // Use API data - already formatted as { l: string, d: string }
-      return apiModelos.map(modelo => `${modelo.l} - ${modelo.d}`).sort();
+      // Use API data - return objects for easy mapping
+      return apiModelos;
     }
     
-    // Fallback to products data
-    const productModelos = new Set<string>();
+    // Fallback to products data - convert to same format
+    const productModelos = new Map<string, string>();
     products.forEach(product => {
-      if (product.epwModelo?.l) productModelos.add(`${product.epwModelo.l} - ${product.epwModelo.d}`);
+      if (product.epwModelo?.l) {
+        productModelos.set(product.epwModelo.l, product.epwModelo.d);
+      }
     });
-    return Array.from(productModelos).sort();
+    
+    return Array.from(productModelos.entries())
+      .map(([l, d]) => ({ l, d }))
+      .sort((a, b) => a.d.localeCompare(b.d));
   }, [apiModelos, products]);
 
   const hasActiveFilters = Object.values(filters).some(filter => filter !== '');
@@ -174,9 +179,9 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
                   ⚠️ API EPW indisponível - usando dados locais
                 </SelectItem>
               )}
-              {modeloOptions.map((option) => (
-                <SelectItem key={option} value={option.split(' - ')[0]}>
-                  {option}
+              {modeloOptions.map((modelo) => (
+                <SelectItem key={modelo.l} value={modelo.l}>
+                  {modelo.d}
                 </SelectItem>
               ))}
             </SelectContent>
