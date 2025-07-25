@@ -18,28 +18,52 @@ export const useSupabaseProductOperations = ({
   
   const addProduct = async (product: Omit<Product, 'id'>) => {
     try {
-      console.log('Adding product:', product);
+      console.log('=== SUPABASE ADD PRODUCT DEBUG ===');
+      console.log('Input product:', JSON.stringify(product, null, 2));
       
-      console.log('Adding product to Supabase...');
+      // Validate required fields
+      const requiredFields = ['familia', 'modelo', 'acabamento', 'cor', 'comprimento'];
+      for (const field of requiredFields) {
+        if (!product[field]) {
+          console.error(`Missing required field in product: ${field}`);
+          throw new Error(`Campo obrigatório em falta: ${field}`);
+        }
+      }
+      console.log('✓ Product validation passed');
+      
+      // Prepare data for Supabase insertion
+      const supabaseData = {
+        familia: String(product.familia),
+        modelo: String(product.modelo),
+        acabamento: String(product.acabamento),
+        cor: String(product.cor),
+        comprimento: String(product.comprimento), // Ensure string type
+        foto: product.foto || null,
+        created_by: 'system', // Default user for now
+        updated_by: 'system',
+      };
+      
+      console.log('Data prepared for Supabase:', JSON.stringify(supabaseData, null, 2));
+      console.log('Inserting into Supabase products table...');
+      
       const { data, error } = await supabase
         .from('products')
-        .insert({
-          familia: product.familia,
-          modelo: product.modelo,
-          acabamento: product.acabamento,
-          cor: product.cor,
-          comprimento: String(product.comprimento), // Convert to string
-          foto: product.foto || null,
-          created_by: 'system', // Default user for now
-          updated_by: 'system',
-        })
+        .insert(supabaseData)
         .select()
         .single();
 
       if (error) {
-        console.error('Supabase error:', error);
-        throw error;
+        console.error('❌ Supabase insertion error:', error);
+        console.error('Error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
+        throw new Error(`Erro do Supabase: ${error.message}`);
       }
+
+      console.log('✓ Supabase insertion successful:', data);
 
       const newProduct: Product = {
         id: data.id,
@@ -49,15 +73,28 @@ export const useSupabaseProductOperations = ({
         cor: product.cor,
         comprimento: product.comprimento,
         foto: product.foto,
+        // Preserve EPW fields if they exist
+        ...(product.epwTipo && { epwTipo: product.epwTipo }),
+        ...(product.epwCertificacao && { epwCertificacao: product.epwCertificacao }),
+        ...(product.epwModelo && { epwModelo: product.epwModelo }),
+        ...(product.epwComprimento && { epwComprimento: product.epwComprimento }),
+        ...(product.epwCor && { epwCor: product.epwCor }),
+        ...(product.epwAcabamento && { epwAcabamento: product.epwAcabamento }),
+        ...(product.epwOriginalCode && { epwOriginalCode: product.epwOriginalCode }),
       };
 
       setProducts(prev => [...prev, newProduct]);
-      console.log('Product added to Supabase:', newProduct);
+      console.log('✓ Product added to local state:', newProduct);
       toast.success('Produto adicionado com sucesso');
       
     } catch (error) {
-      console.error('Error adding product:', error);
-      toast.error('Erro ao adicionar produto');
+      console.error('❌ Error in addProduct:', error);
+      console.error('Full error details:', {
+        message: error.message,
+        stack: error.stack,
+        productData: product
+      });
+      toast.error(`Erro ao adicionar produto: ${error.message}`);
       throw error;
     }
   };

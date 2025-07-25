@@ -68,36 +68,47 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const createProductFromApi = async (apiProduct: any): Promise<Product> => {
     console.log('=== CREATE PRODUCT FROM API DEBUG ===');
-    console.log('Input apiProduct:', apiProduct);
+    console.log('Input apiProduct:', JSON.stringify(apiProduct, null, 2));
+    
+    // Validate required fields
+    const requiredFields = ['familia', 'modelo', 'acabamento', 'cor', 'comprimento'];
+    for (const field of requiredFields) {
+      if (!apiProduct[field]) {
+        console.error(`Missing required field: ${field}`);
+        throw new Error(`Campo obrigatório em falta: ${field}`);
+      }
+    }
+    console.log('✓ All required fields present');
     
     // Generate a clean ID (remove api_ prefix if present)
     const cleanId = apiProduct.id.startsWith('api_') ? apiProduct.id.replace('api_', '') : apiProduct.id;
+    console.log('Clean ID:', cleanId);
     
-    // Create product data
+    // Create product data with proper type conversion
     const newProduct: Omit<Product, 'id'> = {
-      familia: apiProduct.familia,
-      modelo: apiProduct.modelo,
-      acabamento: apiProduct.acabamento,
-      cor: apiProduct.cor,
-      comprimento: apiProduct.comprimento,
-      foto: apiProduct.foto,
-      // Copy EPW fields if they exist
-      epwTipo: apiProduct.epwTipo,
-      epwCertificacao: apiProduct.epwCertificacao,
-      epwModelo: apiProduct.epwModelo,
-      epwComprimento: apiProduct.epwComprimento,
-      epwCor: apiProduct.epwCor,
-      epwAcabamento: apiProduct.epwAcabamento,
-      epwOriginalCode: apiProduct.epwOriginalCode,
+      familia: String(apiProduct.familia),
+      modelo: String(apiProduct.modelo),
+      acabamento: String(apiProduct.acabamento),
+      cor: String(apiProduct.cor),
+      comprimento: String(apiProduct.comprimento), // Always convert to string for Supabase
+      foto: apiProduct.foto || undefined, // Handle optional field
+      // Add EPW fields only if they exist
+      ...(apiProduct.epwTipo && { epwTipo: apiProduct.epwTipo }),
+      ...(apiProduct.epwCertificacao && { epwCertificacao: apiProduct.epwCertificacao }),
+      ...(apiProduct.epwModelo && { epwModelo: apiProduct.epwModelo }),
+      ...(apiProduct.epwComprimento && { epwComprimento: apiProduct.epwComprimento }),
+      ...(apiProduct.epwCor && { epwCor: apiProduct.epwCor }),
+      ...(apiProduct.epwAcabamento && { epwAcabamento: apiProduct.epwAcabamento }),
+      ...(apiProduct.epwOriginalCode && { epwOriginalCode: apiProduct.epwOriginalCode }),
     };
 
-    console.log('Product to create:', newProduct);
+    console.log('Product formatted for Supabase:', JSON.stringify(newProduct, null, 2));
 
     try {
       // Add the product to Supabase
       console.log('Calling operations.addProduct...');
       await operations.addProduct(newProduct);
-      console.log('Product added to Supabase successfully');
+      console.log('✓ Product added to Supabase successfully');
       
       // Return the product with the clean ID
       const resultProduct: Product = {
@@ -105,7 +116,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         ...newProduct,
       };
       
-      console.log('Returning product:', resultProduct);
+      console.log('✓ Returning product:', JSON.stringify(resultProduct, null, 2));
       return resultProduct;
       
     } catch (error) {
