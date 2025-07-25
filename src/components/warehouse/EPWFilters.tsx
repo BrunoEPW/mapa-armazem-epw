@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { Product } from '@/types/warehouse';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
+import { ApiAttribute } from '@/services/attributesApiService';
 
 interface EPWFiltersProps {
   products: Product[];
@@ -15,19 +16,25 @@ interface EPWFiltersProps {
     acabamento: string;
   };
   onFilterChange: (field: string, value: string) => void;
+  // API attributes for modelo filter
+  apiModelos?: ApiAttribute[];
+  modelosLoading?: boolean;
+  modelosError?: string | null;
 }
 
 export const EPWFilters: React.FC<EPWFiltersProps> = ({
   products,
   filters,
   onFilterChange,
+  apiModelos = [],
+  modelosLoading = false,
+  modelosError = null,
 }) => {
   // Extract unique values for each EPW field from available products
   const filterOptions = useMemo(() => {
     const options = {
       tipo: new Set<string>(),
       certificacao: new Set<string>(),
-      modelo: new Set<string>(),
       comprimento: new Set<string>(),
       cor: new Set<string>(),
       acabamento: new Set<string>(),
@@ -36,7 +43,6 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
     products.forEach(product => {
       if (product.epwTipo?.l) options.tipo.add(`${product.epwTipo.l} - ${product.epwTipo.d}`);
       if (product.epwCertificacao?.l) options.certificacao.add(`${product.epwCertificacao.l} - ${product.epwCertificacao.d}`);
-      if (product.epwModelo?.l) options.modelo.add(`${product.epwModelo.l} - ${product.epwModelo.d}`);
       if (product.epwComprimento?.l) options.comprimento.add(`${product.epwComprimento.l} - ${product.epwComprimento.d}`);
       if (product.epwCor?.l) options.cor.add(`${product.epwCor.l} - ${product.epwCor.d}`);
       if (product.epwAcabamento?.l) options.acabamento.add(`${product.epwAcabamento.l} - ${product.epwAcabamento.d}`);
@@ -45,12 +51,26 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
     return {
       tipo: Array.from(options.tipo).sort(),
       certificacao: Array.from(options.certificacao).sort(),
-      modelo: Array.from(options.modelo).sort(),
       comprimento: Array.from(options.comprimento).sort(),
       cor: Array.from(options.cor).sort(),
       acabamento: Array.from(options.acabamento).sort(),
     };
   }, [products]);
+
+  // Modelo options from API (with fallback to products)
+  const modeloOptions = useMemo(() => {
+    if (apiModelos.length > 0) {
+      // Use API data - already formatted as { l: string, d: string }
+      return apiModelos.map(modelo => `${modelo.l} - ${modelo.d}`).sort();
+    }
+    
+    // Fallback to products data
+    const productModelos = new Set<string>();
+    products.forEach(product => {
+      if (product.epwModelo?.l) productModelos.add(`${product.epwModelo.l} - ${product.epwModelo.d}`);
+    });
+    return Array.from(productModelos).sort();
+  }, [apiModelos, products]);
 
   const hasActiveFilters = Object.values(filters).some(filter => filter !== '');
 
@@ -125,18 +145,20 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
 
         {/* Modelo Filter */}
         <div>
-          <label className="text-white text-sm font-medium mb-2 block">
+          <label className="text-white text-sm font-medium mb-2 block flex items-center gap-2">
             Modelo
+            {modelosLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+            {modelosError && <span className="text-red-400 text-xs">(API erro)</span>}
           </label>
           <Select
             value={filters.modelo}
             onValueChange={(value) => onFilterChange('modelo', value)}
           >
             <SelectTrigger className="bg-card border-border text-white">
-              <SelectValue placeholder="Todos os modelos" />
+              <SelectValue placeholder={modelosLoading ? "Carregando..." : "Todos os modelos"} />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              {filterOptions.modelo.map((option) => (
+              {modeloOptions.map((option) => (
                 <SelectItem key={option} value={option.split(' - ')[0]}>
                   {option}
                 </SelectItem>

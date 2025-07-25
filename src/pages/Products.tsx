@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApiProductsPaginated } from '@/hooks/useApiProductsPaginated';
+import { useApiAttributes } from '@/hooks/useApiAttributes';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,13 @@ const Products: React.FC = () => {
     isConnected,
     connectionStatus,
   } = useApiProductsPaginated(20);
+
+  const {
+    modelos: apiModelos,
+    loading: modelosLoading,
+    error: modelosError,
+    refresh: refreshModelos,
+  } = useApiAttributes();
 
   const handleEpwFilterChange = (field: string, value: string) => {
     setEpwFilters(prev => ({
@@ -157,6 +165,9 @@ const Products: React.FC = () => {
             products={products}
             filters={epwFilters}
             onFilterChange={handleEpwFilterChange}
+            apiModelos={apiModelos}
+            modelosLoading={modelosLoading}
+            modelosError={modelosError}
           />
 
           {/* Products Table */}
