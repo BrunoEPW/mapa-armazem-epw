@@ -181,31 +181,32 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Código EPW</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Modelo</TableHead>
-              <TableHead>Comprimento</TableHead>
-              <TableHead>Cor</TableHead>
-              <TableHead>Acabamento</TableHead>
-              <TableHead>Ação</TableHead>
+               <TableHead>Código do Produto</TableHead>
+               <TableHead>Descrição</TableHead>
+               <TableHead>Tipo</TableHead>
+               <TableHead>Modelo</TableHead>
+               <TableHead>Comprimento</TableHead>
+               <TableHead>Cor</TableHead>
+               <TableHead>Acabamento</TableHead>
+               <TableHead>Ação</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                 <TableCell colSpan={8} className="text-center py-8">
                   Carregando produtos...
                 </TableCell>
               </TableRow>
             ) : error ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-destructive">
+                <TableCell colSpan={8} className="text-center py-8 text-destructive">
                   {error}
                 </TableCell>
               </TableRow>
             ) : displayProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   {hasActiveFilters ? "Nenhum produto encontrado com os filtros aplicados" : "Nenhum produto encontrado"}
                 </TableCell>
               </TableRow>
@@ -215,12 +216,13 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
                   key={product.id}
                   className={selectedProductId === product.id ? "bg-muted" : ""}
                 >
-                  <TableCell className="font-mono text-sm">
-                    <div className="flex items-center gap-2">
-                      {product.epwOriginalCode || product.modelo}
+                   <TableCell className="font-mono text-sm">
+                     <div className="flex items-center gap-2">
+                       {product.codigo || product.epwOriginalCode || product.modelo}
                       <Badge variant="secondary" className="text-xs">API</Badge>
                     </div>
                   </TableCell>
+                  <TableCell>{product.descricao || product.acabamento}</TableCell>
                   <TableCell>{product.epwTipo?.d || 'N/A'}</TableCell>
                   <TableCell>{product.epwModelo?.d || product.modelo}</TableCell>
                   <TableCell>{product.epwComprimento?.d || 'N/A'}</TableCell>

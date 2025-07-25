@@ -6,6 +6,9 @@ export interface Product {
   cor: string;
   comprimento: number | string;
   foto?: string;
+  // API fields
+  codigo?: string; // Product code from API (strCodigo)
+  descricao?: string; // Product description from API (strDescricao)
   // EPW decoded fields (when available from API)
   epwTipo?: { l: string; d: string };
   epwCertificacao?: { l: string; d: string };

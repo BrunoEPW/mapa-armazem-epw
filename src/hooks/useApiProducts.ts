@@ -29,11 +29,14 @@ export const useApiProducts = (): UseApiProductsReturn => {
     return {
       id: `api_${apiProduct.Id}`,
       familia: 'API',
-      modelo: codigo,  // strCodigo da API
-      acabamento: description,  // strDescricao da API
+      modelo: codigo,  // Keep for backward compatibility
+      acabamento: description,  // Keep for backward compatibility
       cor: 'N/A',
       comprimento: 0,
       foto: apiProduct.strFoto || undefined,
+      // Correct mapping for API fields
+      codigo: codigo,  // strCodigo da API
+      descricao: description,  // strDescricao da API
     };
   };
 
