@@ -106,11 +106,16 @@ const Products: React.FC = () => {
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="flex flex-col items-center mb-6 sm:mb-8">
-            <img 
-              src="/lovable-uploads/e3f287c7-c1ee-485f-8e58-cb96b7ff55b3.png" 
-              alt="EPW Logo" 
-              className="h-16 sm:h-20 lg:h-24 drop-shadow-lg mb-4"
-            />
+            <button
+              onClick={() => navigate('/')}
+              className="transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg mb-4"
+            >
+              <img 
+                src="/lovable-uploads/e3f287c7-c1ee-485f-8e58-cb96b7ff55b3.png" 
+                alt="EPW Logo - Voltar para página inicial" 
+                className="h-16 sm:h-20 lg:h-24 drop-shadow-lg cursor-pointer"
+              />
+            </button>
             <div className="relative w-full max-w-2xl">
               <img 
                 src={productsBanner} 
