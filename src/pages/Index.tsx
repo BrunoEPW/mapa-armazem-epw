@@ -121,7 +121,7 @@ const Index = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/80 rounded-xl flex items-center justify-between px-6 sm:px-8 lg:px-12">
               <img 
-                src="/lovable-uploads/e3f287c7-c1ee-485f-8e58-cb96b7ff55b3.png" 
+                src="/lovable-uploads/ce6ad3d6-6728-414c-b327-428c5cd38f81.png" 
                 alt="EPW Logo" 
                 className="h-32 sm:h-40 lg:h-48 drop-shadow-2xl"
               />
