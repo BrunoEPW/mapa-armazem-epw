@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useApiProductsPaginated } from '@/hooks/useApiProductsPaginated';
+import { useApiProductsWithFilters } from '@/hooks/useApiProductsWithFilters';
 import { useApiAttributes } from '@/hooks/useApiAttributes';
 import { useExclusions } from '@/contexts/ExclusionsContext';
+import { ApiFilters } from '@/services/apiService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,10 +13,18 @@ import { EPWFilters } from '@/components/warehouse/EPWFilters';
 import { config } from '@/lib/config';
 import productsBanner from '@/assets/epw-products-banner.jpg';
 
+interface EPWFilters {
+  tipo: string;
+  modelo: string;
+  comprimento: string;
+  cor: string;
+  acabamento: string;
+}
+
 const Products: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [epwFilters, setEpwFilters] = useState({
+  const [epwFilters, setEpwFilters] = useState<EPWFilters>({
     tipo: '',
     modelo: '',
     comprimento: '',
@@ -25,6 +34,15 @@ const Products: React.FC = () => {
   
   const { shouldExcludeProduct } = useExclusions();
   
+  // Convert EPW filters to API filters
+  const convertToApiFilters = (filters: EPWFilters): ApiFilters => ({
+    Tipo: filters.tipo !== '' ? filters.tipo : undefined,
+    Modelo: filters.modelo !== '' ? filters.modelo : undefined,
+    Comprimento: filters.comprimento !== '' ? filters.comprimento : undefined,
+    Cor: filters.cor !== '' ? filters.cor : undefined,
+    Acabamento: filters.acabamento !== '' ? filters.acabamento : undefined,
+  });
+
   const {
     products,
     loading,
@@ -37,7 +55,10 @@ const Products: React.FC = () => {
     refresh,
     isConnected,
     connectionStatus,
-  } = useApiProductsPaginated(20, shouldExcludeProduct);
+    activeFilters,
+    setFilters,
+    clearFilters: clearApiFilters,
+  } = useApiProductsWithFilters(20, shouldExcludeProduct, convertToApiFilters(epwFilters));
 
   const {
     modelos: apiModelos,
@@ -59,10 +80,15 @@ const Products: React.FC = () => {
   } = useApiAttributes();
 
   const handleEpwFilterChange = (field: string, value: string) => {
-    setEpwFilters(prev => ({
-      ...prev,
+    const newEpwFilters = {
+      ...epwFilters,
       [field]: value,
-    }));
+    };
+    setEpwFilters(newEpwFilters);
+    
+    // Apply API filters immediately with debounce effect
+    const apiFilters = convertToApiFilters(newEpwFilters);
+    setFilters(apiFilters);
   };
 
   const clearEpwFilters = () => {
@@ -73,31 +99,33 @@ const Products: React.FC = () => {
       cor: '',
       acabamento: '',
     });
+    clearApiFilters();
   };
 
   // Count excluded products for display
   const excludedCount = 0; // This would be calculated differently if we had access to original data
 
-  // Enhanced filtering logic including EPW filters
-  const filteredProducts = products.filter(product => {
-    // Basic search filter
-    const matchesSearch = !searchQuery || 
-      product.modelo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.acabamento.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.epwOriginalCode && product.epwOriginalCode.toLowerCase().includes(searchQuery.toLowerCase()));
+  // Since we're using server-side filtering, we only need to filter by search query locally
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      // Only apply search filter locally - EPW filters are now handled server-side
+      const matchesSearch = !searchQuery || 
+        product.modelo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.acabamento.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (product.epwOriginalCode && product.epwOriginalCode.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (product.codigo && product.codigo.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (product.descricao && product.descricao.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    // EPW filters - handle missing EPW data gracefully
-    const matchesTipo = !epwFilters.tipo || epwFilters.tipo === 'all' || (product.epwTipo?.l === epwFilters.tipo);
-    const matchesModelo = !epwFilters.modelo || epwFilters.modelo === 'all' || (product.epwModelo?.l === epwFilters.modelo);
-    const matchesComprimento = !epwFilters.comprimento || epwFilters.comprimento === 'all' || (product.epwComprimento?.l === epwFilters.comprimento);
-    const matchesCor = !epwFilters.cor || epwFilters.cor === 'all' || (product.epwCor?.l === epwFilters.cor);
-    const matchesAcabamento = !epwFilters.acabamento || epwFilters.acabamento === 'all' || (product.epwAcabamento?.l === epwFilters.acabamento);
+      return matchesSearch;
+    });
+  }, [products, searchQuery]);
 
-    return matchesSearch && matchesTipo && matchesModelo && matchesComprimento && matchesCor && matchesAcabamento;
-  });
+  const hasActiveFilters = Object.values(epwFilters).some(value => value !== '') || searchQuery.length > 0;
+  const hasServerFilters = Object.values(epwFilters).some(value => value !== '');
+  const hasLocalSearchFilter = searchQuery.length > 0;
 
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + filteredProducts.length;
+  // For display purposes - use filtered products when search is active, otherwise use all products
+  const displayProducts = hasLocalSearchFilter ? filteredProducts : products;
 
   return (
     <div className="min-h-screen bg-warehouse-bg">
@@ -132,9 +160,11 @@ const Products: React.FC = () => {
                   <Wifi className={`w-4 h-4 ${isConnected ? 'text-green-400' : 'text-red-400'}`} />
                   <span className="font-medium">{totalCount}</span> produtos da API
                   {loading && <Loader2 className="w-4 h-4 animate-spin ml-1" />}
+                  {hasServerFilters && <span className="text-blue-400 text-xs">(filtrado no servidor)</span>}
                 </div>
                 <div className="text-white/70 text-xs">
                   Status: {connectionStatus}
+                  {hasLocalSearchFilter && ` | Busca local: ${filteredProducts.length} resultados`}
                 </div>
                 {error && (
                   <div className="text-destructive text-sm">
@@ -211,12 +241,12 @@ const Products: React.FC = () => {
           </div>
 
           {/* Products Table */}
-          {filteredProducts.length === 0 ? (
+          {displayProducts.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
                 <p className="text-muted-foreground text-lg">
                   {loading ? 'Carregando produtos da API...' : 
-                   searchQuery ? 'Nenhum produto encontrado para a pesquisa' : 
+                   hasActiveFilters ? 'Nenhum produto encontrado com os filtros aplicados' : 
                    'Nenhum produto encontrado na página atual'}
                 </p>
               </CardContent>
@@ -233,7 +263,7 @@ const Products: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredProducts.map((product) => (
+                      {displayProducts.map((product) => (
                         <tr key={product.id} className="border-b hover:bg-muted/50">
                            <td className="p-3 sm:p-4 font-medium text-sm sm:text-base font-mono">
                              {product.codigo || product.epwOriginalCode || product.modelo}
@@ -255,8 +285,8 @@ const Products: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 p-4 bg-card/20 rounded-lg">
               <div className="text-white text-sm">
                 Página {currentPage} de {totalPages} ({totalCount} produtos total)
-                {(searchQuery || Object.values(epwFilters).some(f => f !== '')) && 
-                  ` - ${filteredProducts.length} resultados filtrados`}
+                {hasServerFilters && ' (filtrado no servidor)'}
+                {hasLocalSearchFilter && ` - ${displayProducts.length} resultados da busca local`}
               </div>
               
               <div className="flex items-center gap-2">
