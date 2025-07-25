@@ -137,7 +137,7 @@ class AttributesApiService {
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
-    let result: ApiAttribute[];
+    let result: any[];
     let rawData: any;
     
     if (proxyUrl.includes('allorigins.win')) {
@@ -169,18 +169,24 @@ class AttributesApiService {
       throw new Error('API response is not an array');
     }
 
-    // Validate each item has the expected structure
-    const validItems = result.filter((item, index) => {
+    // Validate and transform each item from API format {codigo, descricao} to {l, d}
+    const validItems = result.map((item, index) => {
+      // Check if item has the expected API structure
       const isValid = item && typeof item === 'object' && 
-                     typeof item.l === 'string' && 
-                     typeof item.d === 'string';
+                     typeof item.codigo === 'string' && 
+                     typeof item.descricao === 'string';
       
       if (!isValid) {
         console.warn(`⚠️ [AttributesApiService] Invalid item at index ${index}:`, item);
+        return null;
       }
       
-      return isValid;
-    });
+      // Transform API format to expected format
+      return {
+        l: item.codigo,
+        d: item.descricao
+      };
+    }).filter(Boolean) as ApiAttribute[];
 
     console.log(`✅ [AttributesApiService] Validated ${validItems.length}/${result.length} items`);
     
