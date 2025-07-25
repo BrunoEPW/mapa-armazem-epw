@@ -18,7 +18,10 @@ interface UseApiProductsPaginatedReturn {
   connectionStatus: string;
 }
 
-export const useApiProductsPaginated = (itemsPerPage: number = 20): UseApiProductsPaginatedReturn => {
+export const useApiProductsPaginated = (
+  itemsPerPage: number = 20,
+  exclusionFilter?: (codigo: string) => boolean
+): UseApiProductsPaginatedReturn => {
   console.log('🔍 [useApiProductsPaginated] Hook inicializado com', itemsPerPage, 'itens por página');
   
   const [products, setProducts] = useState<Product[]>([]);
@@ -113,10 +116,10 @@ export const useApiProductsPaginated = (itemsPerPage: number = 20): UseApiProduc
         throw new Error('API retornou dados inválidos ou nulos');
       }
       
-      // Filter out products starting with "zzz"
-      const filteredData = apiResponse.data.filter(item => 
-        !item.strCodigo?.toLowerCase().startsWith('zzz')
-      );
+      // Apply exclusions filter if provided
+      const filteredData = exclusionFilter 
+        ? apiResponse.data.filter(item => !exclusionFilter(item.strCodigo || ''))
+        : apiResponse.data;
       const mappedProducts = filteredData.map(mapApiProductToProduct);
       
       setProducts(mappedProducts);

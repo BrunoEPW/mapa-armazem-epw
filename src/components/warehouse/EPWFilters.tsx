@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { X, Loader2 } from 'lucide-react';
 import { ApiAttribute } from '@/services/attributesApiService';
+import { ExclusionsDialog } from './ExclusionsDialog';
 
 interface EPWFiltersProps {
   products: Product[];
@@ -20,6 +21,8 @@ interface EPWFiltersProps {
   apiModelos?: ApiAttribute[];
   modelosLoading?: boolean;
   modelosError?: string | null;
+  // Exclusions count for display
+  excludedCount?: number;
 }
 
 export const EPWFilters: React.FC<EPWFiltersProps> = ({
@@ -29,6 +32,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
   apiModelos = [],
   modelosLoading = false,
   modelosError = null,
+  excludedCount = 0,
 }) => {
   // Extract unique values for each EPW field from available products
   const filterOptions = useMemo(() => {
@@ -78,24 +82,27 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
     <div className="bg-card/20 rounded-lg p-4 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-white font-medium">Filtros EPW</h3>
-        {hasActiveFilters && (
-          <Button
-            onClick={() => {
-              onFilterChange('tipo', '');
-              onFilterChange('certificacao', '');
-              onFilterChange('modelo', '');
-              onFilterChange('comprimento', '');
-              onFilterChange('cor', '');
-              onFilterChange('acabamento', '');
-            }}
-            variant="outline"
-            size="sm"
-            className="text-white border-white hover:bg-white hover:text-black"
-          >
-            <X className="w-4 h-4 mr-1" />
-            Limpar Filtros
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <ExclusionsDialog excludedCount={excludedCount} />
+          {hasActiveFilters && (
+            <Button
+              onClick={() => {
+                onFilterChange('tipo', '');
+                onFilterChange('certificacao', '');
+                onFilterChange('modelo', '');
+                onFilterChange('comprimento', '');
+                onFilterChange('cor', '');
+                onFilterChange('acabamento', '');
+              }}
+              variant="outline"
+              size="sm"
+              className="text-white border-white hover:bg-white hover:text-black"
+            >
+              <X className="w-4 h-4 mr-1" />
+              Limpar Filtros
+            </Button>
+          )}
+        </div>
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">

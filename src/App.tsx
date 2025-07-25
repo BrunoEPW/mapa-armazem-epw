@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WarehouseProvider } from "@/contexts/WarehouseContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ExclusionsProvider } from "@/contexts/ExclusionsContext";
 
 import Index from "./pages/Index";
 import Shelf from "./pages/Shelf";
@@ -22,22 +23,24 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <WarehouseProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/estante/:estante" element={<Shelf />} />
-              <Route path="/prateleira/:estante/:prateleira" element={<ShelfDetail />} />
-              <Route path="/pesquisa" element={<Search />} />
-              <Route path="/produtos" element={<Products />} />
-              <Route path="/relatorios" element={<Reports />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </WarehouseProvider>
+        <ExclusionsProvider>
+          <WarehouseProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/estante/:estante" element={<Shelf />} />
+                <Route path="/prateleira/:estante/:prateleira" element={<ShelfDetail />} />
+                <Route path="/pesquisa" element={<Search />} />
+                <Route path="/produtos" element={<Products />} />
+                <Route path="/relatorios" element={<Reports />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </WarehouseProvider>
+        </ExclusionsProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

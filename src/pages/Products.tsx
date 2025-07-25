@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApiProductsPaginated } from '@/hooks/useApiProductsPaginated';
 import { useApiAttributes } from '@/hooks/useApiAttributes';
+import { useExclusions } from '@/contexts/ExclusionsContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,8 @@ const Products: React.FC = () => {
     acabamento: '',
   });
   
+  const { shouldExcludeProduct } = useExclusions();
+  
   const {
     products,
     loading,
@@ -33,7 +36,7 @@ const Products: React.FC = () => {
     refresh,
     isConnected,
     connectionStatus,
-  } = useApiProductsPaginated(20);
+  } = useApiProductsPaginated(20, shouldExcludeProduct);
 
   const {
     modelos: apiModelos,
@@ -59,6 +62,9 @@ const Products: React.FC = () => {
       acabamento: '',
     });
   };
+
+  // Count excluded products for display
+  const excludedCount = 0; // This would be calculated differently if we had access to original data
 
   // Enhanced filtering logic including EPW filters
   const filteredProducts = products.filter(product => {
@@ -168,6 +174,7 @@ const Products: React.FC = () => {
             apiModelos={apiModelos}
             modelosLoading={modelosLoading}
             modelosError={modelosError}
+            excludedCount={excludedCount}
           />
 
           {/* Products Table */}
