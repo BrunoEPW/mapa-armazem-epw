@@ -58,7 +58,10 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
       return;
     }
 
+    console.log('=== VALIDATION PASSED ===');
+
     try {
+      console.log('=== STARTING ADD MATERIAL PROCESS ===');
       let productToUse = selectedProduct;
 
       // If it's an API product, create it locally first
@@ -72,15 +75,18 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
         };
 
         console.log('Local product to create:', localProduct);
+        console.log('About to call createProductFromApi...');
         await createProductFromApi(localProduct);
         productToUse = localProduct;
         console.log('Product created locally, now using:', productToUse);
+      } else {
+        console.log('Using existing local product:', productToUse);
       }
 
       const materialId = `${productToUse.id}_${location.estante}${location.prateleira}_${Date.now()}`;
       console.log('Generated materialId:', materialId);
       
-      console.log('Calling addMaterial with:', {
+      console.log('About to call addMaterial with:', {
         productId: productToUse.id,
         product: productToUse,
         pecas,
@@ -94,9 +100,9 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
         location,
       });
 
-      console.log('Material created:', createdMaterial);
+      console.log('Material created successfully:', createdMaterial);
 
-      console.log('Calling addMovement with:', {
+      console.log('About to call addMovement with:', {
         materialId: createdMaterial.id,
         type: 'entrada',
         pecas,
@@ -113,6 +119,7 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
       });
 
       console.log('Movement added successfully');
+      console.log('=== PROCESS COMPLETED SUCCESSFULLY ===');
       toast.success(`Material adicionado com sucesso! ${pecas} peças de ${selectedProduct.epwModelo?.d || selectedProduct.modelo} em ${location.estante}${location.prateleira}`);
       onSuccess();
     } catch (error) {
