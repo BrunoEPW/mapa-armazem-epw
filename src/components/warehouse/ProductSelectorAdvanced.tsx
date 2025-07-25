@@ -219,7 +219,15 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
                     <Button
                       size="sm"
                       variant={selectedProductId === product.id ? "default" : "outline"}
-                      onClick={() => onProductSelect(product.id, product)}
+                      onClick={() => {
+                        console.log('=== PRODUCT SELECT DEBUG ===');
+                        console.log('Product clicked:', product);
+                        console.log('Product ID:', product.id);
+                        console.log('Current selectedProductId:', selectedProductId);
+                        console.log('Calling onProductSelect with:', product.id, product);
+                        onProductSelect(product.id, product);
+                        console.log('onProductSelect called successfully');
+                      }}
                     >
                       {selectedProductId === product.id ? "Selecionado" : "Selecionar"}
                     </Button>
