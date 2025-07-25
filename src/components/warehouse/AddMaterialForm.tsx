@@ -33,17 +33,27 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('=== ADD MATERIAL DEBUG ===');
+    console.log('selectedProductId:', selectedProductId);
+    console.log('selectedProduct:', selectedProduct);
+    console.log('pecas:', pecas);
+    console.log('norc:', norc);
+    console.log('location:', location);
+    
     if (!selectedProductId || !selectedProduct) {
+      console.log('ERROR: No product selected');
       toast.error('Por favor, selecione um produto');
       return;
     }
 
     if (pecas <= 0) {
+      console.log('ERROR: Invalid pecas:', pecas);
       toast.error('Por favor, especifique uma quantidade válida');
       return;
     }
 
     if (!norc.trim()) {
+      console.log('ERROR: No NORC provided');
       toast.error('Por favor, especifique o NORC');
       return;
     }
@@ -61,17 +71,37 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
           id: selectedProduct.id.replace('api_', ''),
         };
 
+        console.log('Local product to create:', localProduct);
         await createProductFromApi(localProduct);
         productToUse = localProduct;
+        console.log('Product created locally, now using:', productToUse);
       }
 
       const materialId = `${productToUse.id}_${location.estante}${location.prateleira}_${Date.now()}`;
+      console.log('Generated materialId:', materialId);
+      
+      console.log('Calling addMaterial with:', {
+        productId: productToUse.id,
+        product: productToUse,
+        pecas,
+        location,
+      });
       
       const createdMaterial = await addMaterial({
         productId: productToUse.id,
         product: productToUse,
         pecas,
         location,
+      });
+
+      console.log('Material created:', createdMaterial);
+
+      console.log('Calling addMovement with:', {
+        materialId: createdMaterial.id,
+        type: 'entrada',
+        pecas,
+        norc: norc.trim(),
+        date: new Date().toISOString(),
       });
 
       await addMovement({
@@ -82,10 +112,14 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
         date: new Date().toISOString(),
       });
 
+      console.log('Movement added successfully');
       toast.success(`Material adicionado com sucesso! ${pecas} peças de ${selectedProduct.epwModelo?.d || selectedProduct.modelo} em ${location.estante}${location.prateleira}`);
       onSuccess();
     } catch (error) {
-      console.error('Error adding material:', error);
+      console.error('=== ERROR ADDING MATERIAL ===');
+      console.error('Error details:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error stack:', error?.stack);
       toast.error('Erro ao adicionar material. Tente novamente.');
     }
   };
