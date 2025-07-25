@@ -18,14 +18,24 @@ export const useApiAttributes = (): UseApiAttributesReturn => {
       setLoading(true);
       setError(null);
       
+      console.log('🔄 [useApiAttributes] Starting to fetch modelos...');
+      
       const data = await attributesApiService.fetchModelos();
       setModelos(data);
       
-      console.log('✅ [useApiAttributes] Loaded modelos:', data.length);
+      console.log('✅ [useApiAttributes] Successfully loaded modelos:', {
+        count: data.length,
+        firstItem: data[0] || 'No items',
+        sampleItems: data.slice(0, 3)
+      });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch modelos';
       setError(errorMessage);
-      console.error('❌ [useApiAttributes] Error:', errorMessage);
+      console.error('❌ [useApiAttributes] Error fetching modelos:', {
+        error: errorMessage,
+        originalError: err,
+        existingData: modelos.length
+      });
       
       // Keep existing data if available
       if (modelos.length === 0) {

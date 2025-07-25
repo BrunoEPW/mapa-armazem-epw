@@ -90,6 +90,9 @@ class AttributesApiService {
     let finalUrl: string;
     let fetchOptions: RequestInit;
     
+    console.log(`🔄 [AttributesApiService] Testing proxy: ${proxyUrl}`);
+    console.log(`🎯 [AttributesApiService] Target API: ${apiUrl}`);
+    
     // Configure request based on proxy type
     if (proxyUrl.includes('allorigins.win')) {
       const url = new URL(proxyUrl);
@@ -123,37 +126,69 @@ class AttributesApiService {
       };
     }
     
+    console.log(`🌐 [AttributesApiService] Final URL: ${finalUrl}`);
+    
     const response = await fetch(finalUrl, fetchOptions);
     
     console.log('📡 [AttributesApiService] Response status:', response.status, response.statusText);
+    console.log('📡 [AttributesApiService] Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
     let result: ApiAttribute[];
+    let rawData: any;
     
     if (proxyUrl.includes('allorigins.win')) {
       const proxyResponse = await response.json();
+      console.log('📦 [AttributesApiService] AllOrigins proxy response:', proxyResponse);
       
       if (!proxyResponse.contents) {
         throw new Error(`Proxy failed: ${proxyResponse.status?.http_code || 'unknown error'}`);
       }
       
-      result = JSON.parse(proxyResponse.contents);
+      rawData = proxyResponse.contents;
+      result = JSON.parse(rawData);
     } else {
-      result = await response.json();
+      rawData = await response.text();
+      console.log('📦 [AttributesApiService] Raw response text (first 500 chars):', rawData.substring(0, 500));
+      result = JSON.parse(rawData);
     }
     
-    console.log('📋 [AttributesApiService] API response:', {
+    console.log('📋 [AttributesApiService] Parsed API response:', {
+      isArray: Array.isArray(result),
       dataLength: result?.length || 0,
+      firstItem: result?.[0] || 'No items',
+      dataType: typeof result,
     });
 
-    if (config.isDevelopment) {
-      console.log(`✅ [AttributesApiService] Fetched ${result?.length || 0} attributes from API`);
+    // Validate data structure
+    if (!Array.isArray(result)) {
+      console.error('❌ [AttributesApiService] API response is not an array:', result);
+      throw new Error('API response is not an array');
     }
 
-    return result || [];
+    // Validate each item has the expected structure
+    const validItems = result.filter((item, index) => {
+      const isValid = item && typeof item === 'object' && 
+                     typeof item.l === 'string' && 
+                     typeof item.d === 'string';
+      
+      if (!isValid) {
+        console.warn(`⚠️ [AttributesApiService] Invalid item at index ${index}:`, item);
+      }
+      
+      return isValid;
+    });
+
+    console.log(`✅ [AttributesApiService] Validated ${validItems.length}/${result.length} items`);
+    
+    if (validItems.length > 0) {
+      console.log('📋 [AttributesApiService] Sample valid items:', validItems.slice(0, 3));
+    }
+
+    return validItems;
   }
 
   clearCache(): void {

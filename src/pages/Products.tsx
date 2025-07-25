@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Search, Home, Wifi, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import { EPWFilters } from '@/components/warehouse/EPWFilters';
+import { config } from '@/lib/config';
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
@@ -167,15 +168,29 @@ const Products: React.FC = () => {
           </div>
 
           {/* EPW Filters */}
-          <EPWFilters
-            products={products}
-            filters={epwFilters}
-            onFilterChange={handleEpwFilterChange}
-            apiModelos={apiModelos}
-            modelosLoading={modelosLoading}
-            modelosError={modelosError}
-            excludedCount={excludedCount}
-          />
+          <div className="space-y-2">
+            <EPWFilters
+              products={products}
+              filters={epwFilters}
+              onFilterChange={handleEpwFilterChange}
+              apiModelos={apiModelos}
+              modelosLoading={modelosLoading}
+              modelosError={modelosError}
+              excludedCount={excludedCount}
+            />
+            {config.isDevelopment && (
+              <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                <strong>Debug API Modelos:</strong> {
+                  modelosLoading ? "Carregando..." :
+                  modelosError ? `Erro: ${modelosError}` :
+                  `${apiModelos.length} modelos carregados da API`
+                }
+                {apiModelos.length > 0 && (
+                  <div>Primeiro modelo: {JSON.stringify(apiModelos[0])}</div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Products Table */}
           {filteredProducts.length === 0 ? (

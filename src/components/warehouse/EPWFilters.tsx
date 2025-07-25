@@ -162,9 +162,18 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             onValueChange={(value) => onFilterChange('modelo', value)}
           >
             <SelectTrigger className="bg-card border-border text-white">
-              <SelectValue placeholder={modelosLoading ? "Carregando..." : "Todos os modelos"} />
+              <SelectValue placeholder={
+                modelosLoading ? "Carregando modelos da API..." :
+                modelosError ? "Erro na API - usando dados locais" :
+                "Todos os modelos"
+              } />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
+              {modelosError && (
+                <SelectItem value="" disabled className="text-muted-foreground">
+                  ⚠️ API EPW indisponível - usando dados locais
+                </SelectItem>
+              )}
               {modeloOptions.map((option) => (
                 <SelectItem key={option} value={option.split(' - ')[0]}>
                   {option}
