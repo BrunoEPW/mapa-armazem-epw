@@ -33,17 +33,21 @@ export interface ExclusionSettings {
 }
 
 export const loadExclusions = (): ExclusionSettings => {
-  return loadFromStorage(STORAGE_KEYS.EXCLUSIONS, {
+  const exclusions = loadFromStorage(STORAGE_KEYS.EXCLUSIONS, {
     enabled: true,
     prefixes: ['ZZZ'], // Default exclusion
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
+  console.log('🔍 [loadExclusions] Loaded exclusions from storage:', exclusions);
+  return exclusions;
 };
 
 export const saveExclusions = (exclusions: ExclusionSettings): void => {
-  saveToStorage(STORAGE_KEYS.EXCLUSIONS, {
+  const exclusionsToSave = {
     ...exclusions,
     updatedAt: new Date().toISOString(),
-  });
+  };
+  console.log('🔍 [saveExclusions] Saving exclusions to storage:', exclusionsToSave);
+  saveToStorage(STORAGE_KEYS.EXCLUSIONS, exclusionsToSave);
 };

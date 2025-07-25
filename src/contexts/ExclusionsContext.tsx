@@ -63,14 +63,25 @@ export const ExclusionsProvider: React.FC<ExclusionsProviderProps> = ({ children
   };
 
   const shouldExcludeProduct = (codigo: string): boolean => {
-    if (!exclusions.enabled || !codigo) return false;
+    console.log(`🔍 [ExclusionsContext] Checking product code: "${codigo}"`);
+    console.log(`🔍 [ExclusionsContext] Exclusions enabled: ${exclusions.enabled}`);
+    console.log(`🔍 [ExclusionsContext] Exclusions prefixes: [${exclusions.prefixes.join(', ')}]`);
     
-    const shouldExclude = exclusions.prefixes.some(prefix => 
-      codigo.toUpperCase().startsWith(prefix.toUpperCase())
-    );
+    if (!exclusions.enabled || !codigo) {
+      console.log(`🔍 [ExclusionsContext] Not excluding - enabled: ${exclusions.enabled}, has codigo: ${!!codigo}`);
+      return false;
+    }
+    
+    const shouldExclude = exclusions.prefixes.some(prefix => {
+      const matches = codigo.toUpperCase().startsWith(prefix.toUpperCase());
+      console.log(`🔍 [ExclusionsContext] "${codigo.toUpperCase()}" starts with "${prefix.toUpperCase()}"? ${matches}`);
+      return matches;
+    });
     
     if (shouldExclude) {
       console.log(`🚫 [ExclusionsContext] Excluding product with code: ${codigo}, prefixes: ${exclusions.prefixes.join(', ')}`);
+    } else {
+      console.log(`✅ [ExclusionsContext] Keeping product with code: ${codigo}`);
     }
     
     return shouldExclude;

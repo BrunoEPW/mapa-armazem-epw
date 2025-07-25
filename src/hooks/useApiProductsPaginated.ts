@@ -101,6 +101,7 @@ export const useApiProductsPaginated = (
 
     try {
       console.log(`🔍 [useApiProductsPaginated] Fetching page ${page}...`);
+      console.log(`🔍 [useApiProductsPaginated] exclusionFilter function provided: ${!!exclusionFilter}`);
       setConnectionStatus('Conectando...');
       
       const start = (page - 1) * itemsPerPage;
