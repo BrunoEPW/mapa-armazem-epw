@@ -119,13 +119,8 @@ const Index = () => {
               alt="Warehouse Management System" 
               className="w-full h-48 sm:h-64 lg:h-80 object-cover rounded-xl shadow-2xl"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/80 rounded-xl flex items-center justify-between px-6 sm:px-8 lg:px-12">
-              <img 
-                src="/lovable-uploads/ce6ad3d6-6728-414c-b327-428c5cd38f81.png" 
-                alt="EPW Logo" 
-                className="h-32 sm:h-40 lg:h-48 drop-shadow-2xl"
-              />
-              <div className="text-right">
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/80 rounded-xl flex items-center justify-center px-6 sm:px-8 lg:px-12">
+              <div className="text-center">
                 <h1 className="text-3xl sm:text-4xl lg:text-6xl font-black text-white tracking-wider drop-shadow-2xl mb-2">
                   SISTEMA DE
                 </h1>
