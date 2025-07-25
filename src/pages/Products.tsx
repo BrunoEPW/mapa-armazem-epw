@@ -111,7 +111,7 @@ const Products: React.FC = () => {
               className="transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg mb-4"
             >
               <img 
-                src="/lovable-uploads/e3f287c7-c1ee-485f-8e58-cb96b7ff55b3.png" 
+                src="/lovable-uploads/ce6ad3d6-6728-414c-b327-428c5cd38f81.png" 
                 alt="EPW Logo - Voltar para página inicial" 
                 className="h-16 sm:h-20 lg:h-24 drop-shadow-lg cursor-pointer"
               />
