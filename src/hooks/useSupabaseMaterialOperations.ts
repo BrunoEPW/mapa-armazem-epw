@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuditLog } from '@/hooks/useAuditLog';
+import { config } from '@/lib/config';
 
 interface UseSupabaseMaterialOperationsProps {
   materials: Material[];
@@ -21,8 +22,15 @@ export const useSupabaseMaterialOperations = ({
   const user = auth?.user || null;
   
   const addMaterial = async (material: Omit<Material, 'id'>) => {
-    // Skip permission check in development mode
-    if (!user) {
+    console.log('=== ADD MATERIAL AUTH DEBUG ===');
+    console.log('Auth context:', auth);
+    console.log('User:', user);
+    console.log('Development mode:', config.isDevelopment);
+    console.log('Mock auth enabled:', config.auth.useMockAuth);
+    
+    // In development mode with mock auth, allow operation even without user
+    if (!user && !config.auth.useMockAuth) {
+      console.log('=== AUTH FAILED ===');
       toast.error('Utilizador não autenticado');
       throw new Error('User not authenticated');
     }
@@ -38,7 +46,7 @@ export const useSupabaseMaterialOperations = ({
           estante: material.location.estante,
           prateleira: material.location.prateleira,
           posicao: material.location.posicao,
-          created_by: user.id,
+          created_by: user?.id || 'mock-user-id',
         })
         .select()
         .single();
