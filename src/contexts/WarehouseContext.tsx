@@ -70,7 +70,10 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     console.log('=== CREATE PRODUCT FROM API DEBUG ===');
     console.log('Input apiProduct:', apiProduct);
     
-    // Create product data without the 'api_' prefix
+    // Generate a clean ID (remove api_ prefix if present)
+    const cleanId = apiProduct.id.startsWith('api_') ? apiProduct.id.replace('api_', '') : apiProduct.id;
+    
+    // Create product data
     const newProduct: Omit<Product, 'id'> = {
       familia: apiProduct.familia,
       modelo: apiProduct.modelo,
@@ -91,14 +94,14 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     console.log('Product to create:', newProduct);
 
     try {
-      // Add the product and get the result directly
+      // Add the product to Supabase
       console.log('Calling operations.addProduct...');
       await operations.addProduct(newProduct);
-      console.log('Product added successfully');
+      console.log('Product added to Supabase successfully');
       
-      // Return the expected product structure with the provided ID
+      // Return the product with the clean ID
       const resultProduct: Product = {
-        id: apiProduct.id,
+        id: cleanId,
         ...newProduct,
       };
       

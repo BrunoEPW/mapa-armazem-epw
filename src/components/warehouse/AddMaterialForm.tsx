@@ -64,21 +64,27 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
       console.log('=== STARTING ADD MATERIAL PROCESS ===');
       let productToUse = selectedProduct;
 
+      // Safety check for selectedProduct.id
+      if (!selectedProduct.id || typeof selectedProduct.id !== 'string') {
+        console.error('ERROR: selectedProduct.id is invalid:', selectedProduct.id);
+        toast.error('Erro: ID do produto inválido');
+        return;
+      }
+
       // If it's an API product, create it locally first
       if (selectedProduct.id.startsWith('api_')) {
         console.log('Creating local product from API data:', selectedProduct);
         
-        // Remove the API prefix for local storage
-        const localProduct: Product = {
-          ...selectedProduct,
-          id: selectedProduct.id.replace('api_', ''),
-        };
-
-        console.log('Local product to create:', localProduct);
-        console.log('About to call createProductFromApi...');
-        await createProductFromApi(localProduct);
-        productToUse = localProduct;
-        console.log('Product created locally, now using:', productToUse);
+        try {
+          console.log('About to call createProductFromApi with original product...');
+          const createdProduct = await createProductFromApi(selectedProduct);
+          console.log('Product created from API successfully:', createdProduct);
+          productToUse = createdProduct;
+        } catch (createError) {
+          console.error('Error creating product from API:', createError);
+          toast.error('Erro ao criar produto localmente');
+          return;
+        }
       } else {
         console.log('Using existing local product:', productToUse);
       }
