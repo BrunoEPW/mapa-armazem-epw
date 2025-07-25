@@ -14,6 +14,14 @@ interface ApiResponse {
   data: ApiArtigo[];
 }
 
+interface ApiFilters {
+  Modelo?: string;
+  Tipo?: string;
+  Cor?: string;
+  Acabamento?: string;
+  Comprimento?: string;
+}
+
 class ApiService {
   // Multiple CORS proxies with automatic fallback
   private corsProxies = [
@@ -22,7 +30,7 @@ class ApiService {
     'https://corsproxy.io/?'
   ];
   private originalApiUrl = 'https://pituxa.epw.pt/api/artigos';
-  private cache = new Map<string, { data: ApiArtigo[]; timestamp: number; recordsTotal: number }>();
+  private cache = new Map<string, { data: ApiArtigo[]; timestamp: number; recordsTotal: number; filters?: ApiFilters }>();
   private cacheTimeout = 5 * 60 * 1000; // 5 minutes
   private prefetchCache = new Map<string, Promise<ApiResponse>>();
   private proxyHealthStatus = new Map<string, boolean>();
@@ -32,8 +40,8 @@ class ApiService {
     return result.data;
   }
 
-  async fetchArtigosWithTotal(draw: number = 1, start: number = 0, length: number = 10): Promise<ApiResponse> {
-    const cacheKey = `${start}-${length}`;
+  async fetchArtigosWithTotal(draw: number = 1, start: number = 0, length: number = 10, filters?: ApiFilters): Promise<ApiResponse> {
+    const cacheKey = this.generateCacheKey(start, length, filters);
     const cached = this.cache.get(cacheKey);
     
     // Return cached data if still valid
@@ -55,7 +63,7 @@ class ApiService {
     }
 
     // Create and cache the request promise
-    const requestPromise = this.makeRequest(draw, start, length);
+    const requestPromise = this.makeRequest(draw, start, length, filters);
     this.prefetchCache.set(cacheKey, requestPromise);
 
     try {
@@ -65,11 +73,14 @@ class ApiService {
       this.cache.set(cacheKey, {
         data: result.data || [],
         timestamp: Date.now(),
-        recordsTotal: result.recordsFiltered || result.recordsTotal || 0 // Use filtered count as priority
+        recordsTotal: result.recordsFiltered || result.recordsTotal || 0, // Use filtered count as priority
+        filters
       });
 
-      // Prefetch next page in background
-      this.prefetchNextPage(start, length);
+      // Prefetch next page in background (only for unfiltered requests)
+      if (!filters || Object.keys(filters).length === 0) {
+        this.prefetchNextPage(start, length);
+      }
 
       return result;
     } catch (error) {
@@ -99,14 +110,25 @@ class ApiService {
     }
   }
 
-  private async makeRequest(draw: number, start: number, length: number): Promise<ApiResponse> {
-    console.log(`🌐 [ApiService] Fetching page data - start: ${start}, length: ${length}`);
+  private async makeRequest(draw: number, start: number, length: number, filters?: ApiFilters): Promise<ApiResponse> {
+    const filterString = filters ? ` with filters: ${JSON.stringify(filters)}` : '';
+    console.log(`🌐 [ApiService] Fetching page data - start: ${start}, length: ${length}${filterString}`);
     
     // Build the original API URL with parameters
     const apiUrl = new URL(this.originalApiUrl);
     apiUrl.searchParams.set('draw', draw.toString());
     apiUrl.searchParams.set('start', start.toString());
     apiUrl.searchParams.set('length', length.toString());
+    
+    // Add filter parameters if provided
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value && value !== 'all' && value !== '') {
+          apiUrl.searchParams.set(key, value);
+          console.log(`🔍 [ApiService] Adding filter: ${key}=${value}`);
+        }
+      });
+    }
     
     // Try each proxy with fallback
     for (let i = 0; i < this.corsProxies.length; i++) {
@@ -115,7 +137,7 @@ class ApiService {
       try {
         console.log(`🔄 [ApiService] Trying proxy ${i + 1}/${this.corsProxies.length}: ${proxyUrl}`);
         
-        const result = await this.tryProxy(proxyUrl, apiUrl, draw, start, length);
+        const result = await this.tryProxy(proxyUrl, apiUrl, draw, start, length, filters);
         
         console.log(`✅ [ApiService] Proxy ${i + 1} successful`);
         this.proxyHealthStatus.set(proxyUrl, true);
@@ -136,7 +158,7 @@ class ApiService {
     throw new Error('All proxy attempts failed');
   }
 
-  private async tryProxy(proxyUrl: string, apiUrl: URL, draw: number, start: number, length: number): Promise<ApiResponse> {
+  private async tryProxy(proxyUrl: string, apiUrl: URL, draw: number, start: number, length: number, filters?: ApiFilters): Promise<ApiResponse> {
     let finalUrl: string;
     let fetchOptions: RequestInit;
     
@@ -279,7 +301,12 @@ class ApiService {
     
     return healthStatus;
   }
+
+  private generateCacheKey(start: number, length: number, filters?: ApiFilters): string {
+    const filterKey = filters ? JSON.stringify(filters) : '';
+    return `${start}-${length}-${filterKey}`;
+  }
 }
 
 export const apiService = new ApiService();
-export type { ApiArtigo, ApiResponse };
+export type { ApiArtigo, ApiResponse, ApiFilters };

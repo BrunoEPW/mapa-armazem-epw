@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Product } from '@/types/warehouse';
-import { useApiProductsPaginated } from '@/hooks/useApiProductsPaginated';
+import { useApiProductsWithFilters } from '@/hooks/useApiProductsWithFilters';
 import { useApiAttributes } from '@/hooks/useApiAttributes';
 import { useExclusions } from '@/contexts/ExclusionsContext';
+import { ApiFilters } from '@/services/apiService';
 import { EPWFilters } from './EPWFilters';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,15 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
   const { shouldExcludeProduct } = useExclusions();
   const exclusionFilter = (codigo: string) => shouldExcludeProduct(codigo);
 
+  // Convert EPW filters to API filters
+  const convertToApiFilters = (epwFilters: EPWFilters): ApiFilters => ({
+    Tipo: epwFilters.tipo !== 'all' ? epwFilters.tipo : undefined,
+    Modelo: epwFilters.modelo !== 'all' ? epwFilters.modelo : undefined,
+    Comprimento: epwFilters.comprimento !== 'all' ? epwFilters.comprimento : undefined,
+    Cor: epwFilters.cor !== 'all' ? epwFilters.cor : undefined,
+    Acabamento: epwFilters.acabamento !== 'all' ? epwFilters.acabamento : undefined,
+  });
+
   const {
     products,
     loading,
@@ -48,7 +58,10 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
     totalCount,
     setCurrentPage,
     connectionStatus,
-  } = useApiProductsPaginated(20, exclusionFilter);
+    activeFilters,
+    setFilters,
+    clearFilters: clearApiFilters,
+  } = useApiProductsWithFilters(20, exclusionFilter);
 
   const {
     modelos: apiModelos,
@@ -69,10 +82,15 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
   } = useApiAttributes();
 
   const handleEpwFilterChange = (filterType: keyof EPWFilters, value: string) => {
-    setEpwFilters(prev => ({
-      ...prev,
+    const newEpwFilters = {
+      ...epwFilters,
       [filterType]: value
-    }));
+    };
+    setEpwFilters(newEpwFilters);
+    
+    // Apply API filters immediately
+    const apiFilters = convertToApiFilters(newEpwFilters);
+    setFilters(apiFilters);
   };
 
   const clearEpwFilters = () => {
@@ -84,48 +102,26 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
       acabamento: 'all',
     });
     setSearchQuery('');
+    clearApiFilters();
   };
 
+  // Since we're using server-side filtering, we only need to filter by search query locally
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
-      // EPW code search
+      // EPW code search (local filter)
       const matchesEpwSearch = !searchQuery || 
         (product.epwOriginalCode && product.epwOriginalCode.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      // EPW filters
-      const matchesTipo = epwFilters.tipo === 'all' || 
-        (product.epwTipo && product.epwTipo.l === epwFilters.tipo);
-
-      const matchesModelo = epwFilters.modelo === 'all' || 
-        (product.epwModelo && product.epwModelo.l === epwFilters.modelo);
-
-      const matchesComprimento = epwFilters.comprimento === 'all' || 
-        (product.epwComprimento && product.epwComprimento.l === epwFilters.comprimento);
-
-      const matchesCor = epwFilters.cor === 'all' || 
-        (product.epwCor && product.epwCor.l === epwFilters.cor);
-
-      const matchesAcabamento = epwFilters.acabamento === 'all' || 
-        (product.epwAcabamento && product.epwAcabamento.l === epwFilters.acabamento);
-
-      return matchesEpwSearch && matchesTipo && matchesModelo && 
-             matchesComprimento && matchesCor && matchesAcabamento;
+      return matchesEpwSearch;
     });
-  }, [products, searchQuery, epwFilters]);
-
-  // Pagination for filtered products
-  const [localPage, setLocalPage] = useState(1);
-  const productsPerPage = 20;
-  const totalFilteredPages = Math.ceil(filteredProducts.length / productsPerPage);
-  const startIndex = (localPage - 1) * productsPerPage;
-  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + productsPerPage);
+  }, [products, searchQuery]);
 
   const hasActiveFilters = Object.values(epwFilters).some(value => value !== 'all') || searchQuery.length > 0;
+  const hasServerFilters = Object.values(epwFilters).some(value => value !== 'all');
+  const hasLocalSearchFilter = searchQuery.length > 0;
 
-  // Reset local page when filters change
-  useEffect(() => {
-    setLocalPage(1);
-  }, [searchQuery, epwFilters]);
+  // For display purposes - use filtered products when search is active, otherwise use all products
+  const displayProducts = hasLocalSearchFilter ? filteredProducts : products;
 
   return (
     <div className="space-y-4">
@@ -175,7 +171,8 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
       {/* Connection Status */}
       <div className="text-sm text-muted-foreground">
         Status: {connectionStatus} | 
-        {hasActiveFilters ? ` Filtrados: ${filteredProducts.length} | ` : ''} 
+        {hasLocalSearchFilter ? ` Busca local: ${filteredProducts.length} | ` : ''}
+        {hasServerFilters ? ' Filtros aplicados no servidor | ' : ''}
         Total: {totalCount} produtos
       </div>
 
@@ -206,14 +203,14 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
                   {error}
                 </TableCell>
               </TableRow>
-            ) : filteredProducts.length === 0 ? (
+            ) : displayProducts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   {hasActiveFilters ? "Nenhum produto encontrado com os filtros aplicados" : "Nenhum produto encontrado"}
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedProducts.map((product) => (
+              displayProducts.map((product) => (
                 <TableRow 
                   key={product.id}
                   className={selectedProductId === product.id ? "bg-muted" : ""}
@@ -254,38 +251,12 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
       </div>
 
       {/* Pagination */}
-      {(totalFilteredPages > 1 && hasActiveFilters) ? (
-        // Local pagination for filtered results
+      {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Página {localPage} de {totalFilteredPages} (produtos filtrados)
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setLocalPage(localPage - 1)}
-              disabled={localPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setLocalPage(localPage + 1)}
-              disabled={localPage === totalFilteredPages}
-            >
-              Próxima
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      ) : totalPages > 1 && !hasActiveFilters ? (
-        // API pagination for unfiltered results
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Página {currentPage} de {totalPages} (API)
+            Página {currentPage} de {totalPages} 
+            {hasServerFilters ? ' (filtrado no servidor)' : ' (todos os produtos)'}
+            {hasLocalSearchFilter ? ` - ${displayProducts.length} resultados da busca local` : ''}
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -308,7 +279,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
             </Button>
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 };
