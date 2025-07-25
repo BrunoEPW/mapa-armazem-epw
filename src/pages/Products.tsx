@@ -91,12 +91,12 @@ const Products: React.FC = () => {
       (product.epwOriginalCode && product.epwOriginalCode.toLowerCase().includes(searchQuery.toLowerCase()));
 
     // EPW filters - handle missing EPW data gracefully
-    const matchesTipo = !epwFilters.tipo || (product.epwTipo?.l === epwFilters.tipo);
-    const matchesCertificacao = !epwFilters.certificacao || (product.epwCertificacao?.l === epwFilters.certificacao);
-    const matchesModelo = !epwFilters.modelo || (product.epwModelo?.l === epwFilters.modelo);
-    const matchesComprimento = !epwFilters.comprimento || (product.epwComprimento?.l === epwFilters.comprimento);
-    const matchesCor = !epwFilters.cor || (product.epwCor?.l === epwFilters.cor);
-    const matchesAcabamento = !epwFilters.acabamento || (product.epwAcabamento?.l === epwFilters.acabamento);
+    const matchesTipo = !epwFilters.tipo || epwFilters.tipo === 'all' || (product.epwTipo?.l === epwFilters.tipo);
+    const matchesCertificacao = !epwFilters.certificacao || epwFilters.certificacao === 'all' || (product.epwCertificacao?.l === epwFilters.certificacao);
+    const matchesModelo = !epwFilters.modelo || epwFilters.modelo === 'all' || (product.epwModelo?.l === epwFilters.modelo);
+    const matchesComprimento = !epwFilters.comprimento || epwFilters.comprimento === 'all' || (product.epwComprimento?.l === epwFilters.comprimento);
+    const matchesCor = !epwFilters.cor || epwFilters.cor === 'all' || (product.epwCor?.l === epwFilters.cor);
+    const matchesAcabamento = !epwFilters.acabamento || epwFilters.acabamento === 'all' || (product.epwAcabamento?.l === epwFilters.acabamento);
 
     return matchesSearch && matchesTipo && matchesCertificacao && matchesModelo && matchesComprimento && matchesCor && matchesAcabamento;
   });

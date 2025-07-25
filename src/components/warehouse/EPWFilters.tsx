@@ -222,12 +222,12 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
           {hasActiveFilters && (
             <Button
               onClick={() => {
-                onFilterChange('tipo', '');
-                onFilterChange('certificacao', '');
-                onFilterChange('modelo', '');
-                onFilterChange('comprimento', '');
-                onFilterChange('cor', '');
-                onFilterChange('acabamento', '');
+                onFilterChange('tipo', 'all');
+                onFilterChange('certificacao', 'all');
+                onFilterChange('modelo', 'all');
+                onFilterChange('comprimento', 'all');
+                onFilterChange('cor', 'all');
+                onFilterChange('acabamento', 'all');
               }}
               variant="outline"
               size="sm"
@@ -260,7 +260,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               } />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="">Todos os tipos</SelectItem>
+              <SelectItem value="all">Todos os tipos</SelectItem>
               {tiposError && (
                 <SelectItem value="" disabled className="text-muted-foreground">
                   ⚠️ API EPW indisponível - usando dados locais
@@ -294,7 +294,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               } />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="">Todas certificações</SelectItem>
+              <SelectItem value="all">Todas certificações</SelectItem>
               {certificacoesError && (
                 <SelectItem value="" disabled className="text-muted-foreground">
                   ⚠️ API EPW indisponível - usando dados locais
@@ -328,7 +328,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               } />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="">Todos os modelos</SelectItem>
+              <SelectItem value="all">Todos os modelos</SelectItem>
               {modelosError && (
                 <SelectItem value="" disabled className="text-muted-foreground">
                   ⚠️ API EPW indisponível - usando dados locais
@@ -362,7 +362,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               } />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="">Todos comprimentos</SelectItem>
+              <SelectItem value="all">Todos comprimentos</SelectItem>
               {comprimentosError && (
                 <SelectItem value="" disabled className="text-muted-foreground">
                   ⚠️ API EPW indisponível - usando dados locais
@@ -396,7 +396,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               } />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="">Todas as cores</SelectItem>
+              <SelectItem value="all">Todas as cores</SelectItem>
               {coresError && (
                 <SelectItem value="" disabled className="text-muted-foreground">
                   ⚠️ API EPW indisponível - usando dados locais
@@ -430,7 +430,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               } />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="">Todos acabamentos</SelectItem>
+              <SelectItem value="all">Todos acabamentos</SelectItem>
               {acabamentosError && (
                 <SelectItem value="" disabled className="text-muted-foreground">
                   ⚠️ API EPW indisponível - usando dados locais
