@@ -67,6 +67,9 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useRealTimeSync(refreshData, refreshData, refreshData);
 
   const createProductFromApi = async (apiProduct: any): Promise<Product> => {
+    console.log('=== CREATE PRODUCT FROM API DEBUG ===');
+    console.log('Input apiProduct:', apiProduct);
+    
     // Create product data without the 'api_' prefix
     const newProduct: Omit<Product, 'id'> = {
       familia: apiProduct.familia,
@@ -75,28 +78,37 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       cor: apiProduct.cor,
       comprimento: apiProduct.comprimento,
       foto: apiProduct.foto,
+      // Copy EPW fields if they exist
+      epwTipo: apiProduct.epwTipo,
+      epwCertificacao: apiProduct.epwCertificacao,
+      epwModelo: apiProduct.epwModelo,
+      epwComprimento: apiProduct.epwComprimento,
+      epwCor: apiProduct.epwCor,
+      epwAcabamento: apiProduct.epwAcabamento,
+      epwOriginalCode: apiProduct.epwOriginalCode,
     };
 
-    // Add the product (this updates the local state)
-    await operations.addProduct(newProduct);
-    
-    // Find the newly created product in the local state
-    // We need to wait a moment for the state to update
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    const createdProduct = products.find(p => 
-      p.familia === newProduct.familia &&
-      p.modelo === newProduct.modelo &&
-      p.acabamento === newProduct.acabamento &&
-      p.cor === newProduct.cor &&
-      p.comprimento === newProduct.comprimento
-    );
+    console.log('Product to create:', newProduct);
 
-    if (!createdProduct) {
-      throw new Error('Failed to create product from API');
+    try {
+      // Add the product and get the result directly
+      console.log('Calling operations.addProduct...');
+      await operations.addProduct(newProduct);
+      console.log('Product added successfully');
+      
+      // Return the expected product structure with the provided ID
+      const resultProduct: Product = {
+        id: apiProduct.id,
+        ...newProduct,
+      };
+      
+      console.log('Returning product:', resultProduct);
+      return resultProduct;
+      
+    } catch (error) {
+      console.error('Error creating product from API:', error);
+      throw error;
     }
-
-    return createdProduct;
   };
 
   const handleClearAllMaterials = async () => {
