@@ -22,7 +22,7 @@ export const useApiProductsPaginated = (
   itemsPerPage: number = 20,
   exclusionFilter?: (codigo: string) => boolean
 ): UseApiProductsPaginatedReturn => {
-  console.log('🔍 [useApiProductsPaginated] Hook inicializado com', itemsPerPage, 'itens por página');
+  console.log('🔍 [useApiProductsPaginated] Hook inicializado com', itemsPerPage, 'itens por página, exclusionFilter:', !!exclusionFilter);
   
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -118,8 +118,18 @@ export const useApiProductsPaginated = (
       
       // Apply exclusions filter if provided
       const filteredData = exclusionFilter 
-        ? apiResponse.data.filter(item => !exclusionFilter(item.strCodigo || ''))
+        ? apiResponse.data.filter(item => {
+            const shouldExclude = exclusionFilter(item.strCodigo || '');
+            if (config.isDevelopment && shouldExclude) {
+              console.log(`🚫 [Exclusions] Excluding product: ${item.strCodigo}`);
+            }
+            return !shouldExclude;
+          })
         : apiResponse.data;
+      
+      if (config.isDevelopment && exclusionFilter) {
+        console.log(`📊 [Exclusions] Original: ${apiResponse.data.length}, Filtered: ${filteredData.length}`);
+      }
       const mappedProducts = filteredData.map(mapApiProductToProduct);
       
       setProducts(mappedProducts);

@@ -65,9 +65,15 @@ export const ExclusionsProvider: React.FC<ExclusionsProviderProps> = ({ children
   const shouldExcludeProduct = (codigo: string): boolean => {
     if (!exclusions.enabled || !codigo) return false;
     
-    return exclusions.prefixes.some(prefix => 
+    const shouldExclude = exclusions.prefixes.some(prefix => 
       codigo.toUpperCase().startsWith(prefix.toUpperCase())
     );
+    
+    if (shouldExclude) {
+      console.log(`🚫 [ExclusionsContext] Excluding product with code: ${codigo}, prefixes: ${exclusions.prefixes.join(', ')}`);
+    }
+    
+    return shouldExclude;
   };
 
   return (
