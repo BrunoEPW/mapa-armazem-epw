@@ -9,10 +9,22 @@ import { useWarehouse } from '@/contexts/WarehouseContext';
 import { FAMILIAS } from '@/data/product-data';
 import { useNavigate } from 'react-router-dom';
 import { MovementHistoryDialog } from './MovementHistoryDialog';
+import { useApiAttributes } from '@/hooks/useApiAttributes';
 
 const SearchPanel: React.FC = () => {
   const navigate = useNavigate();
   const { searchMaterials, setSelectedShelf, products, materials } = useWarehouse();
+  const { 
+    modelos: apiModelos, 
+    acabamentos: apiAcabamentos, 
+    comprimentos: apiComprimentos,
+    modelosLoading,
+    acabamentosLoading,
+    comprimentosLoading,
+    modelosError,
+    acabamentosError,
+    comprimentosError
+  } = useApiAttributes();
   
   const [searchQuery, setSearchQuery] = useState({
     familia: '',
@@ -24,11 +36,13 @@ const SearchPanel: React.FC = () => {
   const [searchResults, setSearchResults] = useState<Array<any>>([]);
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
 
-  // Get unique values from products
+  // Get unique values from products (only for família, others use API)
   const uniqueFamilias = [...new Set(products.map(p => p.familia))].filter(Boolean).sort();
-  const uniqueModelos = [...new Set(products.map(p => p.modelo))].sort();
-  const uniqueAcabamentos = [...new Set(products.map(p => p.acabamento))].sort();
-  const uniqueComprimentos = [...new Set(products.map(p => p.comprimento.toString()))].sort((a, b) => parseInt(a) - parseInt(b));
+  
+  // Use API data with fallback to local data if API fails
+  const modelos = modelosError ? [...new Set(products.map(p => p.modelo))].sort() : apiModelos;
+  const acabamentos = acabamentosError ? [...new Set(products.map(p => p.acabamento))].sort() : apiAcabamentos;
+  const comprimentos = comprimentosError ? [...new Set(products.map(p => p.comprimento.toString()))].sort((a, b) => parseInt(a) - parseInt(b)) : apiComprimentos;
 
   const handleSearch = () => {
     const query: any = {};
@@ -111,15 +125,25 @@ const SearchPanel: React.FC = () => {
               <Label htmlFor="modelo">Modelo</Label>
               <Select value={searchQuery.modelo} onValueChange={(value) => setSearchQuery(prev => ({ ...prev, modelo: value }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o modelo" />
+                  <SelectValue placeholder={modelosLoading ? "Carregando..." : "Selecione o modelo"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os modelos</SelectItem>
-                  {uniqueModelos.map((modelo) => (
-                    <SelectItem key={modelo} value={modelo}>
-                      {modelo}
-                    </SelectItem>
-                  ))}
+                  {modelosLoading ? (
+                    <SelectItem value="loading" disabled>Carregando modelos...</SelectItem>
+                  ) : modelosError ? (
+                    modelos.map((modelo) => (
+                      <SelectItem key={modelo} value={modelo}>
+                        {modelo}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    modelos.map((modelo) => (
+                      <SelectItem key={modelo.l} value={modelo.l}>
+                        {modelo.l} - {modelo.d}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -128,15 +152,25 @@ const SearchPanel: React.FC = () => {
               <Label htmlFor="acabamento">Acabamento</Label>
               <Select value={searchQuery.acabamento} onValueChange={(value) => setSearchQuery(prev => ({ ...prev, acabamento: value }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o acabamento" />
+                  <SelectValue placeholder={acabamentosLoading ? "Carregando..." : "Selecione o acabamento"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os acabamentos</SelectItem>
-                  {uniqueAcabamentos.map((acabamento) => (
-                    <SelectItem key={acabamento} value={acabamento}>
-                      {acabamento}
-                    </SelectItem>
-                  ))}
+                  {acabamentosLoading ? (
+                    <SelectItem value="loading" disabled>Carregando acabamentos...</SelectItem>
+                  ) : acabamentosError ? (
+                    acabamentos.map((acabamento) => (
+                      <SelectItem key={acabamento} value={acabamento}>
+                        {acabamento}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    acabamentos.map((acabamento) => (
+                      <SelectItem key={acabamento.l} value={acabamento.l}>
+                        {acabamento.l} - {acabamento.d}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -145,15 +179,25 @@ const SearchPanel: React.FC = () => {
               <Label htmlFor="comprimento">Comprimento (mm)</Label>
               <Select value={searchQuery.comprimento} onValueChange={(value) => setSearchQuery(prev => ({ ...prev, comprimento: value }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o comprimento" />
+                  <SelectValue placeholder={comprimentosLoading ? "Carregando..." : "Selecione o comprimento"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os comprimentos</SelectItem>
-                  {uniqueComprimentos.map((comprimento) => (
-                    <SelectItem key={comprimento} value={comprimento}>
-                      {comprimento}mm
-                    </SelectItem>
-                  ))}
+                  {comprimentosLoading ? (
+                    <SelectItem value="loading" disabled>Carregando comprimentos...</SelectItem>
+                  ) : comprimentosError ? (
+                    comprimentos.map((comprimento) => (
+                      <SelectItem key={comprimento} value={comprimento}>
+                        {comprimento}mm
+                      </SelectItem>
+                    ))
+                  ) : (
+                    comprimentos.map((comprimento) => (
+                      <SelectItem key={comprimento.l} value={comprimento.l}>
+                        {comprimento.l}mm - {comprimento.d}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
