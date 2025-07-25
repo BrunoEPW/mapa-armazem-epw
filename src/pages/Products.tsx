@@ -10,7 +10,7 @@ import { Search, Wifi, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import { EPWFilters } from '@/components/warehouse/EPWFilters';
 import { config } from '@/lib/config';
-import productsBanner from '@/assets/products-banner.jpg';
+import productsBanner from '@/assets/epw-products-banner.jpg';
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
