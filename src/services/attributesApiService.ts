@@ -32,6 +32,10 @@ class AttributesApiService {
     return this.fetchAttribute('comprimento');
   }
 
+  async fetchCores(): Promise<ApiAttribute[]> {
+    return this.fetchAttribute('cor');
+  }
+
   private async fetchAttribute(attributeType: string): Promise<ApiAttribute[]> {
     const cacheKey = attributeType;
     const cached = this.cache.get(cacheKey);

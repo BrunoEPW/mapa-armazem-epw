@@ -22,14 +22,17 @@ interface EPWFiltersProps {
   apiTipos?: ApiAttribute[];
   apiAcabamentos?: ApiAttribute[];
   apiComprimentos?: ApiAttribute[];
+  apiCores?: ApiAttribute[];
   modelosLoading?: boolean;
   tiposLoading?: boolean;
   acabamentosLoading?: boolean;
   comprimentosLoading?: boolean;
+  coresLoading?: boolean;
   modelosError?: string | null;
   tiposError?: string | null;
   acabamentosError?: string | null;
   comprimentosError?: string | null;
+  coresError?: string | null;
   // Exclusions count for display
   excludedCount?: number;
 }
@@ -42,14 +45,17 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
   apiTipos = [],
   apiAcabamentos = [],
   apiComprimentos = [],
+  apiCores = [],
   modelosLoading = false,
   tiposLoading = false,
   acabamentosLoading = false,
   comprimentosLoading = false,
+  coresLoading = false,
   modelosError = null,
   tiposError = null,
   acabamentosError = null,
   comprimentosError = null,
+  coresError = null,
   excludedCount = 0,
 }) => {
   // Extract unique values for each EPW field from available products
@@ -158,6 +164,26 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
       .map(([l, d]) => ({ l, d }))
       .sort((a, b) => a.d.localeCompare(b.d));
   }, [apiComprimentos, products]);
+
+  // Cor options from API (with fallback to products)
+  const corOptions = useMemo(() => {
+    if (apiCores.length > 0) {
+      // Use API data - return objects for easy mapping
+      return apiCores;
+    }
+    
+    // Fallback to products data - convert to same format
+    const productCores = new Map<string, string>();
+    products.forEach(product => {
+      if (product.epwCor?.l) {
+        productCores.set(product.epwCor.l, product.epwCor.d);
+      }
+    });
+    
+    return Array.from(productCores.entries())
+      .map(([l, d]) => ({ l, d }))
+      .sort((a, b) => a.d.localeCompare(b.d));
+  }, [apiCores, products]);
 
   const hasActiveFilters = Object.values(filters).some(filter => filter !== '');
 
@@ -312,20 +338,31 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
 
         {/* Cor Filter */}
         <div>
-          <label className="text-white text-sm font-medium mb-2 block">
+          <label className="text-white text-sm font-medium mb-2 block flex items-center gap-2">
             Cor
+            {coresLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+            {coresError && <span className="text-red-400 text-xs">(API erro)</span>}
           </label>
           <Select
             value={filters.cor}
             onValueChange={(value) => onFilterChange('cor', value)}
           >
             <SelectTrigger className="bg-card border-border text-white">
-              <SelectValue placeholder="Todas as cores" />
+              <SelectValue placeholder={
+                coresLoading ? "Carregando cores da API..." :
+                coresError ? "Erro na API - usando dados locais" :
+                "Todas as cores"
+              } />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              {filterOptions.cor.map((option) => (
-                <SelectItem key={option} value={option.split(' - ')[0]}>
-                  {option}
+              {coresError && (
+                <SelectItem value="" disabled className="text-muted-foreground">
+                  ⚠️ API EPW indisponível - usando dados locais
+                </SelectItem>
+              )}
+              {corOptions.map((cor) => (
+                <SelectItem key={cor.l} value={cor.l}>
+                  {cor.d}
                 </SelectItem>
               ))}
             </SelectContent>

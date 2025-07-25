@@ -44,14 +44,17 @@ const Products: React.FC = () => {
     tipos: apiTipos,
     acabamentos: apiAcabamentos,
     comprimentos: apiComprimentos,
+    cores: apiCores,
     modelosLoading,
     tiposLoading,
     acabamentosLoading,
     comprimentosLoading,
+    coresLoading,
     modelosError,
     tiposError,
     acabamentosError,
     comprimentosError,
+    coresError,
     refresh: refreshAttributes,
   } = useApiAttributes();
 
@@ -182,18 +185,21 @@ const Products: React.FC = () => {
               products={products}
               filters={epwFilters}
               onFilterChange={handleEpwFilterChange}
-          apiModelos={apiModelos}
-          apiTipos={apiTipos}
-          apiAcabamentos={apiAcabamentos}
-          apiComprimentos={apiComprimentos}
-          modelosLoading={modelosLoading}
-          tiposLoading={tiposLoading}
-          acabamentosLoading={acabamentosLoading}
-          comprimentosLoading={comprimentosLoading}
-          modelosError={modelosError}
-          tiposError={tiposError}
-          acabamentosError={acabamentosError}
-          comprimentosError={comprimentosError}
+              apiModelos={apiModelos}
+              apiTipos={apiTipos}
+              apiAcabamentos={apiAcabamentos}
+              apiComprimentos={apiComprimentos}
+              apiCores={apiCores}
+              modelosLoading={modelosLoading}
+              tiposLoading={tiposLoading}
+              acabamentosLoading={acabamentosLoading}
+              comprimentosLoading={comprimentosLoading}
+              coresLoading={coresLoading}
+              modelosError={modelosError}
+              tiposError={tiposError}
+              acabamentosError={acabamentosError}
+              comprimentosError={comprimentosError}
+              coresError={coresError}
               excludedCount={excludedCount}
             />
             {config.isDevelopment && (
