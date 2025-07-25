@@ -107,7 +107,14 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Background Logo */}
+      <div className="fixed inset-0 flex items-center justify-center pointer-events-none select-none">
+        <div className="opacity-[0.03] scale-[4] transform">
+          <EPWLogo size="large" />
+        </div>
+      </div>
+      
       <Header />
       <div className="p-4 sm:p-6 lg:p-8 relative">
         <div className="max-w-7xl mx-auto">
