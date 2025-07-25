@@ -42,10 +42,13 @@ const Products: React.FC = () => {
   const {
     modelos: apiModelos,
     tipos: apiTipos,
+    acabamentos: apiAcabamentos,
     modelosLoading,
     tiposLoading,
+    acabamentosLoading,
     modelosError,
     tiposError,
+    acabamentosError,
     refresh: refreshAttributes,
   } = useApiAttributes();
 
@@ -176,12 +179,15 @@ const Products: React.FC = () => {
               products={products}
               filters={epwFilters}
               onFilterChange={handleEpwFilterChange}
-              apiModelos={apiModelos}
-              apiTipos={apiTipos}
-              modelosLoading={modelosLoading}
-              tiposLoading={tiposLoading}
-              modelosError={modelosError}
-              tiposError={tiposError}
+          apiModelos={apiModelos}
+          apiTipos={apiTipos}
+          apiAcabamentos={apiAcabamentos}
+          modelosLoading={modelosLoading}
+          tiposLoading={tiposLoading}
+          acabamentosLoading={acabamentosLoading}
+          modelosError={modelosError}
+          tiposError={tiposError}
+          acabamentosError={acabamentosError}
               excludedCount={excludedCount}
             />
             {config.isDevelopment && (

@@ -20,10 +20,13 @@ interface EPWFiltersProps {
   // API attributes for filters
   apiModelos?: ApiAttribute[];
   apiTipos?: ApiAttribute[];
+  apiAcabamentos?: ApiAttribute[];
   modelosLoading?: boolean;
   tiposLoading?: boolean;
+  acabamentosLoading?: boolean;
   modelosError?: string | null;
   tiposError?: string | null;
+  acabamentosError?: string | null;
   // Exclusions count for display
   excludedCount?: number;
 }
@@ -34,10 +37,13 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
   onFilterChange,
   apiModelos = [],
   apiTipos = [],
+  apiAcabamentos = [],
   modelosLoading = false,
   tiposLoading = false,
+  acabamentosLoading = false,
   modelosError = null,
   tiposError = null,
+  acabamentosError = null,
   excludedCount = 0,
 }) => {
   // Extract unique values for each EPW field from available products
@@ -106,6 +112,26 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
       .map(([l, d]) => ({ l, d }))
       .sort((a, b) => a.d.localeCompare(b.d));
   }, [apiTipos, products]);
+
+  // Acabamento options from API (with fallback to products)
+  const acabamentoOptions = useMemo(() => {
+    if (apiAcabamentos.length > 0) {
+      // Use API data - return objects for easy mapping
+      return apiAcabamentos;
+    }
+    
+    // Fallback to products data - convert to same format
+    const productAcabamentos = new Map<string, string>();
+    products.forEach(product => {
+      if (product.epwAcabamento?.l) {
+        productAcabamentos.set(product.epwAcabamento.l, product.epwAcabamento.d);
+      }
+    });
+    
+    return Array.from(productAcabamentos.entries())
+      .map(([l, d]) => ({ l, d }))
+      .sort((a, b) => a.d.localeCompare(b.d));
+  }, [apiAcabamentos, products]);
 
   const hasActiveFilters = Object.values(filters).some(filter => filter !== '');
 
@@ -271,20 +297,31 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
 
         {/* Acabamento Filter */}
         <div>
-          <label className="text-white text-sm font-medium mb-2 block">
+          <label className="text-white text-sm font-medium mb-2 block flex items-center gap-2">
             Acabamento
+            {acabamentosLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+            {acabamentosError && <span className="text-red-400 text-xs">(API erro)</span>}
           </label>
           <Select
             value={filters.acabamento}
             onValueChange={(value) => onFilterChange('acabamento', value)}
           >
             <SelectTrigger className="bg-card border-border text-white">
-              <SelectValue placeholder="Todos acabamentos" />
+              <SelectValue placeholder={
+                acabamentosLoading ? "Carregando acabamentos da API..." :
+                acabamentosError ? "Erro na API - usando dados locais" :
+                "Todos acabamentos"
+              } />
             </SelectTrigger>
             <SelectContent className="bg-card border-border text-foreground z-50">
-              {filterOptions.acabamento.map((option) => (
-                <SelectItem key={option} value={option.split(' - ')[0]}>
-                  {option}
+              {acabamentosError && (
+                <SelectItem value="" disabled className="text-muted-foreground">
+                  ⚠️ API EPW indisponível - usando dados locais
+                </SelectItem>
+              )}
+              {acabamentoOptions.map((acabamento) => (
+                <SelectItem key={acabamento.l} value={acabamento.l}>
+                  {acabamento.d}
                 </SelectItem>
               ))}
             </SelectContent>
