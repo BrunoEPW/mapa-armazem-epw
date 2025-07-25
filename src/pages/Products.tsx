@@ -16,7 +16,6 @@ const Products: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [epwFilters, setEpwFilters] = useState({
     tipo: '',
-    certificacao: '',
     modelo: '',
     comprimento: '',
     cor: '',
@@ -45,19 +44,16 @@ const Products: React.FC = () => {
     acabamentos: apiAcabamentos,
     comprimentos: apiComprimentos,
     cores: apiCores,
-    certificacoes: apiCertificacoes,
     modelosLoading,
     tiposLoading,
     acabamentosLoading,
     comprimentosLoading,
     coresLoading,
-    certificacoesLoading,
     modelosError,
     tiposError,
     acabamentosError,
     comprimentosError,
     coresError,
-    certificacoesError,
     refresh: refreshAttributes,
   } = useApiAttributes();
 
@@ -71,7 +67,6 @@ const Products: React.FC = () => {
   const clearEpwFilters = () => {
     setEpwFilters({
       tipo: '',
-      certificacao: '',
       modelo: '',
       comprimento: '',
       cor: '',
@@ -92,13 +87,12 @@ const Products: React.FC = () => {
 
     // EPW filters - handle missing EPW data gracefully
     const matchesTipo = !epwFilters.tipo || epwFilters.tipo === 'all' || (product.epwTipo?.l === epwFilters.tipo);
-    const matchesCertificacao = !epwFilters.certificacao || epwFilters.certificacao === 'all' || (product.epwCertificacao?.l === epwFilters.certificacao);
     const matchesModelo = !epwFilters.modelo || epwFilters.modelo === 'all' || (product.epwModelo?.l === epwFilters.modelo);
     const matchesComprimento = !epwFilters.comprimento || epwFilters.comprimento === 'all' || (product.epwComprimento?.l === epwFilters.comprimento);
     const matchesCor = !epwFilters.cor || epwFilters.cor === 'all' || (product.epwCor?.l === epwFilters.cor);
     const matchesAcabamento = !epwFilters.acabamento || epwFilters.acabamento === 'all' || (product.epwAcabamento?.l === epwFilters.acabamento);
 
-    return matchesSearch && matchesTipo && matchesCertificacao && matchesModelo && matchesComprimento && matchesCor && matchesAcabamento;
+    return matchesSearch && matchesTipo && matchesModelo && matchesComprimento && matchesCor && matchesAcabamento;
   });
 
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -193,19 +187,16 @@ const Products: React.FC = () => {
               apiAcabamentos={apiAcabamentos}
               apiComprimentos={apiComprimentos}
               apiCores={apiCores}
-              apiCertificacoes={apiCertificacoes}
               modelosLoading={modelosLoading}
               tiposLoading={tiposLoading}
               acabamentosLoading={acabamentosLoading}
               comprimentosLoading={comprimentosLoading}
               coresLoading={coresLoading}
-              certificacoesLoading={certificacoesLoading}
               modelosError={modelosError}
               tiposError={tiposError}
               acabamentosError={acabamentosError}
               comprimentosError={comprimentosError}
               coresError={coresError}
-              certificacoesError={certificacoesError}
               excludedCount={excludedCount}
             />
             {config.isDevelopment && (

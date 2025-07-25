@@ -10,7 +10,6 @@ interface EPWFiltersProps {
   products: Product[];
   filters: {
     tipo: string;
-    certificacao: string;
     modelo: string;
     comprimento: string;
     cor: string;
@@ -23,19 +22,16 @@ interface EPWFiltersProps {
   apiAcabamentos?: ApiAttribute[];
   apiComprimentos?: ApiAttribute[];
   apiCores?: ApiAttribute[];
-  apiCertificacoes?: ApiAttribute[];
   modelosLoading?: boolean;
   tiposLoading?: boolean;
   acabamentosLoading?: boolean;
   comprimentosLoading?: boolean;
   coresLoading?: boolean;
-  certificacoesLoading?: boolean;
   modelosError?: string | null;
   tiposError?: string | null;
   acabamentosError?: string | null;
   comprimentosError?: string | null;
   coresError?: string | null;
-  certificacoesError?: string | null;
   // Exclusions count for display
   excludedCount?: number;
 }
@@ -49,26 +45,22 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
   apiAcabamentos = [],
   apiComprimentos = [],
   apiCores = [],
-  apiCertificacoes = [],
   modelosLoading = false,
   tiposLoading = false,
   acabamentosLoading = false,
   comprimentosLoading = false,
   coresLoading = false,
-  certificacoesLoading = false,
   modelosError = null,
   tiposError = null,
   acabamentosError = null,
   comprimentosError = null,
   coresError = null,
-  certificacoesError = null,
   excludedCount = 0,
 }) => {
   // Extract unique values for each EPW field from available products
   const filterOptions = useMemo(() => {
     const options = {
       tipo: new Set<string>(),
-      certificacao: new Set<string>(),
       comprimento: new Set<string>(),
       cor: new Set<string>(),
       acabamento: new Set<string>(),
@@ -76,7 +68,6 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
 
     products.forEach(product => {
       if (product.epwTipo?.l) options.tipo.add(`${product.epwTipo.l} - ${product.epwTipo.d}`);
-      if (product.epwCertificacao?.l) options.certificacao.add(`${product.epwCertificacao.l} - ${product.epwCertificacao.d}`);
       if (product.epwComprimento?.l) options.comprimento.add(`${product.epwComprimento.l} - ${product.epwComprimento.d}`);
       if (product.epwCor?.l) options.cor.add(`${product.epwCor.l} - ${product.epwCor.d}`);
       if (product.epwAcabamento?.l) options.acabamento.add(`${product.epwAcabamento.l} - ${product.epwAcabamento.d}`);
@@ -84,7 +75,6 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
 
     return {
       tipo: Array.from(options.tipo).sort(),
-      certificacao: Array.from(options.certificacao).sort(),
       comprimento: Array.from(options.comprimento).sort(),
       cor: Array.from(options.cor).sort(),
       acabamento: Array.from(options.acabamento).sort(),
@@ -191,25 +181,6 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
       .sort((a, b) => a.d.localeCompare(b.d));
   }, [apiCores, products]);
 
-  // Certificacao options from API (with fallback to products)
-  const certificacaoOptions = useMemo(() => {
-    if (apiCertificacoes.length > 0) {
-      // Use API data - return objects for easy mapping
-      return apiCertificacoes;
-    }
-    
-    // Fallback to products data - convert to same format
-    const productCertificacoes = new Map<string, string>();
-    products.forEach(product => {
-      if (product.epwCertificacao?.l) {
-        productCertificacoes.set(product.epwCertificacao.l, product.epwCertificacao.d);
-      }
-    });
-    
-    return Array.from(productCertificacoes.entries())
-      .map(([l, d]) => ({ l, d }))
-      .sort((a, b) => a.d.localeCompare(b.d));
-  }, [apiCertificacoes, products]);
 
   const hasActiveFilters = Object.values(filters).some(filter => filter !== '');
 
@@ -220,19 +191,18 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
         <div className="flex items-center gap-2">
           <ExclusionsDialog excludedCount={excludedCount} />
           {hasActiveFilters && (
-            <Button
-              onClick={() => {
-                onFilterChange('tipo', 'all');
-                onFilterChange('certificacao', 'all');
-                onFilterChange('modelo', 'all');
-                onFilterChange('comprimento', 'all');
-                onFilterChange('cor', 'all');
-                onFilterChange('acabamento', 'all');
-              }}
-              variant="outline"
-              size="sm"
-              className="text-white border-white hover:bg-white hover:text-black"
-            >
+              <Button
+                onClick={() => {
+                  onFilterChange('tipo', 'all');
+                  onFilterChange('modelo', 'all');
+                  onFilterChange('comprimento', 'all');
+                  onFilterChange('cor', 'all');
+                  onFilterChange('acabamento', 'all');
+                }}
+                variant="outline"
+                size="sm"
+                className="text-white border-white hover:bg-white hover:text-black"
+              >
               <X className="w-4 h-4 mr-1" />
               Limpar Filtros
             </Button>
@@ -240,7 +210,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {/* Tipo Filter */}
         <div>
           <label className="text-white text-sm font-medium mb-2 block flex items-center gap-2">
@@ -275,39 +245,6 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
           </Select>
         </div>
 
-        {/* Certificação Filter */}
-        <div>
-          <label className="text-white text-sm font-medium mb-2 block flex items-center gap-2">
-            Certificação
-            {certificacoesLoading && <Loader2 className="w-3 h-3 animate-spin" />}
-            {certificacoesError && <span className="text-red-400 text-xs">(API erro)</span>}
-          </label>
-          <Select
-            value={filters.certificacao}
-            onValueChange={(value) => onFilterChange('certificacao', value)}
-          >
-            <SelectTrigger className="bg-card border-border text-white">
-              <SelectValue placeholder={
-                certificacoesLoading ? "Carregando certificações da API..." :
-                certificacoesError ? "Erro na API - usando dados locais" :
-                "Todas certificações"
-              } />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="all">Todas certificações</SelectItem>
-              {certificacoesError && (
-                <SelectItem value="" disabled className="text-muted-foreground">
-                  ⚠️ API EPW indisponível - usando dados locais
-                </SelectItem>
-              )}
-              {certificacaoOptions.map((certificacao) => (
-                <SelectItem key={certificacao.l} value={certificacao.l}>
-                  {certificacao.d}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
 
         {/* Modelo Filter */}
         <div>
