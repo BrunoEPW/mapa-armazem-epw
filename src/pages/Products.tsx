@@ -230,11 +230,6 @@ const Products: React.FC = () => {
                       <tr className="border-b">
                          <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Código do Produto</th>
                          <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Descrição</th>
-                         <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Tipo</th>
-                         <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Modelo</th>
-                         <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Comprimento</th>
-                         <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Cor</th>
-                         <th className="text-left p-3 sm:p-4 font-medium text-sm sm:text-base">Acabamento</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -245,21 +240,6 @@ const Products: React.FC = () => {
                            </td>
                            <td className="p-3 sm:p-4 text-sm sm:text-base">
                              {product.descricao || product.acabamento}
-                           </td>
-                           <td className="p-3 sm:p-4 text-sm sm:text-base">
-                             {product.epwTipo ? `${product.epwTipo.l} - ${product.epwTipo.d}` : '-'}
-                           </td>
-                           <td className="p-3 sm:p-4 text-sm sm:text-base">
-                             {product.epwModelo ? `${product.epwModelo.l} - ${product.epwModelo.d}` : product.modelo}
-                           </td>
-                           <td className="p-3 sm:p-4 text-sm sm:text-base">
-                             {product.epwComprimento ? `${product.epwComprimento.l} - ${product.epwComprimento.d}` : product.comprimento}
-                           </td>
-                           <td className="p-3 sm:p-4 text-sm sm:text-base">
-                             {product.epwCor ? `${product.epwCor.l} - ${product.epwCor.d}` : product.cor}
-                           </td>
-                           <td className="p-3 sm:p-4 text-sm sm:text-base">
-                             {product.epwAcabamento ? `${product.epwAcabamento.l} - ${product.epwAcabamento.d}` : product.acabamento}
                            </td>
                         </tr>
                       ))}

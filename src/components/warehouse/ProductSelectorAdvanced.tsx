@@ -183,30 +183,25 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
             <TableRow>
                <TableHead>Código do Produto</TableHead>
                <TableHead>Descrição</TableHead>
-               <TableHead>Tipo</TableHead>
-               <TableHead>Modelo</TableHead>
-               <TableHead>Comprimento</TableHead>
-               <TableHead>Cor</TableHead>
-               <TableHead>Acabamento</TableHead>
                <TableHead>Ação</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                 <TableCell colSpan={8} className="text-center py-8">
+                 <TableCell colSpan={3} className="text-center py-8">
                   Carregando produtos...
                 </TableCell>
               </TableRow>
             ) : error ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-destructive">
+                <TableCell colSpan={3} className="text-center py-8 text-destructive">
                   {error}
                 </TableCell>
               </TableRow>
             ) : displayProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+                <TableCell colSpan={3} className="text-center py-8">
                   {hasActiveFilters ? "Nenhum produto encontrado com os filtros aplicados" : "Nenhum produto encontrado"}
                 </TableCell>
               </TableRow>
@@ -223,11 +218,6 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
                     </div>
                   </TableCell>
                   <TableCell>{product.descricao || product.acabamento}</TableCell>
-                  <TableCell>{product.epwTipo?.d || 'N/A'}</TableCell>
-                  <TableCell>{product.epwModelo?.d || product.modelo}</TableCell>
-                  <TableCell>{product.epwComprimento?.d || 'N/A'}</TableCell>
-                  <TableCell>{product.epwCor?.d || 'N/A'}</TableCell>
-                  <TableCell>{product.epwAcabamento?.d || 'N/A'}</TableCell>
                   <TableCell>
                     <Button
                       size="sm"
