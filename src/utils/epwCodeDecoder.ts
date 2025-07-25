@@ -176,25 +176,43 @@ export const decodeEPWReference = (ref: string, debug: boolean = false): EPWDeco
   }
 
   const refLength = ref.length;
+  const refUpper = ref.toUpperCase();
   
-  // Handle 8-character codes (like RSC23CL01)
-  if (refLength === 8) {
+  if (debug) {
+    console.log(`🔍 EPW Debug - Analyzing: "${ref}" [Length: ${refLength}]`);
+  }
+
+  // Handle 11-character codes (like csxr32clt01 -> CSXR32CLT01)
+  if (refLength === 11) {
     try {
-      const tipo = ref.charAt(0);           // Position 0: R
-      const certif = ref.charAt(1);         // Position 1: S  
-      const modelo = ref.charAt(2);         // Position 2: C
-      const comprimento = ref.substring(3, 5); // Positions 3-4: 23
-      const cor = ref.charAt(5);            // Position 5: C
-      const acabamento = ref.charAt(6);     // Position 6: L
+      // Analyzing pattern: csxr32clt01
+      // c = Tipo (position 0)
+      // s = Certif (position 1) 
+      // x = ? (position 2)
+      // r = Modelo (position 3)
+      // 32 = Comprimento (positions 4-5)
+      // c = Cor (position 6)
+      // l = Acabamento (position 7)
+      // t = ? (position 8)
+      // 01 = Variant/Serie (positions 9-10)
+      
+      const tipo = refUpper.charAt(0);
+      const certif = refUpper.charAt(1);
+      const modelo = refUpper.charAt(3);  // Skip position 2 for now
+      const comprimento = refUpper.substring(4, 6);
+      const cor = refUpper.charAt(6);
+      const acabamento = refUpper.charAt(7);
       
       if (debug) {
-        console.log(`EPW Debug - Ref: ${ref} [Length: ${refLength}]`);
-        console.log(`Tipo: ${tipo}, Certif: ${certif}, Modelo: ${modelo}, Comprim: ${comprimento}, Cor: ${cor}, Acabamento: ${acabamento}`);
+        console.log(`🔍 EPW 11-char breakdown:`, {
+          tipo, certif, modelo, comprimento, cor, acabamento,
+          skipped: { pos2: refUpper.charAt(2), pos8: refUpper.charAt(8), variant: refUpper.substring(9, 11) }
+        });
       }
 
       return {
         success: true,
-        msg: 'Successfully decoded',
+        msg: 'Successfully decoded (11-char pattern)',
         decoded: {
           tipo: { l: tipo, d: getAttributeValue('tipo', tipo) },
           certif: { l: certif, d: getAttributeValue('certif', certif) },
@@ -205,28 +223,58 @@ export const decodeEPWReference = (ref: string, debug: boolean = false): EPWDeco
         }
       };
     } catch (error) {
-      return { success: false, msg: `Decode error: ${error instanceof Error ? error.message : 'Unknown error'}` };
+      return { success: false, msg: `Decode error (11-char): ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
+  }
+
+  // Handle 8-character codes (like RSC23CL01)
+  if (refLength === 8) {
+    try {
+      const tipo = refUpper.charAt(0);
+      const certif = refUpper.charAt(1);
+      const modelo = refUpper.charAt(2);
+      const comprimento = refUpper.substring(3, 5);
+      const cor = refUpper.charAt(5);
+      const acabamento = refUpper.charAt(6);
+      
+      if (debug) {
+        console.log(`🔍 EPW 8-char breakdown:`, { tipo, certif, modelo, comprimento, cor, acabamento });
+      }
+
+      return {
+        success: true,
+        msg: 'Successfully decoded (8-char pattern)',
+        decoded: {
+          tipo: { l: tipo, d: getAttributeValue('tipo', tipo) },
+          certif: { l: certif, d: getAttributeValue('certif', certif) },
+          modelo: { l: modelo, d: getAttributeValue('modelo', modelo) },
+          comprim: { l: comprimento, d: getAttributeValue('comprim', comprimento) },
+          cor: { l: cor, d: getAttributeValue('cor', cor) },
+          acabamento: { l: acabamento, d: getAttributeValue('acabamento', acabamento) }
+        }
+      };
+    } catch (error) {
+      return { success: false, msg: `Decode error (8-char): ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
 
   // Handle 7-character codes (like RSC23CL)
   if (refLength === 7) {
     try {
-      const tipo = ref.charAt(0);           // Position 0
-      const certif = ref.charAt(1);         // Position 1
-      const modelo = ref.charAt(2);         // Position 2
-      const comprimento = ref.substring(3, 5); // Positions 3-4
-      const cor = ref.charAt(5);            // Position 5
-      const acabamento = ref.charAt(6);     // Position 6
+      const tipo = refUpper.charAt(0);
+      const certif = refUpper.charAt(1);
+      const modelo = refUpper.charAt(2);
+      const comprimento = refUpper.substring(3, 5);
+      const cor = refUpper.charAt(5);
+      const acabamento = refUpper.charAt(6);
       
       if (debug) {
-        console.log(`EPW Debug - Ref: ${ref} [Length: ${refLength}]`);
-        console.log(`Tipo: ${tipo}, Certif: ${certif}, Modelo: ${modelo}, Comprim: ${comprimento}, Cor: ${cor}, Acabamento: ${acabamento}`);
+        console.log(`🔍 EPW 7-char breakdown:`, { tipo, certif, modelo, comprimento, cor, acabamento });
       }
 
       return {
         success: true,
-        msg: 'Successfully decoded',
+        msg: 'Successfully decoded (7-char pattern)',
         decoded: {
           tipo: { l: tipo, d: getAttributeValue('tipo', tipo) },
           certif: { l: certif, d: getAttributeValue('certif', certif) },
@@ -237,11 +285,11 @@ export const decodeEPWReference = (ref: string, debug: boolean = false): EPWDeco
         }
       };
     } catch (error) {
-      return { success: false, msg: `Decode error: ${error instanceof Error ? error.message : 'Unknown error'}` };
+      return { success: false, msg: `Decode error (7-char): ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
 
-  return { success: false, msg: `Unsupported code length: ${refLength}. Expected 7 or 8 characters.` };
+  return { success: false, msg: `Unsupported code length: ${refLength}. Expected 7, 8, or 11 characters.` };
 };
 
 // Helper function to get familia from decoded EPW data

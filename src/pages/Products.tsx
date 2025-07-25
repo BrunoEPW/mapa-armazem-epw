@@ -11,6 +11,7 @@ import { Search, Wifi, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import { EPWFilters } from '@/components/warehouse/EPWFilters';
 import { FilterDebugPanel } from '@/components/warehouse/FilterDebugPanel';
+import { EPWCodeDebugger } from '@/components/warehouse/EPWCodeDebugger';
 import { config } from '@/lib/config';
 import productsBanner from '@/assets/epw-products-banner.jpg';
 
@@ -33,6 +34,7 @@ const Products: React.FC = () => {
     acabamento: 'all',
   });
   const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [showEpwDebugger, setShowEpwDebugger] = useState(false);
   
   const { shouldExcludeProduct } = useExclusions();
   
@@ -252,17 +254,23 @@ const Products: React.FC = () => {
               </div>
              )}
 
-             {/* Debug Panel for Development */}
-             {config.isDevelopment && (
-               <FilterDebugPanel
-                 show={showDebugPanel}
-                 onToggle={() => setShowDebugPanel(!showDebugPanel)}
-                 apiCores={apiCores}
-                 apiTipos={apiTipos}
-                 apiAcabamentos={apiAcabamentos}
-                 apiComprimentos={apiComprimentos}
-               />
-             )}
+              {/* Debug Panel for Development */}
+              {config.isDevelopment && (
+                <div className="flex gap-2 flex-wrap">
+                  <FilterDebugPanel
+                    show={showDebugPanel}
+                    onToggle={() => setShowDebugPanel(!showDebugPanel)}
+                    apiCores={apiCores}
+                    apiTipos={apiTipos}
+                    apiAcabamentos={apiAcabamentos}
+                    apiComprimentos={apiComprimentos}
+                  />
+                  <EPWCodeDebugger
+                    show={showEpwDebugger}
+                    onToggle={() => setShowEpwDebugger(!showEpwDebugger)}
+                  />
+                </div>
+              )}
            </div>
 
            {/* Products Table */}
