@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { WAREHOUSE_CONFIG } from '@/types/warehouse';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { cn } from '@/lib/utils';
+import warehouseHeroBanner from '@/assets/warehouse-hero-banner.jpg';
 import EPWLogo from '@/components/ui/epw-logo';
 import InvertedTSeparator from '@/components/ui/inverted-t-separator';
 import { QuickResetDialog } from '@/components/warehouse/QuickResetDialog';
@@ -110,16 +111,33 @@ const Index = () => {
       <Header />
       <div className="p-4 sm:p-6 lg:p-8 relative">
         <div className="max-w-7xl mx-auto">
-        {/* Header simplificado */}
+        {/* Hero Banner */}
         <div className="flex flex-col items-center mb-6 sm:mb-8">
-          <img 
-            src="/lovable-uploads/e3f287c7-c1ee-485f-8e58-cb96b7ff55b3.png" 
-            alt="EPW Logo" 
-            className="h-16 sm:h-20 lg:h-24 drop-shadow-lg mb-4"
-          />
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider">
-            ARMAZÉM
-          </h1>
+          <div className="relative w-full max-w-4xl">
+            <img 
+              src={warehouseHeroBanner} 
+              alt="Warehouse Management System" 
+              className="w-full h-48 sm:h-64 lg:h-80 object-cover rounded-xl shadow-2xl"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/80 rounded-xl flex items-center justify-between px-6 sm:px-8 lg:px-12">
+              <img 
+                src="/lovable-uploads/e3f287c7-c1ee-485f-8e58-cb96b7ff55b3.png" 
+                alt="EPW Logo" 
+                className="h-32 sm:h-40 lg:h-48 drop-shadow-2xl"
+              />
+              <div className="text-right">
+                <h1 className="text-3xl sm:text-4xl lg:text-6xl font-black text-white tracking-wider drop-shadow-2xl mb-2">
+                  SISTEMA DE
+                </h1>
+                <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-orange-400 tracking-wide drop-shadow-2xl">
+                  GESTÃO DE ARMAZÉM
+                </h2>
+                <p className="text-sm sm:text-base lg:text-lg text-gray-200 mt-2 drop-shadow-lg">
+                  Controlo Inteligente de Stock • Localização Precisa • Gestão Eficiente
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
         
         {/* Info de atualização no canto */}
