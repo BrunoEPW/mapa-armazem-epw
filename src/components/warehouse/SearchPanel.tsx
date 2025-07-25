@@ -140,7 +140,7 @@ const SearchPanel: React.FC = () => {
                   ) : (
                     modelos.map((modelo) => (
                       <SelectItem key={modelo.l} value={modelo.l}>
-                        {modelo.l} - {modelo.d}
+                        {modelo.d}
                       </SelectItem>
                     ))
                   )}
@@ -167,7 +167,7 @@ const SearchPanel: React.FC = () => {
                   ) : (
                     acabamentos.map((acabamento) => (
                       <SelectItem key={acabamento.l} value={acabamento.l}>
-                        {acabamento.l} - {acabamento.d}
+                        {acabamento.d}
                       </SelectItem>
                     ))
                   )}
@@ -194,7 +194,7 @@ const SearchPanel: React.FC = () => {
                   ) : (
                     comprimentos.map((comprimento) => (
                       <SelectItem key={comprimento.l} value={comprimento.l}>
-                        {comprimento.l}mm - {comprimento.d}
+                        {comprimento.d}
                       </SelectItem>
                     ))
                   )}
