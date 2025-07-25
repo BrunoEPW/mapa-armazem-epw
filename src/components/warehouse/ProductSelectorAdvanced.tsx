@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Product } from '@/types/warehouse';
 import { useApiProductsPaginated } from '@/hooks/useApiProductsPaginated';
 import { useApiAttributes } from '@/hooks/useApiAttributes';
@@ -113,7 +113,19 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
     });
   }, [products, searchQuery, epwFilters]);
 
+  // Pagination for filtered products
+  const [localPage, setLocalPage] = useState(1);
+  const productsPerPage = 20;
+  const totalFilteredPages = Math.ceil(filteredProducts.length / productsPerPage);
+  const startIndex = (localPage - 1) * productsPerPage;
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + productsPerPage);
+
   const hasActiveFilters = Object.values(epwFilters).some(value => value !== 'all') || searchQuery.length > 0;
+
+  // Reset local page when filters change
+  useEffect(() => {
+    setLocalPage(1);
+  }, [searchQuery, epwFilters]);
 
   return (
     <div className="space-y-4">
@@ -162,7 +174,9 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
 
       {/* Connection Status */}
       <div className="text-sm text-muted-foreground">
-        Status: {connectionStatus} | Total: {totalCount} produtos
+        Status: {connectionStatus} | 
+        {hasActiveFilters ? ` Filtrados: ${filteredProducts.length} | ` : ''} 
+        Total: {totalCount} produtos
       </div>
 
       {/* Products Table */}
@@ -195,11 +209,11 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
             ) : filteredProducts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  Nenhum produto encontrado
+                  {hasActiveFilters ? "Nenhum produto encontrado com os filtros aplicados" : "Nenhum produto encontrado"}
                 </TableCell>
               </TableRow>
             ) : (
-              filteredProducts.map((product) => (
+              paginatedProducts.map((product) => (
                 <TableRow 
                   key={product.id}
                   className={selectedProductId === product.id ? "bg-muted" : ""}
@@ -240,10 +254,38 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {(totalFilteredPages > 1 && hasActiveFilters) ? (
+        // Local pagination for filtered results
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Página {currentPage} de {totalPages}
+            Página {localPage} de {totalFilteredPages} (produtos filtrados)
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setLocalPage(localPage - 1)}
+              disabled={localPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setLocalPage(localPage + 1)}
+              disabled={localPage === totalFilteredPages}
+            >
+              Próxima
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      ) : totalPages > 1 && !hasActiveFilters ? (
+        // API pagination for unfiltered results
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Página {currentPage} de {totalPages} (API)
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -266,7 +308,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
             </Button>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };
