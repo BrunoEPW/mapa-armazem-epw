@@ -108,20 +108,20 @@ const Products: React.FC = () => {
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           <button
             onClick={() => navigate('/')}
-            className="relative w-full max-w-2xl transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg"
+            className="relative w-full max-w-2xl transition-all duration-500 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg animate-fade-in"
           >
             <img 
               src={productsBanner} 
               alt="Products Banner" 
-              className="w-full h-32 sm:h-40 object-cover rounded-lg shadow-lg"
+              className="w-full h-32 sm:h-40 object-cover rounded-lg shadow-lg transition-all duration-300"
             />
-            <div className="absolute inset-0 flex items-center justify-between bg-black/30 rounded-lg px-4 sm:px-6">
+            <div className="absolute inset-0 flex items-center justify-between bg-black/30 rounded-lg px-4 sm:px-6 transition-all duration-300 hover:bg-black/20">
               <img 
                 src="/lovable-uploads/ce6ad3d6-6728-414c-b327-428c5cd38f81.png" 
                 alt="EPW Logo - Voltar para página inicial" 
-                className="h-12 sm:h-16 lg:h-20 drop-shadow-lg"
+                className="h-16 sm:h-20 lg:h-24 drop-shadow-lg transition-transform duration-300 hover:scale-110"
               />
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-wider drop-shadow-lg">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-wider drop-shadow-lg transition-all duration-300">
                 PRODUTOS
               </h1>
             </div>
