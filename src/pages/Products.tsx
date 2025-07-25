@@ -111,14 +111,18 @@ const Products: React.FC = () => {
               alt="EPW Logo" 
               className="h-16 sm:h-20 lg:h-24 drop-shadow-lg mb-4"
             />
-            <img 
-              src={productsBanner} 
-              alt="Products Banner" 
-              className="w-full max-w-2xl h-24 sm:h-32 object-cover rounded-lg shadow-lg mb-4"
-            />
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider">
-              PRODUTOS
-            </h1>
+            <div className="relative w-full max-w-2xl">
+              <img 
+                src={productsBanner} 
+                alt="Products Banner" 
+                className="w-full h-32 sm:h-40 object-cover rounded-lg shadow-lg"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wider drop-shadow-lg">
+                  PRODUTOS
+                </h1>
+              </div>
+            </div>
           </div>
 
           {/* Navigation */}
