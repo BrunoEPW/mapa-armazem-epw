@@ -5,10 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { ShelfLocation, Product } from '@/types/warehouse';
-import { ProductSelector } from './ProductSelector';
-import { useProductSearch } from '@/hooks/useProductSearch';
-import { useCombinedProducts } from '@/hooks/useCombinedProducts';
 import { toast } from 'sonner';
+import { ProductSelectorAdvanced } from './ProductSelectorAdvanced';
 
 interface AddMaterialFormProps {
   location: ShelfLocation;
@@ -22,116 +20,115 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
   onCancel,
 }) => {
   const { products, addMaterial, addMovement, createProductFromApi } = useWarehouse();
-  const [selectedProductId, setSelectedProductId] = useState('');
-  const [pecas, setPecas] = useState('');
-  const [norc, setNorc] = useState('');
+  const [selectedProductId, setSelectedProductId] = useState<string>('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [pecas, setPecas] = useState<number>(1);
+  const [norc, setNorc] = useState<string>('');
 
-  const { combinedProducts, loading } = useCombinedProducts(products);
-  const productSearch = useProductSearch(combinedProducts);
+  const handleProductSelect = (productId: string, product: Product) => {
+    setSelectedProductId(productId);
+    setSelectedProduct(product);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('AddMaterialForm - Form submitted with:', {
-      selectedProductId,
-      pecas,
-      norc,
-      location
-    });
     
-    if (!selectedProductId || !pecas || !norc) {
-      console.log('AddMaterialForm - Validation failed: missing fields');
-      toast.error('Preencha todos os campos');
+    if (!selectedProductId || !selectedProduct) {
+      toast.error('Por favor, selecione um produto');
       return;
     }
 
-    let product = combinedProducts.find(p => p.id === selectedProductId);
-    if (!product) {
-      toast.error('Produto não encontrado');
+    if (pecas <= 0) {
+      toast.error('Por favor, especifique uma quantidade válida');
+      return;
+    }
+
+    if (!norc.trim()) {
+      toast.error('Por favor, especifique o NORC');
       return;
     }
 
     try {
-      let finalProduct: Product;
-      let finalProductId: string;
+      let productToUse = selectedProduct;
 
       // If it's an API product, create it locally first
-      if ('isFromApi' in product && product.isFromApi) {
-        console.log('Creating local product from API product:', product);
-        finalProduct = await createProductFromApi(product);
-        finalProductId = finalProduct.id;
-        toast.success('Produto da API adicionado ao sistema local');
-      } else {
-        finalProduct = product;
-        finalProductId = selectedProductId;
+      if (selectedProduct.id.startsWith('api_')) {
+        console.log('Creating local product from API data:', selectedProduct);
+        
+        // Remove the API prefix for local storage
+        const localProduct: Product = {
+          ...selectedProduct,
+          id: selectedProduct.id.replace('api_', ''),
+        };
+
+        await createProductFromApi(localProduct);
+        productToUse = localProduct;
       }
 
-      const newMaterial = {
-        productId: finalProductId,
-        product: finalProduct,
-        pecas: parseInt(pecas),
-        location,
-      };
-
-      console.log('Attempting to add material:', newMaterial);
-      const createdMaterial = await addMaterial(newMaterial);
-      console.log('AddMaterialForm - Material created:', createdMaterial);
+      const materialId = `${productToUse.id}_${location.estante}${location.prateleira}_${Date.now()}`;
       
-      // Add movement entry with the correct material ID
+      const createdMaterial = await addMaterial({
+        productId: productToUse.id,
+        product: productToUse,
+        pecas,
+        location,
+      });
+
       await addMovement({
         materialId: createdMaterial.id,
-        type: 'entrada' as const,
-        pecas: parseInt(pecas),
-        norc,
-        date: new Date().toISOString().split('T')[0],
+        type: 'entrada',
+        pecas,
+        norc: norc.trim(),
+        date: new Date().toISOString(),
       });
-      console.log('AddMaterialForm - Movement added for material:', createdMaterial.id);
 
-      toast.success('Material adicionado com sucesso');
+      toast.success(`Material adicionado com sucesso! ${pecas} peças de ${selectedProduct.epwModelo?.d || selectedProduct.modelo} em ${location.estante}${location.prateleira}`);
       onSuccess();
     } catch (error) {
       console.error('Error adding material:', error);
-      toast.error('Erro ao adicionar material');
+      toast.error('Erro ao adicionar material. Tente novamente.');
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <ProductSelector
-        {...productSearch}
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <ProductSelectorAdvanced
         selectedProductId={selectedProductId}
-        setSelectedProductId={setSelectedProductId}
-        loading={loading}
-        showSourceFilter={true}
+        onProductSelect={handleProductSelect}
       />
 
-      <div>
-        <Label htmlFor="pecas">Número de Peças</Label>
-        <Input
-          id="pecas"
-          type="number"
-          value={pecas}
-          onChange={(e) => setPecas(e.target.value)}
-          placeholder="Ex: 25"
-          min="1"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="pecas">Número de Peças</Label>
+          <Input
+            id="pecas"
+            type="number"
+            min="1"
+            value={pecas}
+            onChange={(e) => setPecas(parseInt(e.target.value) || 1)}
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="norc">NORC</Label>
+          <Input
+            id="norc"
+            type="text"
+            value={norc}
+            onChange={(e) => setNorc(e.target.value)}
+            placeholder="Ex: OF123456"
+            required
+          />
+        </div>
       </div>
 
-      <div>
-        <Label htmlFor="norc">NORC</Label>
-        <Input
-          id="norc"
-          value={norc}
-          onChange={(e) => setNorc(e.target.value)}
-          placeholder="Ex: NORC001"
-        />
-      </div>
-
-      <div className="flex gap-2 pt-4">
-        <Button type="submit" className="flex-1">
-          Adicionar
-        </Button>
+      <div className="flex justify-end gap-3">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
+        </Button>
+        <Button type="submit">
+          Adicionar
         </Button>
       </div>
     </form>

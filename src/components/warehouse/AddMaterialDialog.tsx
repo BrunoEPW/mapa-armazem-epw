@@ -16,7 +16,7 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
   
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             Adicionar Material - {location.estante}{location.prateleira}
