@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import * as XLSX from 'xlsx';
 import EPWLogo from '@/components/ui/epw-logo';
+import Footer from '@/components/ui/Footer';
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -153,8 +154,8 @@ const Reports = () => {
   };
 
   return (
-    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8 flex flex-col">
+      <div className="max-w-6xl mx-auto flex-1">
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           <button
             onClick={() => navigate('/')}
@@ -406,7 +407,7 @@ const Reports = () => {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                          Nenhum stock registado para esta data
+                          Nenhum material em stock na data selecionada
                         </TableCell>
                       </TableRow>
                     )}
@@ -417,51 +418,68 @@ const Reports = () => {
           </Card>
         </div>
 
-        {/* Recent Movements - Full Width */}
-        <Card className="bg-card/80 backdrop-blur">
-          <CardHeader>
-            <CardTitle>Movimentações Recentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentMovements.length > 0 ? (
-                recentMovements.map((movement) => {
-                  const material = materials.find(m => m.id === movement.materialId);
-                  return (
-                    <div key={movement.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">
-                          {material?.product?.modelo || 'Material não encontrado'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {movement.type === 'entrada' ? 'Entrada' : 'Saída'} - {movement.pecas} peças
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          NORC: {movement.norc}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground">{movement.date}</p>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          movement.type === 'entrada' 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                        }`}>
-                          {movement.type === 'entrada' ? '+' : '-'}{movement.pecas}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhuma movimentação registada ainda
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Últimas Movimentações */}
+        <div className="mb-6">
+          <Card className="bg-card/80 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ArrowUpDown className="h-5 w-5" />
+                Últimas Movimentações
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Material</TableHead>
+                      <TableHead className="text-right">Quantidade</TableHead>
+                      <TableHead>Localização</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentMovements.length > 0 ? (
+                      recentMovements.map((movement) => {
+                        const material = materials.find(m => m.id === movement.materialId);
+                        return (
+                          <TableRow key={movement.id}>
+                            <TableCell>{format(new Date(movement.date), 'dd/MM/yyyy HH:mm')}</TableCell>
+                            <TableCell>
+                              <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs ${
+                                movement.type === 'entrada'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {movement.type === 'entrada' ? 'Entrada' : 'Saída'}
+                              </span>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {material ? material.product.modelo : 'Material não encontrado'}
+                            </TableCell>
+                            <TableCell className="text-right font-bold">{movement.pecas}</TableCell>
+                            <TableCell>
+                              {material ? `${material.location.estante}${material.location.prateleira}` : '-'}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                          Nenhuma movimentação registada
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
+      <Footer />
     </div>
   );
 };

@@ -15,6 +15,7 @@ import { EPWCodeDebugger } from '@/components/warehouse/EPWCodeDebugger';
 import { FilterCodeTester } from '@/components/warehouse/FilterCodeTester';
 import { ModelFilterDebugger } from '@/components/warehouse/ModelFilterDebugger';
 import { config } from '@/lib/config';
+import Footer from '@/components/ui/Footer';
 import productsBanner from '@/assets/epw-products-banner.jpg';
 
 interface EPWFilters {
@@ -165,9 +166,9 @@ const Products: React.FC = () => {
   const displayProducts = hasLocalSearchFilter ? filteredProducts : products;
 
   return (
-    <div className="min-h-screen bg-warehouse-bg">
+    <div className="min-h-screen bg-warehouse-bg flex flex-col">
       <Header />
-      <div className="p-4 sm:p-6 lg:p-8">
+      <div className="p-4 sm:p-6 lg:p-8 flex-1">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
         <div className="flex flex-col items-center mb-6 sm:mb-8">
@@ -407,6 +408,7 @@ const Products: React.FC = () => {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

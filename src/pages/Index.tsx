@@ -12,6 +12,7 @@ import InvertedTSeparator from '@/components/ui/inverted-t-separator';
 import { QuickResetDialog } from '@/components/warehouse/QuickResetDialog';
 import DebugConsole from '@/components/ui/debug-console';
 import Header from '@/components/Header';
+import Footer from '@/components/ui/Footer';
 
 
 
@@ -107,9 +108,9 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <div className="p-4 sm:p-6 lg:p-8 relative">
+      <div className="p-4 sm:p-6 lg:p-8 relative flex-1">
         <div className="max-w-7xl mx-auto">
         {/* Hero Banner */}
         <div className="flex flex-col items-center mb-6 sm:mb-8">
@@ -214,6 +215,7 @@ const Index = () => {
         
         <DebugConsole />
       </div>
+      <Footer />
     </div>
   );
 };

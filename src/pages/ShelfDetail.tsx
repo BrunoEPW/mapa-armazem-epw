@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ShelfDetailView from '@/components/warehouse/ShelfDetailView';
+import Footer from '@/components/ui/Footer';
 import shelfDetailsBanner from '@/assets/shelf-details-banner.jpg';
 
 const ShelfDetail = () => {
@@ -16,8 +17,8 @@ const ShelfDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8 flex flex-col">
+      <div className="max-w-6xl mx-auto flex-1">
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           <button
             onClick={() => navigate('/')}
@@ -38,6 +39,7 @@ const ShelfDetail = () => {
 
         <ShelfDetailView />
       </div>
+      <Footer />
     </div>
   );
 };

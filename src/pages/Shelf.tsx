@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ShelfView from '@/components/warehouse/ShelfView';
+import Footer from '@/components/ui/Footer';
 import shelvesBanner from '@/assets/shelves-banner.jpg';
 
 const Shelf = () => {
@@ -15,8 +16,8 @@ const Shelf = () => {
   const canGoNext = currentIndex < estantes.length - 1;
 
   return (
-    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8 flex flex-col">
+      <div className="max-w-6xl mx-auto flex-1">
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           <button
             onClick={() => navigate('/')}
@@ -60,6 +61,7 @@ const Shelf = () => {
 
         <ShelfView />
       </div>
+      <Footer />
     </div>
   );
 };
