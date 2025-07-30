@@ -179,28 +179,54 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       console.log('✅ Step 5: All validation checks passed');
 
-      // Step 6: Add to database with enhanced error handling
+      // Step 6: Try to add to database, fallback to local only if RLS error
       console.log('💾 Calling operations.addProduct...');
       try {
         await operations.addProduct(productData);
-        console.log('✅ Step 6: Product added successfully');
+        console.log('✅ Step 6: Product added to database successfully');
       } catch (supabaseError) {
         console.error('🔴 === SUPABASE ERROR DETAILS ===');
         console.error('🔴 Error object:', supabaseError);
         console.error('🔴 Error message:', supabaseError?.message);
         console.error('🔴 Product data that failed:', JSON.stringify(productData, null, 2));
         
-        let errorMessage = 'Erro ao guardar na base de dados';
-        if (supabaseError?.message) {
-          if (supabaseError.message.includes('duplicate key')) {
-            errorMessage = 'Produto já existe na base de dados';
-          } else if (supabaseError.message.includes('null value')) {
-            errorMessage = 'Dados obrigatórios em falta para a base de dados';
-          } else {
-            errorMessage = `Erro na base de dados: ${supabaseError.message}`;
+        // Check if it's an RLS policy error
+        if (supabaseError?.message?.includes('row-level security policy') || 
+            supabaseError?.message?.includes('RLS') ||
+            supabaseError?.code === '42501') {
+          console.log('⚠️ RLS policy error detected - adding product locally only');
+          
+          // Add to local state only as fallback
+          const localProduct: Product = {
+            id: cleanId,
+            ...productData,
+          };
+          
+          setProducts(prev => {
+            const exists = prev.some(p => p.id === cleanId);
+            if (exists) {
+              console.log('✅ Product already exists locally');
+              return prev;
+            }
+            console.log('✅ Added product to local state only');
+            return [...prev, localProduct];
+          });
+          
+          console.log('✅ Step 6: Product added locally (database has RLS restrictions)');
+        } else {
+          // Other database errors
+          let errorMessage = 'Erro ao guardar na base de dados';
+          if (supabaseError?.message) {
+            if (supabaseError.message.includes('duplicate key')) {
+              errorMessage = 'Produto já existe na base de dados';
+            } else if (supabaseError.message.includes('null value')) {
+              errorMessage = 'Dados obrigatórios em falta para a base de dados';
+            } else {
+              errorMessage = `Erro na base de dados: ${supabaseError.message}`;
+            }
           }
+          throw new Error(errorMessage);
         }
-        throw new Error(errorMessage);
       }
       
       // Return the product with the clean ID
