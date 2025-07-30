@@ -37,7 +37,7 @@ const Products: React.FC = () => {
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [showEpwDebugger, setShowEpwDebugger] = useState(false);
   
-  const { shouldExcludeProduct } = useExclusions();
+  const { shouldExcludeProduct, exclusions } = useExclusions();
   
   // Convert EPW filters to API filters
   const convertToApiFilters = (filters: EPWFilters): ApiFilters => ({
@@ -181,6 +181,9 @@ const Products: React.FC = () => {
                 <div className="text-white/70 text-xs">
                   Status: {connectionStatus}
                   {hasLocalSearchFilter && ` | Busca local: ${filteredProducts.length} resultados`}
+                  {exclusions.enabled && exclusions.prefixes.length > 0 && (
+                    <span className="text-yellow-400"> | Exclusões ativas: {exclusions.prefixes.join(', ')}</span>
+                  )}
                 </div>
                 {error && (
                   <div className="text-destructive text-sm">

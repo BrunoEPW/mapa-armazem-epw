@@ -154,15 +154,25 @@ export const useApiProductsWithFilters = (
           })
         : apiResponse.data;
       
+      const originalCount = apiResponse.recordsFiltered || apiResponse.recordsTotal || 0;
+      const excludedCount = apiResponse.data.length - filteredData.length;
+      
+      // Estimate total count after exclusions (approximation for pagination)
+      const estimatedTotalAfterExclusions = exclusionFilter && excludedCount > 0
+        ? Math.max(1, Math.round(originalCount * (filteredData.length / apiResponse.data.length)))
+        : originalCount;
+      
       if (config.isDevelopment && exclusionFilter) {
-        console.log(`📊 [Exclusions] Original: ${apiResponse.data.length}, Filtered: ${filteredData.length}`);
+        console.log(`📊 [Exclusions] Original: ${apiResponse.data.length}, Filtered: ${filteredData.length}, Excluded: ${excludedCount}`);
+        console.log(`📊 [Exclusions] Total count adjusted from ${originalCount} to ${estimatedTotalAfterExclusions}`);
       }
       
       const mappedProducts = filteredData.map(mapApiProductToProduct);
       
       setProducts(mappedProducts);
-      setTotalCount(apiResponse.recordsFiltered || apiResponse.recordsTotal || 0);
-      setConnectionStatus(`Conectado via proxy CORS${Object.keys(apiFilters).length > 0 ? ' (com filtros)' : ''}`);
+      setTotalCount(estimatedTotalAfterExclusions);
+      const exclusionInfo = exclusionFilter && excludedCount > 0 ? ` (${excludedCount} excluídos)` : '';
+      setConnectionStatus(`Conectado via proxy CORS${Object.keys(apiFilters).length > 0 ? ' (com filtros)' : ''}${exclusionInfo}`);
       
       if (config.isDevelopment) {
         console.log(`✅ [useApiProductsWithFilters] Successfully loaded ${mappedProducts.length} products from API for page ${page} with filters:`, apiFilters);
