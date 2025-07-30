@@ -31,9 +31,12 @@ const EPW_MAPPINGS = {
     'P': 'Perfil',
     'D': 'Drenagem',
     'U': 'União',
+    'M': 'Material',
+    'L': 'Linear',
     'CS': 'Calha Sistema',
     'TT': 'Tampa Técnica',
-    'GG': 'Grelha Grande'
+    'GG': 'Grelha Grande',
+    'ML': 'Material Linear'
   },
   
   // Attribute 2: Certificação
@@ -89,7 +92,14 @@ const EPW_MAPPINGS = {
     '40': '4000mm',
     '45': '4500mm',
     '50': '5000mm',
-    '60': '6000mm'
+    '60': '6000mm',
+    // Códigos alfabéticos
+    'ML': 'Médio Longo',
+    'MC': 'Médio Curto',
+    'XL': 'Extra Longo',
+    'XS': 'Extra Pequeno',
+    'SM': 'Pequeno',
+    'LG': 'Grande'
   },
   
   // Attribute 5: Cor
@@ -119,7 +129,16 @@ const EPW_MAPPINGS = {
     'W': 'White',
     'X': 'Xadrez',
     'Y': 'Yellow',
-    'Z': 'Zinco'
+    'Z': 'Zinco',
+    // Códigos de 2 caracteres
+    'VL': 'Verde Claro',
+    'VE': 'Verde Escuro',
+    'CL': 'Cinza Claro',
+    'CE': 'Cinza Escuro',
+    'ML': 'Marrom Claro',
+    'ME': 'Marrom Escuro',
+    'AL': 'Azul Claro',
+    'AE': 'Azul Escuro'
   },
   
   // Attribute 6: Acabamento
