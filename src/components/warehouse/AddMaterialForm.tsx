@@ -75,9 +75,12 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
       if (selectedProduct.id.startsWith('api_')) {
         console.log('🔄 Creating local product from API data...');
         console.log('🔍 API Product details:', JSON.stringify(selectedProduct, null, 2));
+        console.log('🔍 API Product ID:', selectedProduct.id);
+        console.log('🔍 createProductFromApi function exists:', !!createProductFromApi);
         
         try {
           console.log('📞 About to call createProductFromApi...');
+          console.log('📞 Function type:', typeof createProductFromApi);
           const createdProduct = await createProductFromApi(selectedProduct);
           console.log('✅ Product created from API successfully:', createdProduct);
           productToUse = createdProduct;
