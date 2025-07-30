@@ -40,14 +40,9 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log('🔥 [EditMaterialDialog] BUTTON CLICKED - Starting handleSubmit');
     e.preventDefault();
     
-    console.log('🔄 [EditMaterialDialog] Starting handleSubmit');
-    console.log('🔄 [EditMaterialDialog] Input values:', { pecas, norc, materialId: material.id });
-    
     if (!pecas || !norc) {
-      console.log('❌ [EditMaterialDialog] Validation failed - missing fields');
       toast.error('Preencha todos os campos');
       return;
     }
@@ -57,56 +52,29 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
       const oldPecas = material.pecas;
       const difference = newPecas - oldPecas;
 
-      console.log('📊 [EditMaterialDialog] Quantity calculation:', {
-        newPecas,
-        oldPecas,
-        difference
-      });
-
       if (difference !== 0) {
-        console.log('💾 [EditMaterialDialog] Calling updateMaterial...');
+        // Update material quantity
+        await updateMaterial(material.id, { pecas: newPecas });
         
-        // Simple test: just update local state first
-        console.log('🧪 [EditMaterialDialog] Testing simple local update...');
-        
-        try {
-          // Update material quantity
-          await updateMaterial(material.id, { pecas: newPecas });
-          console.log('✅ [EditMaterialDialog] Material updated successfully');
-          
-          // Add movement record
-          console.log('📝 [EditMaterialDialog] Adding movement...');
-          await addMovement({
-            materialId: material.id,
-            type: difference > 0 ? 'entrada' : 'saida',
-            pecas: Math.abs(difference),
-            norc,
-            date: new Date().toISOString().split('T')[0],
-          });
-          
-          console.log('✅ [EditMaterialDialog] Movement added successfully');
-          toast.success('Material atualizado com sucesso');
-          
-        } catch (updateError) {
-          console.error('🔴 [EditMaterialDialog] Error during update:', updateError);
-          console.error('🔴 [EditMaterialDialog] Error details:', {
-            message: updateError?.message,
-            stack: updateError?.stack,
-            name: updateError?.name
-          });
-          throw updateError; // Re-throw to be caught by outer catch
-        }
+        // Add movement record
+        await addMovement({
+          materialId: material.id,
+          type: difference > 0 ? 'entrada' : 'saida',
+          pecas: Math.abs(difference),
+          norc,
+          date: new Date().toISOString().split('T')[0],
+        });
+
+        toast.success('Material atualizado com sucesso!');
       } else {
-        console.log('ℹ️ [EditMaterialDialog] No changes made');
         toast.info('Nenhuma alteração foi feita');
       }
 
-      console.log('🎯 [EditMaterialDialog] Closing dialog');
       onClose();
       
     } catch (error) {
-      console.error('🔴 [EditMaterialDialog] Error in handleSubmit:', error);
-      toast.error('Erro ao atualizar material');
+      console.error('Error updating material:', error);
+      toast.error(`Erro: ${error?.message || 'Erro desconhecido'}`);
     }
   };
 
