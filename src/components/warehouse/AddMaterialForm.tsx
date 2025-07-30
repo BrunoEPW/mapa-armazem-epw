@@ -34,8 +34,8 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
     try {
       e.preventDefault();
       
-      // Use alert instead of console.log to bypass any console capture issues
-      alert('DEBUG: Starting handleSubmit function');
+      // Direct DOM manipulation to show debug info
+      document.title = `DEBUG: Step 1 - Function started`;
       
       console.log('=== ADD MATERIAL DEBUG ===');
       console.log('🔍 Function started, checking variables...');
@@ -50,7 +50,10 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
       console.log('🔍 location:', location);
       console.log('🔍 About to start validation...');
       
+      document.title = `DEBUG: Step 2 - Starting validation`;
+      
       if (!selectedProductId || !selectedProduct) {
+        document.title = `DEBUG: ERROR - No product selected`;
         console.log('❌ ERROR: No product selected');
         toast.error('Por favor, selecione um produto');
         return;
@@ -68,7 +71,8 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
       return;
     }
 
-    console.log('=== VALIDATION PASSED ===');
+      document.title = `DEBUG: Step 3 - Validation passed`;
+      console.log('=== VALIDATION PASSED ===');
 
     try {
       console.log('=== STARTING ADD MATERIAL PROCESS ===');
