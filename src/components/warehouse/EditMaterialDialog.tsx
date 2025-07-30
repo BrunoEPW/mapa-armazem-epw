@@ -102,7 +102,7 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
         
         <div className="mb-4 p-4 bg-muted rounded-lg">
           <h4 className="font-medium mb-2">Artigo</h4>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground break-words whitespace-normal">
             {material.product.descricao || `${material.product.familia} ${material.product.modelo}`}
           </p>
         </div>
