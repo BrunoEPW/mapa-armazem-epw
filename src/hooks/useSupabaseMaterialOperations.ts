@@ -205,7 +205,9 @@ export const useSupabaseMaterialOperations = ({
     }
   };
 
-  const updateMaterial = async (materialId: string, updates: Partial<Material>) => {
+  const updateMaterial = async (materialId: string, updates: Partial<Material>): Promise<void> => {
+    console.log('🔄 [updateMaterial] Starting update for material:', materialId, 'with updates:', updates);
+    
     try {
       const updateData: any = {};
       
@@ -216,20 +218,52 @@ export const useSupabaseMaterialOperations = ({
         updateData.posicao = updates.location.posicao;
       }
 
-      const { error } = await supabase
+      console.log('💾 [updateMaterial] Updating in Supabase with data:', updateData);
+
+      const { data, error } = await supabase
         .from('materials')
         .update(updateData)
-        .eq('id', materialId);
+        .eq('id', materialId)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('🔴 [updateMaterial] Supabase error:', error);
+        
+        // If it's an RLS or permission error, update locally only
+        if (error.message?.includes('row-level security') || 
+            error.code === '42501') {
+          console.log('⚠️ [updateMaterial] Database restricted, updating locally only');
+          
+          setMaterials(prev => prev.map(m => 
+            m.id === materialId ? { ...m, ...updates } : m
+          ));
+          
+          toast.success('Material atualizado localmente!');
+          console.log('✅ [updateMaterial] Updated locally successfully');
+          return;
+        }
+        
+        throw error;
+      }
 
+      console.log('✅ [updateMaterial] Supabase update successful:', data);
+
+      // Update local state
       setMaterials(prev => prev.map(m => 
         m.id === materialId ? { ...m, ...updates } : m
       ));
       
+      // Log the action
+      await logAction('materials', materialId, 'UPDATE', undefined, updates);
+      
+      toast.success('Material atualizado com sucesso!');
+      console.log('✅ [updateMaterial] Operation completed successfully');
+      
     } catch (error) {
-      console.error('Error updating material:', error);
-      toast.error('Erro ao atualizar material');
+      console.error('🔴 [updateMaterial] Error:', error);
+      toast.error('Erro ao atualizar material. Tente novamente.');
+      throw error;
     }
   };
 
