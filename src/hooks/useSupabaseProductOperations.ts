@@ -34,7 +34,7 @@ export const useSupabaseProductOperations = ({
       }
       console.log('🔵 ✓ Product validation passed');
       
-      // Prepare data for Supabase insertion
+      // Prepare data for Supabase insertion - Remove RLS fields causing issues
       const supabaseData = {
         familia: String(product.familia),
         modelo: String(product.modelo),
@@ -42,8 +42,7 @@ export const useSupabaseProductOperations = ({
         cor: String(product.cor),
         comprimento: String(product.comprimento), // Ensure string type
         foto: product.foto || null,
-        created_by: 'system', // Default user for now
-        updated_by: 'system',
+        // Remove created_by and updated_by to avoid RLS policy violations
       };
       
       console.log('🔵 Data prepared for Supabase:', JSON.stringify(supabaseData, null, 2));
