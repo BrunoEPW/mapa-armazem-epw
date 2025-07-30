@@ -170,36 +170,40 @@ export const EPWCodeDebugger: React.FC<EPWCodeDebuggerProps> = ({
                 {decodeResult.success ? 'Decodificação Bem-sucedida' : 'Erro na Decodificação'}
               </span>
               <Badge variant={decodeResult.success ? 'default' : 'destructive'}>
-                {decodeResult.msg}
+                {decodeResult.message}
               </Badge>
             </div>
 
-            {decodeResult.success && decodeResult.decoded && (
+            {decodeResult.success && decodeResult.product && (
               <div className="space-y-4">
+                <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded border">
+                  🔧 <strong>Parsing Adaptativo:</strong> Código analisado de trás para frente usando estrutura variável
+                </div>
+                
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="font-medium text-muted-foreground">Tipo:</span>
-                    <div>{decodeResult.decoded.tipo.l} → {decodeResult.decoded.tipo.d}</div>
+                    <div>{decodeResult.product.tipo.l} → {decodeResult.product.tipo.d}</div>
                   </div>
                   <div>
                     <span className="font-medium text-muted-foreground">Certificação:</span>
-                    <div>{decodeResult.decoded.certif.l} → {decodeResult.decoded.certif.d}</div>
+                    <div>{decodeResult.product.certif.l} → {decodeResult.product.certif.d}</div>
                   </div>
                   <div>
                     <span className="font-medium text-muted-foreground">Modelo:</span>
-                    <div>{decodeResult.decoded.modelo.l} → {decodeResult.decoded.modelo.d}</div>
+                    <div>{decodeResult.product.modelo.l} → {decodeResult.product.modelo.d}</div>
                   </div>
                   <div>
                     <span className="font-medium text-muted-foreground">Comprimento:</span>
-                    <div>{decodeResult.decoded.comprim.l} → {decodeResult.decoded.comprim.d}</div>
+                    <div>{decodeResult.product.comprim.l} → {decodeResult.product.comprim.d}</div>
                   </div>
                   <div>
                     <span className="font-medium text-muted-foreground">Cor:</span>
-                    <div>{decodeResult.decoded.cor.l} → {decodeResult.decoded.cor.d}</div>
+                    <div>{decodeResult.product.cor.l} → {decodeResult.product.cor.d}</div>
                   </div>
                   <div>
                     <span className="font-medium text-muted-foreground">Acabamento:</span>
-                    <div>{decodeResult.decoded.acabamento.l} → {decodeResult.decoded.acabamento.d}</div>
+                    <div>{decodeResult.product.acabamento.l} → {decodeResult.product.acabamento.d}</div>
                   </div>
                 </div>
 
@@ -210,7 +214,7 @@ export const EPWCodeDebugger: React.FC<EPWCodeDebuggerProps> = ({
                     <div className="grid grid-cols-1 gap-2 text-xs">
                       {['tipos', 'modelos', 'cores', 'acabamentos', 'comprimentos'].map((attr) => {
                         const apiData = apiAttributes[attr] || [];
-                        const decodedValue = getDecodedAttributeCode(decodeResult.decoded, attr);
+                        const decodedValue = getDecodedAttributeCode(decodeResult.product, attr);
                         const found = apiData.find((item: any) => item.l === decodedValue);
                         return (
                           <div key={attr} className="flex items-center gap-2">
@@ -232,7 +236,7 @@ export const EPWCodeDebugger: React.FC<EPWCodeDebuggerProps> = ({
             {!decodeResult.success && (
               <div className="text-red-600 text-sm">
                 <Info className="w-4 h-4 inline mr-1" />
-                {decodeResult.msg}
+                {decodeResult.message}
               </div>
             )}
           </div>

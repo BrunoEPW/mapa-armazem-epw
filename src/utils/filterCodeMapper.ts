@@ -31,8 +31,8 @@ export const extractCodesFromProducts = (products: any[]): {
     const codigo = product.produto_codigo || product.strCodigo;
     if (codigo) {
       const decoded = decodeEPWReference(codigo);
-      if (decoded.success && decoded.decoded) {
-        const { tipo, modelo, cor, acabamento, comprim } = decoded.decoded;
+      if (decoded.success && decoded.product) {
+        const { tipo, modelo, cor, acabamento, comprim } = decoded.product;
         
         // Store mappings
         tipos.set(tipo.l, { epwCode: tipo.l, apiCode: tipo.l, description: tipo.d });

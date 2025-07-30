@@ -47,13 +47,13 @@ export const useApiProductsPaginated = (
         strCodigo: codigo, 
         strDescricao: description,
         epwDecoded: epwDecodeResult.success,
-        epwData: epwDecodeResult.decoded
+        epwData: epwDecodeResult.product
       });
     }
     
     // Use EPW decoded data if successful, otherwise fallback to API data
-    if (epwDecodeResult.success && epwDecodeResult.decoded) {
-      const decoded = epwDecodeResult.decoded;
+    if (epwDecodeResult.success && epwDecodeResult.product) {
+      const decoded = epwDecodeResult.product;
       
       return {
         id: `api_${apiProduct.Id}`,

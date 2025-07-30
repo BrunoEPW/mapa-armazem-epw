@@ -12,8 +12,8 @@ export interface EPWDecodedProduct {
 
 export interface EPWDecodeResult {
   success: boolean;
-  msg: string;
-  decoded?: EPWDecodedProduct;
+  message: string;
+  product?: EPWDecodedProduct;
 }
 
 // Corrected EPW mappings based on real examples
@@ -25,7 +25,15 @@ const EPW_MAPPINGS = {
     'F': 'Fixação', 
     'G': 'Grelha',
     'O': 'Outros',
-    'X': 'Especial'
+    'X': 'Especial',
+    'T': 'Tampa',
+    'S': 'Sistema',
+    'P': 'Perfil',
+    'D': 'Drenagem',
+    'U': 'União',
+    'CS': 'Calha Sistema',
+    'TT': 'Tampa Técnica',
+    'GG': 'Grelha Grande'
   },
   
   // Attribute 2: Certificação
@@ -156,15 +164,15 @@ const getAttributeValue = (attribute: keyof typeof EPW_MAPPINGS, code: string): 
 
 export const decodeEPWReference = (ref: string, debug: boolean = false): EPWDecodeResult => {
   if (!ref || typeof ref !== 'string') {
-    return { success: false, msg: 'Invalid reference code' };
+    return { success: false, message: 'Invalid reference code' };
   }
 
   // Special case for OSACAN001
   if (ref === 'OSACAN001') {
     return {
       success: true,
-      msg: 'Special case decoded',
-      decoded: {
+      message: 'Special case decoded',
+      product: {
         tipo: { l: 'X', d: getAttributeValue('tipo', 'X') },
         certif: { l: 'S', d: getAttributeValue('certif', 'S') },
         modelo: { l: '--', d: 'Genérico' },
@@ -182,116 +190,193 @@ export const decodeEPWReference = (ref: string, debug: boolean = false): EPWDeco
     console.log(`🔍 EPW Debug - Analyzing: "${ref}" [Length: ${refLength}]`);
   }
 
-  // Handle 11-character codes (like csxr32clt01 -> CSXR32CLT01)
-  if (refLength === 11) {
+  // Use adaptive parsing for all code lengths (7-11 characters)
+  if (refLength >= 7 && refLength <= 11) {
     try {
-      // Analyzing pattern: csxr32clt01
-      // Based on EPW structure analysis:
-      // Position 0: Tipo (c)
-      // Position 1: Certificação (s) 
-      // Position 2: Unknown/Extra (x)
-      // Position 3: Modelo (r)
-      // Position 4-5: Comprimento (32)
-      // Position 6: Cor (c)
-      // Position 7: Acabamento (l)
-      // Position 8: Unknown/Extra (t)
-      // Position 9-10: Variant/Serie (01)
+      const decoded = parseEPWCodeAdaptive(refUpper, debug);
       
-      const tipo = refUpper.charAt(0);
-      const certif = refUpper.charAt(1);
-      const modelo = refUpper.charAt(3);  // Skip position 2 for now
-      const comprimento = refUpper.substring(4, 6);
-      const cor = refUpper.charAt(6);
-      const acabamento = refUpper.charAt(7);
-      
-      if (debug) {
-        console.log(`🔍 EPW 11-char breakdown:`, {
-          tipo, certif, modelo, comprimento, cor, acabamento,
-          skipped: { pos2: refUpper.charAt(2), pos8: refUpper.charAt(8), variant: refUpper.substring(9, 11) }
-        });
-      }
-
       return {
         success: true,
-        msg: 'Successfully decoded (11-char pattern)',
-        decoded: {
-          tipo: { l: tipo, d: getAttributeValue('tipo', tipo) },
-          certif: { l: certif, d: getAttributeValue('certif', certif) },
-          modelo: { l: modelo, d: getAttributeValue('modelo', modelo) },
-          comprim: { l: comprimento, d: getAttributeValue('comprim', comprimento) },
-          cor: { l: cor, d: getAttributeValue('cor', cor) },
-          acabamento: { l: acabamento, d: getAttributeValue('acabamento', acabamento) }
-        }
+        message: `Successfully decoded using adaptive parsing (${refLength}-char)`,
+        product: decoded
       };
     } catch (error) {
-      return { success: false, msg: `Decode error (11-char): ${error instanceof Error ? error.message : 'Unknown error'}` };
+      return { success: false, message: `Decode error: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
 
-  // Handle 8-character codes (like RSC23CL01)
-  if (refLength === 8) {
-    try {
-      const tipo = refUpper.charAt(0);
-      const certif = refUpper.charAt(1);
-      const modelo = refUpper.charAt(2);
-      const comprimento = refUpper.substring(3, 5);
-      const cor = refUpper.charAt(5);
-      const acabamento = refUpper.charAt(6);
-      
-      if (debug) {
-        console.log(`🔍 EPW 8-char breakdown:`, { tipo, certif, modelo, comprimento, cor, acabamento });
-      }
-
-      return {
-        success: true,
-        msg: 'Successfully decoded (8-char pattern)',
-        decoded: {
-          tipo: { l: tipo, d: getAttributeValue('tipo', tipo) },
-          certif: { l: certif, d: getAttributeValue('certif', certif) },
-          modelo: { l: modelo, d: getAttributeValue('modelo', modelo) },
-          comprim: { l: comprimento, d: getAttributeValue('comprim', comprimento) },
-          cor: { l: cor, d: getAttributeValue('cor', cor) },
-          acabamento: { l: acabamento, d: getAttributeValue('acabamento', acabamento) }
-        }
-      };
-    } catch (error) {
-      return { success: false, msg: `Decode error (8-char): ${error instanceof Error ? error.message : 'Unknown error'}` };
-    }
-  }
-
-  // Handle 7-character codes (like RSC23CL)
-  if (refLength === 7) {
-    try {
-      const tipo = refUpper.charAt(0);
-      const certif = refUpper.charAt(1);
-      const modelo = refUpper.charAt(2);
-      const comprimento = refUpper.substring(3, 5);
-      const cor = refUpper.charAt(5);
-      const acabamento = refUpper.charAt(6);
-      
-      if (debug) {
-        console.log(`🔍 EPW 7-char breakdown:`, { tipo, certif, modelo, comprimento, cor, acabamento });
-      }
-
-      return {
-        success: true,
-        msg: 'Successfully decoded (7-char pattern)',
-        decoded: {
-          tipo: { l: tipo, d: getAttributeValue('tipo', tipo) },
-          certif: { l: certif, d: getAttributeValue('certif', certif) },
-          modelo: { l: modelo, d: getAttributeValue('modelo', modelo) },
-          comprim: { l: comprimento, d: getAttributeValue('comprim', comprimento) },
-          cor: { l: cor, d: getAttributeValue('cor', cor) },
-          acabamento: { l: acabamento, d: getAttributeValue('acabamento', acabamento) }
-        }
-      };
-    } catch (error) {
-      return { success: false, msg: `Decode error (7-char): ${error instanceof Error ? error.message : 'Unknown error'}` };
-    }
-  }
-
-  return { success: false, msg: `Unsupported code length: ${refLength}. Expected 7, 8, or 11 characters.` };
+  return { success: false, message: `Unsupported code length: ${refLength}. Expected 7-11 characters.` };
 };
+
+function parseEPWCodeAdaptive(cleanRef: string, debug: boolean = false): EPWDecodedProduct {
+  if (debug) {
+    console.log(`🔧 EPW Adaptive Parser - Processing: "${cleanRef}"`);
+  }
+
+  // Step 1: Extract sequential numbers (always 2 digits at the end)
+  const sequentialNumbers = cleanRef.slice(-2);
+  let remaining = cleanRef.slice(0, -2);
+  
+  if (debug) {
+    console.log(`📊 Sequential numbers: ${sequentialNumbers}, Remaining: ${remaining}`);
+  }
+
+  // Step 2: Extract cor (always 2 chars before sequential numbers)
+  const cor = remaining.slice(-2);
+  remaining = remaining.slice(0, -2);
+  
+  // Step 3: Extract comprimento (always 2 chars before cor)
+  const comprim = remaining.slice(-2);
+  remaining = remaining.slice(0, -2);
+  
+  if (debug) {
+    console.log(`🎨 Cor: ${cor}, Comprimento: ${comprim}, Front part: ${remaining}`);
+  }
+
+  // Step 4: Parse the front part (tipo, certif, modelo, acabamento)
+  const frontPart = parseFrontPart(remaining, debug);
+  
+  if (debug) {
+    console.log(`🔍 Front part parsed:`, frontPart);
+  }
+
+  return {
+    tipo: { l: frontPart.tipo, d: getAttributeValue('tipo', frontPart.tipo) },
+    certif: { l: frontPart.certif, d: getAttributeValue('certif', frontPart.certif) },
+    modelo: { l: frontPart.modelo, d: getAttributeValue('modelo', frontPart.modelo) },
+    comprim: { l: comprim, d: getAttributeValue('comprim', comprim) },
+    cor: { l: cor, d: getAttributeValue('cor', cor) },
+    acabamento: { l: frontPart.acabamento, d: getAttributeValue('acabamento', frontPart.acabamento) }
+  };
+}
+
+function parseFrontPart(remaining: string, debug: boolean = false): {
+  tipo: string;
+  certif: string;
+  modelo: string;
+  acabamento: string;
+} {
+  if (debug) {
+    console.log(`🏗️ Parsing front part: "${remaining}" (length: ${remaining.length})`);
+  }
+
+  // Define parsing strategies based on user description:
+  // - Tipo: 1 or 2 characters
+  // - Certificação: 1 character
+  // - Modelo: 1 or 2 characters  
+  // - Acabamento: variable (remaining chars)
+  
+  const strategies = [
+    // Strategy 1: tipo=1, certif=1, modelo=1, acabamento=rest
+    () => {
+      if (remaining.length >= 3) {
+        const tipo = remaining[0];
+        const certif = remaining[1];
+        const modelo = remaining[2];
+        const acabamento = remaining.slice(3);
+        return { tipo, certif, modelo, acabamento, score: validateFrontPart(tipo, certif, modelo, acabamento) };
+      }
+      return null;
+    },
+    
+    // Strategy 2: tipo=2, certif=1, modelo=1, acabamento=rest
+    () => {
+      if (remaining.length >= 4) {
+        const tipo = remaining.substring(0, 2);
+        const certif = remaining[2];
+        const modelo = remaining[3];
+        const acabamento = remaining.slice(4);
+        return { tipo, certif, modelo, acabamento, score: validateFrontPart(tipo, certif, modelo, acabamento) };
+      }
+      return null;
+    },
+    
+    // Strategy 3: tipo=1, certif=1, modelo=2, acabamento=rest
+    () => {
+      if (remaining.length >= 4) {
+        const tipo = remaining[0];
+        const certif = remaining[1];
+        const modelo = remaining.substring(2, 4);
+        const acabamento = remaining.slice(4);
+        return { tipo, certif, modelo, acabamento, score: validateFrontPart(tipo, certif, modelo, acabamento) };
+      }
+      return null;
+    },
+    
+    // Strategy 4: tipo=2, certif=1, modelo=2, acabamento=rest
+    () => {
+      if (remaining.length >= 5) {
+        const tipo = remaining.substring(0, 2);
+        const certif = remaining[2];
+        const modelo = remaining.substring(3, 5);
+        const acabamento = remaining.slice(5);
+        return { tipo, certif, modelo, acabamento, score: validateFrontPart(tipo, certif, modelo, acabamento) };
+      }
+      return null;
+    }
+  ];
+
+  // Try strategies and pick the one with the highest validation score
+  let bestResult = null;
+  let bestScore = 0;
+
+  for (let i = 0; i < strategies.length; i++) {
+    const result = strategies[i]();
+    if (result && result.score > bestScore) {
+      bestResult = result;
+      bestScore = result.score;
+      
+      if (debug) {
+        console.log(`✅ Strategy ${i + 1} scored ${result.score}:`, result);
+      }
+    }
+  }
+
+  if (bestResult) {
+    return {
+      tipo: bestResult.tipo,
+      certif: bestResult.certif,
+      modelo: bestResult.modelo,
+      acabamento: bestResult.acabamento
+    };
+  }
+
+  // Fallback: use strategy 1 even if not validated
+  if (remaining.length >= 3) {
+    const fallback = {
+      tipo: remaining[0],
+      certif: remaining[1],
+      modelo: remaining[2],
+      acabamento: remaining.slice(3)
+    };
+    
+    if (debug) {
+      console.log(`⚠️ Using fallback strategy:`, fallback);
+    }
+    
+    return fallback;
+  }
+
+  // Ultimate fallback for very short codes
+  return {
+    tipo: remaining[0] || '',
+    certif: remaining[1] || '',
+    modelo: remaining[2] || '',
+    acabamento: remaining.slice(3) || ''
+  };
+}
+
+function validateFrontPart(tipo: string, certif: string, modelo: string, acabamento: string): number {
+  let score = 0;
+  
+  // Check if the extracted codes exist in our mappings (higher score = better match)
+  if (tipo && getAttributeValue('tipo', tipo) !== tipo) score += 3;
+  if (certif && getAttributeValue('certif', certif) !== certif) score += 3;
+  if (modelo && getAttributeValue('modelo', modelo) !== modelo) score += 3;
+  if (acabamento && getAttributeValue('acabamento', acabamento) !== acabamento) score += 1;
+  
+  return score;
+}
 
 // Helper function to get familia from decoded EPW data
 export const getEPWFamilia = (decoded: EPWDecodedProduct): string => {
