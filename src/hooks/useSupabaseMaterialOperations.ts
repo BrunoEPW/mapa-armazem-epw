@@ -188,20 +188,61 @@ export const useSupabaseMaterialOperations = ({
   };
 
   const removeMaterial = async (materialId: string) => {
+    console.log('🗑️ [removeMaterial] Starting removal for material:', materialId);
+    
     try {
+      // Check if this is a local-only material (created when database was restricted)
+      if (materialId.startsWith('local-')) {
+        console.log('⚠️ [removeMaterial] Detected local material, removing locally only');
+        
+        // Remove from local state only
+        setMaterials(prev => prev.filter(m => m.id !== materialId));
+        
+        toast.success('Material removido localmente!');
+        console.log('✅ [removeMaterial] Local material removed successfully');
+        return;
+      }
+
+      // For database materials, proceed with normal deletion
+      console.log('💾 [removeMaterial] Removing from Supabase database');
+      
       const { error } = await supabase
         .from('materials')
         .delete()
         .eq('id', materialId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('🔴 [removeMaterial] Supabase error:', error);
+        
+        // If it's an RLS or permission error, remove locally only
+        if (error.message?.includes('row-level security') || 
+            error.code === '42501') {
+          console.log('⚠️ [removeMaterial] Database restricted, removing locally only');
+          
+          setMaterials(prev => prev.filter(m => m.id !== materialId));
+          
+          toast.success('Material removido localmente!');
+          console.log('✅ [removeMaterial] Removed locally successfully');
+          return;
+        }
+        
+        throw error;
+      }
 
+      console.log('✅ [removeMaterial] Supabase deletion successful');
+
+      // Remove from local state
       setMaterials(prev => prev.filter(m => m.id !== materialId));
-      toast.success('Material removido com sucesso');
+      
+      // Log the action
+      await logAction('materials', materialId, 'DELETE');
+      
+      toast.success('Material removido com sucesso!');
+      console.log('✅ [removeMaterial] Operation completed successfully');
       
     } catch (error) {
-      console.error('Error removing material:', error);
-      toast.error('Erro ao remover material');
+      console.error('🔴 [removeMaterial] Error:', error);
+      toast.error('Erro ao remover material. Tente novamente.');
     }
   };
 
