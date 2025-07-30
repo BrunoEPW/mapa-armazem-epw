@@ -209,6 +209,21 @@ export const useSupabaseMaterialOperations = ({
     console.log('🔄 [updateMaterial] Starting update for material:', materialId, 'with updates:', updates);
     
     try {
+      // Check if this is a local-only material (created when database was restricted)
+      if (materialId.startsWith('local-')) {
+        console.log('⚠️ [updateMaterial] Detected local material, updating locally only');
+        
+        // Update local state only
+        setMaterials(prev => prev.map(m => 
+          m.id === materialId ? { ...m, ...updates } : m
+        ));
+        
+        toast.success('Material atualizado localmente!');
+        console.log('✅ [updateMaterial] Local material updated successfully');
+        return;
+      }
+
+      // For database materials, proceed with normal update
       const updateData: any = {};
       
       if (updates.pecas !== undefined) updateData.pecas = updates.pecas;
