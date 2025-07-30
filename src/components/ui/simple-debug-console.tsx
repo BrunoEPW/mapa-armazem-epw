@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Copy } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface LogEntry {
   id: string;
@@ -14,6 +15,7 @@ interface LogEntry {
 
 const SimpleDebugConsole = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Only capture console.log to avoid infinite loops
@@ -48,6 +50,25 @@ const SimpleDebugConsole = () => {
     setLogs([]);
   };
 
+  const copyAllLogs = () => {
+    const logText = logs.map(log => 
+      `[${log.timestamp}] ${log.level.toUpperCase()}: ${log.message}`
+    ).join('\n\n');
+    
+    navigator.clipboard.writeText(logText).then(() => {
+      toast({
+        title: "Logs copiados",
+        description: "Todos os logs foram copiados para a área de transferência",
+      });
+    }).catch(() => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível copiar os logs",
+        variant: "destructive",
+      });
+    });
+  };
+
   const getLevelColor = (level: LogEntry['level']) => {
     switch (level) {
       case 'error': return 'destructive';
@@ -63,15 +84,28 @@ const SimpleDebugConsole = () => {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm">Debug Console</CardTitle>
-          <Button
-            onClick={clearLogs}
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0"
-            disabled={logs.length === 0}
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
+          <div className="flex gap-1">
+            <Button
+              onClick={copyAllLogs}
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              disabled={logs.length === 0}
+              title="Copiar todos os logs"
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+            <Button
+              onClick={clearLogs}
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              disabled={logs.length === 0}
+              title="Limpar logs"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-2">
