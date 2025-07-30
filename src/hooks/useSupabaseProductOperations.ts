@@ -18,18 +18,19 @@ export const useSupabaseProductOperations = ({
   
   const addProduct = async (product: Omit<Product, 'id'>) => {
     try {
-      console.log('=== SUPABASE ADD PRODUCT DEBUG ===');
-      console.log('Input product:', JSON.stringify(product, null, 2));
+      console.log('🔵 === SUPABASE ADD PRODUCT DEBUG ===');
+      console.log('🔵 Input product:', JSON.stringify(product, null, 2));
+      console.log('🔵 Supabase client:', !!supabase);
       
       // Validate required fields
       const requiredFields = ['familia', 'modelo', 'acabamento', 'cor', 'comprimento'];
       for (const field of requiredFields) {
         if (!product[field]) {
-          console.error(`Missing required field in product: ${field}`);
+          console.error(`🔴 Missing required field in product: ${field}`);
           throw new Error(`Campo obrigatório em falta: ${field}`);
         }
       }
-      console.log('✓ Product validation passed');
+      console.log('🔵 ✓ Product validation passed');
       
       // Prepare data for Supabase insertion
       const supabaseData = {
@@ -43,8 +44,8 @@ export const useSupabaseProductOperations = ({
         updated_by: 'system',
       };
       
-      console.log('Data prepared for Supabase:', JSON.stringify(supabaseData, null, 2));
-      console.log('Inserting into Supabase products table...');
+      console.log('🔵 Data prepared for Supabase:', JSON.stringify(supabaseData, null, 2));
+      console.log('🔵 About to call Supabase...');
       
       const { data, error } = await supabase
         .from('products')
@@ -52,9 +53,13 @@ export const useSupabaseProductOperations = ({
         .select()
         .single();
 
+      console.log('🔵 Supabase call completed');
+      console.log('🔵 Supabase data response:', data);
+      console.log('🔵 Supabase error response:', error);
+
       if (error) {
-        console.error('❌ Supabase insertion error:', error);
-        console.error('Error details:', {
+        console.error('🔴 Supabase insertion error:', error);
+        console.error('🔴 Error details:', {
           message: error.message,
           code: error.code,
           details: error.details,
