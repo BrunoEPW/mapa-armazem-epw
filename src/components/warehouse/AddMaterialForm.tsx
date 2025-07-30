@@ -31,26 +31,27 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    console.log('=== ADD MATERIAL DEBUG ===');
-    console.log('🔍 Function started, checking variables...');
-    console.log('🔍 selectedProductId:', selectedProductId);
-    console.log('🔍 selectedProductId type:', typeof selectedProductId);
-    console.log('🔍 selectedProduct exists:', !!selectedProduct);
-    console.log('🔍 selectedProduct:', selectedProduct);
-    console.log('🔍 pecas:', pecas);
-    console.log('🔍 pecas type:', typeof pecas);
-    console.log('🔍 norc:', norc);
-    console.log('🔍 norc type:', typeof norc);
-    console.log('🔍 location:', location);
-    console.log('🔍 About to start validation...');
-    
-    if (!selectedProductId || !selectedProduct) {
-      console.log('ERROR: No product selected');
-      toast.error('Por favor, selecione um produto');
-      return;
-    }
+    try {
+      e.preventDefault();
+      
+      console.log('=== ADD MATERIAL DEBUG ===');
+      console.log('🔍 Function started, checking variables...');
+      console.log('🔍 selectedProductId:', selectedProductId);
+      console.log('🔍 selectedProductId type:', typeof selectedProductId);
+      console.log('🔍 selectedProduct exists:', !!selectedProduct);
+      console.log('🔍 selectedProduct:', selectedProduct);
+      console.log('🔍 pecas:', pecas);
+      console.log('🔍 pecas type:', typeof pecas);
+      console.log('🔍 norc:', norc);
+      console.log('🔍 norc type:', typeof norc);
+      console.log('🔍 location:', location);
+      console.log('🔍 About to start validation...');
+      
+      if (!selectedProductId || !selectedProduct) {
+        console.log('❌ ERROR: No product selected');
+        toast.error('Por favor, selecione um produto');
+        return;
+      }
 
     if (pecas <= 0) {
       console.log('ERROR: Invalid pecas:', pecas);
@@ -170,6 +171,13 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
       console.error('Error message:', error?.message);
       console.error('Error stack:', error?.stack);
       toast.error('Erro ao adicionar material. Tente novamente.');
+    }
+    } catch (mainError) {
+      console.error('=== CRITICAL ERROR IN HANDLE SUBMIT ===');
+      console.error('Critical error details:', mainError);
+      console.error('Critical error message:', mainError?.message);
+      console.error('Critical error stack:', mainError?.stack);
+      toast.error('Erro crítico. Tente novamente.');
     }
   };
 
