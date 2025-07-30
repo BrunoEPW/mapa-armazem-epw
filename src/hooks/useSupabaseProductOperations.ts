@@ -21,10 +21,12 @@ export const useSupabaseProductOperations = ({
       console.log('🔵 === SUPABASE ADD PRODUCT DEBUG ===');
       console.log('🔵 Input product:', JSON.stringify(product, null, 2));
       console.log('🔵 Supabase client:', !!supabase);
+      console.log('🔵 Starting field validation...');
       
       // Validate required fields
       const requiredFields = ['familia', 'modelo', 'acabamento', 'cor', 'comprimento'];
       for (const field of requiredFields) {
+        console.log(`🔵 Validating field "${field}":`, product[field]);
         if (!product[field]) {
           console.error(`🔴 Missing required field in product: ${field}`);
           throw new Error(`Campo obrigatório em falta: ${field}`);

@@ -79,6 +79,8 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       throw new Error(`Dados do produto inválidos: ${error}`);
     }
 
+    console.log('🔍 apiProduct validation - passed null check');
+
     // Validate required fields with detailed checks
     const requiredFields = ['familia', 'modelo', 'acabamento', 'cor', 'comprimento'];
     console.log('🔍 Checking required fields:', requiredFields);
