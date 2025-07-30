@@ -5,6 +5,7 @@ import { ArrowLeft, Plus, Edit, Trash2, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { Material } from '@/types/warehouse';
 import { AddMaterialDialog } from './AddMaterialDialog';
@@ -52,9 +53,7 @@ const ShelfDetailView: React.FC = () => {
   });
 
   const handleRemoveMaterial = (materialId: string) => {
-    if (confirm('Tem certeza que deseja remover este material?')) {
-      removeMaterial(materialId);
-    }
+    removeMaterial(materialId);
   };
 
   return (
@@ -119,13 +118,33 @@ const ShelfDetailView: React.FC = () => {
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleRemoveMaterial(material.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmar Remoção</AlertDialogTitle>
+                            <AlertDialogDescription className="text-base">
+                              Vai apagar este artigo e perder todo o registo de movimentos... é mesmo isso que quer!!!???
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction 
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={() => handleRemoveMaterial(material.id)}
+                            >
+                              Sim, Apagar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </CardHeader>
