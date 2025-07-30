@@ -34,6 +34,9 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
     try {
       e.preventDefault();
       
+      // Use alert instead of console.log to bypass any console capture issues
+      alert('DEBUG: Starting handleSubmit function');
+      
       console.log('=== ADD MATERIAL DEBUG ===');
       console.log('🔍 Function started, checking variables...');
       console.log('🔍 selectedProductId:', selectedProductId);
