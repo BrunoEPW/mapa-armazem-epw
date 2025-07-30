@@ -124,15 +124,15 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="norcType">Tipo de NORC</Label>
+            <Label htmlFor="norcType">Tipo de Saída/Entrada</Label>
             <Select value={norcType} onValueChange={(value: 'escrever' | 'partidas' | 'amostras') => setNorcType(value)}>
               <SelectTrigger className="w-full bg-background border border-border">
-                <SelectValue placeholder="Selecione o tipo de NORC" />
+                <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
               <SelectContent className="bg-background border border-border shadow-lg z-50">
-                <SelectItem value="escrever">Escrever NORC</SelectItem>
-                <SelectItem value="partidas">Partidas</SelectItem>
-                <SelectItem value="amostras">Amostras</SelectItem>
+                <SelectItem value="escrever">NORC (Entrada/Saída)</SelectItem>
+                <SelectItem value="partidas">Partidas (Saída)</SelectItem>
+                <SelectItem value="amostras">Amostras (Saída)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -140,13 +140,13 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
           {(norcType === 'escrever' || norcType === 'amostras') && (
             <div>
               <Label htmlFor="customNorc">
-                {norcType === 'escrever' ? 'NORC' : 'Nome da Amostra'}
+                {norcType === 'escrever' ? 'NORC (Número de Ordem)' : 'Nome da Amostra'}
               </Label>
               <Input
                 id="customNorc"
                 value={customNorc}
                 onChange={(e) => setCustomNorc(e.target.value)}
-                placeholder={norcType === 'escrever' ? 'Ex: NORC001' : 'Ex: Amostra Cliente X'}
+                placeholder={norcType === 'escrever' ? 'Ex: NORC001, OF123456' : 'Ex: Amostra Cliente X'}
               />
             </div>
           )}

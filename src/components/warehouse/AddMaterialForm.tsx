@@ -24,8 +24,7 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [pecas, setPecas] = useState<number>(1);
-  const [norcType, setNorcType] = useState<'escrever' | 'partidas' | 'amostras'>('escrever');
-  const [customNorc, setCustomNorc] = useState<string>('');
+  const [norc, setNorc] = useState<string>(''); // Sempre NORC para entradas
 
   const handleProductSelect = (productId: string, product: Product) => {
     setSelectedProductId(productId);
@@ -47,25 +46,14 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
       console.log('🔍 selectedProduct:', selectedProduct);
       console.log('🔍 pecas:', pecas);
       console.log('🔍 pecas type:', typeof pecas);
-      console.log('🔍 norcType:', norcType);
-      console.log('🔍 customNorc:', customNorc);
+      console.log('🔍 norc:', norc);
       console.log('🔍 location:', location);
       console.log('🔍 About to start validation...');
       
       document.title = `DEBUG: Step 2 - Starting validation`;
       
-      // Determine the final NORC value based on type
-      let finalNorc = '';
-      if (norcType === 'escrever') {
-        finalNorc = customNorc;
-      } else if (norcType === 'partidas') {
-        finalNorc = 'PARTIDAS';
-      } else if (norcType === 'amostras') {
-        finalNorc = `AMOSTRAS - ${customNorc}`;
-      }
-      
       // Validation checks
-      if (!selectedProduct || !pecas || !finalNorc) {
+      if (!selectedProduct || !pecas || !norc.trim()) {
         document.title = `DEBUG: ERROR - Missing required fields`;
         console.log('❌ ERROR: Missing required fields');
         toast.error('Por favor, preencha todos os campos');
@@ -170,7 +158,7 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
         materialId: createdMaterial.id,
         type: 'entrada',
         pecas,
-        norc: finalNorc,
+        norc: norc.trim(),
         date: new Date().toISOString(),
       });
 
@@ -178,7 +166,7 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
         materialId: createdMaterial.id,
         type: 'entrada',
         pecas,
-        norc: finalNorc,
+        norc: norc.trim(),
         date: new Date().toISOString(),
       });
 
@@ -223,33 +211,16 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
         </div>
 
         <div>
-          <Label htmlFor="norcType">Tipo de NORC</Label>
-          <Select value={norcType} onValueChange={(value: 'escrever' | 'partidas' | 'amostras') => setNorcType(value)}>
-            <SelectTrigger className="w-full bg-background border border-border">
-              <SelectValue placeholder="Selecione o tipo de NORC" />
-            </SelectTrigger>
-            <SelectContent className="bg-background border border-border shadow-lg z-50">
-              <SelectItem value="escrever">Escrever NORC</SelectItem>
-              <SelectItem value="partidas">Partidas</SelectItem>
-              <SelectItem value="amostras">Amostras</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {(norcType === 'escrever' || norcType === 'amostras') && (
-        <div>
-          <Label htmlFor="customNorc">
-            {norcType === 'escrever' ? 'NORC' : 'Nome da Amostra'}
-          </Label>
+          <Label htmlFor="norc">NORC (Número de Ordem)</Label>
           <Input
-            id="customNorc"
-            value={customNorc}
-            onChange={(e) => setCustomNorc(e.target.value)}
-            placeholder={norcType === 'escrever' ? 'Ex: NORC001' : 'Ex: Amostra Cliente X'}
+            id="norc"
+            value={norc}
+            onChange={(e) => setNorc(e.target.value)}
+            placeholder="Ex: NORC001, OF123456"
+            required
           />
         </div>
-      )}
+      </div>
 
       <div className="flex justify-end gap-3">
         <Button type="button" variant="outline" onClick={onCancel}>
