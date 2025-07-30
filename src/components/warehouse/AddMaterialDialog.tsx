@@ -33,9 +33,9 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
           onCancel={onClose}
         />
         
-        <div className="mt-4 border-t pt-4">
+        {/* <div className="mt-4 border-t pt-4">
           <SimpleDebugConsole />
-        </div>
+        </div> */}
       </DialogContent>
     </Dialog>
   );
