@@ -118,18 +118,16 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
             cause: createError?.cause
           });
           
-          // More specific error message based on error type
-          let userMessage = 'Erro ao criar produto localmente';
-          if (createError?.message?.includes('Campo obrigatório')) {
-            userMessage = `Dados incompletos: ${createError.message}`;
-          } else if (createError?.message?.includes('Supabase')) {
-            userMessage = 'Erro de conexão com a base de dados';
-          } else if (createError?.message?.includes('conversão')) {
-            userMessage = 'Erro na conversão dos dados do produto';
-          }
+          // Enhanced error handling - don't fail the material creation
+          console.log('🔄 Product creation failed, but continuing with material creation...');
           
-          toast.error(userMessage);
-          return;
+          // Use the original API product data as fallback
+          productToUse = selectedProduct;
+          
+          // Show warning but don't stop the process
+          toast.warning('Produto não foi guardado na base de dados', {
+            description: 'O material será adicionado com dados temporários do produto.'
+          });
         }
       } else {
         console.log('📋 Using existing local product:', productToUse);

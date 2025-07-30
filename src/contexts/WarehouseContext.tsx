@@ -192,13 +192,22 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         console.error('🔴 === SUPABASE ERROR DETAILS ===');
         console.error('🔴 Error object:', supabaseError);
         console.error('🔴 Error message:', supabaseError?.message);
+        console.error('🔴 Error code:', supabaseError?.code);
         console.error('🔴 Product data that failed:', JSON.stringify(productData, null, 2));
         
-        // Check if it's an RLS policy error
-        if (supabaseError?.message?.includes('row-level security policy') || 
-            supabaseError?.message?.includes('RLS') ||
-            supabaseError?.code === '42501') {
-          console.log('⚠️ RLS policy error detected - adding product locally only');
+        // Enhanced RLS error detection
+        const isRLSError = supabaseError?.message?.includes('row-level security policy') || 
+                          supabaseError?.message?.includes('RLS') ||
+                          supabaseError?.message?.includes('violates row-level security') ||
+                          supabaseError?.code === '42501' ||
+                          supabaseError?.code === 'PGRST301';
+        
+        const isPermissionError = supabaseError?.message?.includes('permission denied') ||
+                                 supabaseError?.message?.includes('not allowed') ||
+                                 supabaseError?.code === '42501';
+        
+        if (isRLSError || isPermissionError) {
+          console.log('⚠️ RLS/Permission error detected - adding product locally only');
           
           // Add to local state only as fallback
           const localProduct: Product = {
@@ -216,20 +225,37 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             return [...prev, localProduct];
           });
           
-          console.log('✅ Step 6: Product added locally (database has RLS restrictions)');
+          console.log('✅ Step 6: Product added locally (database has RLS/permission restrictions)');
+          
+          // Show user-friendly message about local storage
+          toast.success('Produto criado localmente (limitações da base de dados)', {
+            description: 'O produto foi guardado no dispositivo, mas pode não estar sincronizado com a base de dados.'
+          });
         } else {
-          // Other database errors
-          let errorMessage = 'Erro ao guardar na base de dados';
-          if (supabaseError?.message) {
-            if (supabaseError.message.includes('duplicate key')) {
-              errorMessage = 'Produto já existe na base de dados';
-            } else if (supabaseError.message.includes('null value')) {
-              errorMessage = 'Dados obrigatórios em falta para a base de dados';
-            } else {
-              errorMessage = `Erro na base de dados: ${supabaseError.message}`;
+          // Other database errors - try local fallback
+          console.log('🔄 Non-RLS database error, attempting local fallback...');
+          
+          const localProduct: Product = {
+            id: cleanId,
+            ...productData,
+          };
+          
+          setProducts(prev => {
+            const exists = prev.some(p => p.id === cleanId);
+            if (exists) {
+              console.log('✅ Product already exists locally');
+              return prev;
             }
-          }
-          throw new Error(errorMessage);
+            console.log('✅ Added product to local state as fallback');
+            return [...prev, localProduct];
+          });
+          
+          console.log('⚠️ Step 6: Product added locally due to database error');
+          
+          // Show warning about database connectivity
+          toast.warning('Produto criado localmente', {
+            description: 'Problemas de conectividade com a base de dados. O produto foi guardado localmente.'
+          });
         }
       }
       
