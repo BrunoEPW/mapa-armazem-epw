@@ -40,7 +40,7 @@ export const MovementHistoryDialog: React.FC<MovementHistoryDialogProps> = ({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            Histórico de Movimentações - {material.product.modelo}
+            Histórico de Movimentações
           </DialogTitle>
         </DialogHeader>
         

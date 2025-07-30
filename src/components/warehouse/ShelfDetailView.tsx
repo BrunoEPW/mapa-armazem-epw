@@ -104,9 +104,6 @@ const ShelfDetailView: React.FC = () => {
               <Card key={material.id}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">
-                      {material.product.modelo}
-                    </CardTitle>
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
