@@ -16,6 +16,8 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
   material,
   onClose,
 }) => {
+  console.log('🚀 [EditMaterialDialog] Component mounted with material:', material);
+  
   const { updateMaterial, addMovement } = useWarehouse();
   
   console.log('🔍 [EditMaterialDialog] Functions available:', {
@@ -28,7 +30,17 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
   const [norc, setNorc] = useState('');
   const [movementType, setMovementType] = useState<'entrada' | 'saida'>('entrada');
 
+  console.log('📊 [EditMaterialDialog] Component state initialized:', {
+    initialPecas: pecas,
+    materialInfo: {
+      id: material.id,
+      currentPecas: material.pecas,
+      produto: material.product.modelo
+    }
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('🔥 [EditMaterialDialog] BUTTON CLICKED - Starting handleSubmit');
     e.preventDefault();
     
     console.log('🔄 [EditMaterialDialog] Starting handleSubmit');
@@ -54,22 +66,36 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
       if (difference !== 0) {
         console.log('💾 [EditMaterialDialog] Calling updateMaterial...');
         
-        // Update material quantity
-        await updateMaterial(material.id, { pecas: newPecas });
+        // Simple test: just update local state first
+        console.log('🧪 [EditMaterialDialog] Testing simple local update...');
         
-        console.log('✅ [EditMaterialDialog] Material updated, now adding movement...');
-        
-        // Add movement record
-        await addMovement({
-          materialId: material.id,
-          type: difference > 0 ? 'entrada' : 'saida',
-          pecas: Math.abs(difference),
-          norc,
-          date: new Date().toISOString().split('T')[0],
-        });
-
-        console.log('✅ [EditMaterialDialog] Movement added successfully');
-        toast.success('Material atualizado com sucesso');
+        try {
+          // Update material quantity
+          await updateMaterial(material.id, { pecas: newPecas });
+          console.log('✅ [EditMaterialDialog] Material updated successfully');
+          
+          // Add movement record
+          console.log('📝 [EditMaterialDialog] Adding movement...');
+          await addMovement({
+            materialId: material.id,
+            type: difference > 0 ? 'entrada' : 'saida',
+            pecas: Math.abs(difference),
+            norc,
+            date: new Date().toISOString().split('T')[0],
+          });
+          
+          console.log('✅ [EditMaterialDialog] Movement added successfully');
+          toast.success('Material atualizado com sucesso');
+          
+        } catch (updateError) {
+          console.error('🔴 [EditMaterialDialog] Error during update:', updateError);
+          console.error('🔴 [EditMaterialDialog] Error details:', {
+            message: updateError?.message,
+            stack: updateError?.stack,
+            name: updateError?.name
+          });
+          throw updateError; // Re-throw to be caught by outer catch
+        }
       } else {
         console.log('ℹ️ [EditMaterialDialog] No changes made');
         toast.info('Nenhuma alteração foi feita');
