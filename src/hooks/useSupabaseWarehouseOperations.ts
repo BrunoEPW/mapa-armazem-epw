@@ -27,6 +27,8 @@ export const useSupabaseWarehouseOperations = ({
   const materialOperations = useSupabaseMaterialOperations({
     materials,
     setMaterials,
+    products,
+    setProducts,
   });
 
   const productOperations = useSupabaseProductOperations({

@@ -7,6 +7,9 @@ import { useRealTimeSync } from '@/hooks/useRealTimeSync';
 import { useDataReset } from '@/hooks/useDataReset';
 import { useSupabaseAdminOperations } from '@/hooks/useSupabaseAdminOperations';
 import { useProductWebService } from '@/hooks/useProductWebService';
+import { decodeEPWReference } from '@/utils/epwCodeDecoder';
+import { ensureValidProductId } from '@/utils/uuidUtils';
+import { toast } from 'sonner';
 
 interface WarehouseContextType {
   materials: Material[];
@@ -78,13 +81,14 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       console.log('🔍 Step 1: Input validation passed');
 
-      // Step 2: Enhanced ID handling
-      if (!apiProduct.id) {
-        throw new Error('ID do produto em falta');
+      // Step 2: Generate valid UUID from API product ID
+      if (!apiProduct.id && !apiProduct.codigo) {
+        throw new Error('ID ou código do produto em falta');
       }
       
-      const cleanId = apiProduct.id.startsWith('api_') ? apiProduct.id.replace('api_', '') : apiProduct.id;
-      console.log('🆔 Clean ID generated:', cleanId);
+      const apiId = apiProduct.id || apiProduct.codigo || `temp-${Date.now()}`;
+      const cleanId = ensureValidProductId(apiId);
+      console.log('🆔 Generated valid UUID:', cleanId, 'from API ID:', apiId);
       
       // Check if product already exists
       const existingProduct = products.find(p => p.id === cleanId);
