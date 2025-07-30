@@ -108,7 +108,6 @@ export const useRealTimeSync = (
         setConnectedUsers(users);
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log('User joined:', key, newPresences);
         addNotification(`Utilizador ${key} entrou`, 'info');
       })
       .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
