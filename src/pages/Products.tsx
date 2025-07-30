@@ -13,6 +13,7 @@ import { EPWFilters } from '@/components/warehouse/EPWFilters';
 import { FilterDebugPanel } from '@/components/warehouse/FilterDebugPanel';
 import { EPWCodeDebugger } from '@/components/warehouse/EPWCodeDebugger';
 import { FilterCodeTester } from '@/components/warehouse/FilterCodeTester';
+import { ModelFilterDebugger } from '@/components/warehouse/ModelFilterDebugger';
 import { config } from '@/lib/config';
 import productsBanner from '@/assets/epw-products-banner.jpg';
 
@@ -36,17 +37,27 @@ const Products: React.FC = () => {
   });
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [showEpwDebugger, setShowEpwDebugger] = useState(false);
+  const [showModelDebugger, setShowModelDebugger] = useState(false);
   
   const { shouldExcludeProduct, exclusions } = useExclusions();
   
   // Convert EPW filters to API filters
-  const convertToApiFilters = (filters: EPWFilters): ApiFilters => ({
-    Tipo: filters.tipo !== 'all' ? filters.tipo : undefined,
-    Modelo: filters.modelo !== 'all' ? filters.modelo : undefined,
-    Comprimento: filters.comprimento !== 'all' ? filters.comprimento : undefined,
-    Cor: filters.cor !== 'all' ? filters.cor : undefined,
-    Acabamento: filters.acabamento !== 'all' ? filters.acabamento : undefined,
-  });
+  const convertToApiFilters = (filters: EPWFilters): ApiFilters => {
+    const result = {
+      Tipo: filters.tipo !== 'all' ? filters.tipo : undefined,
+      Modelo: filters.modelo !== 'all' ? filters.modelo : undefined,
+      Comprimento: filters.comprimento !== 'all' ? filters.comprimento : undefined,
+      Cor: filters.cor !== 'all' ? filters.cor : undefined,
+      Acabamento: filters.acabamento !== 'all' ? filters.acabamento : undefined,
+    };
+    
+    console.log(`🔄 [Products] Converting EPW to API filters:`, {
+      input: filters,
+      output: result
+    });
+    
+    return result;
+  };
 
   const {
     products,
@@ -85,7 +96,17 @@ const Products: React.FC = () => {
   } = useApiAttributes();
 
   const handleEpwFilterChange = (field: string, value: string) => {
-    console.log('🎯 [Products] Filter change:', { field, value });
+    console.log(`🎯 [Products] Filter change: ${field} = ${value}`);
+    
+    // Special logging for modelo filters
+    if (field === 'modelo') {
+      console.log(`🔍 [Products] Modelo filter details:`, {
+        selectedValue: value,
+        availableModelos: apiModelos?.length ? apiModelos.slice(0, 5) : 'Loading or empty',
+        isValidCode: value !== 'all' && value !== ''
+      });
+    }
+    
     const newEpwFilters = {
       ...epwFilters,
       [field]: value,
@@ -269,11 +290,15 @@ const Products: React.FC = () => {
                     apiAcabamentos={apiAcabamentos}
                     apiComprimentos={apiComprimentos}
                   />
-                  <EPWCodeDebugger
-                    show={showEpwDebugger}
-                    onToggle={() => setShowEpwDebugger(!showEpwDebugger)}
-                  />
-                  <FilterCodeTester />
+                   <EPWCodeDebugger
+                     show={showEpwDebugger}
+                     onToggle={() => setShowEpwDebugger(!showEpwDebugger)}
+                   />
+                   <FilterCodeTester />
+                   <ModelFilterDebugger
+                     show={showModelDebugger}
+                     onToggle={() => setShowModelDebugger(!showModelDebugger)}
+                   />
                 </div>
               )}
            </div>

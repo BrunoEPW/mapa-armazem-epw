@@ -255,7 +255,15 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
           </label>
           <Select
             value={filters.modelo}
-            onValueChange={(value) => onFilterChange('modelo', value)}
+            onValueChange={(value) => {
+              console.log(`🎯 [EPWFilters] Modelo selection changed:`, {
+                selectedValue: value,
+                availableOptions: modeloOptions.length,
+                isFromAPI: !!apiModelos?.length,
+                selectedOption: modeloOptions.find(m => m.l === value)
+              });
+              onFilterChange('modelo', value);
+            }}
           >
             <SelectTrigger className="bg-card border-border text-white">
               <SelectValue placeholder={
@@ -273,7 +281,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               )}
               {modeloOptions.map((modelo) => (
                 <SelectItem key={modelo.l} value={modelo.l}>
-                  {modelo.d}
+                  {modelo.d} ({modelo.l})
                 </SelectItem>
               ))}
             </SelectContent>
