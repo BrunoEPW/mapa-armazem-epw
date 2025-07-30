@@ -144,10 +144,12 @@ export const useApiProductsWithFilters = (
       }
       
       // Apply exclusions filter if provided (client-side)
+      console.log('🔍 [Exclusions Debug] Applying exclusions filter:', !!exclusionFilter);
       const filteredData = exclusionFilter 
         ? apiResponse.data.filter(item => {
             const shouldExclude = exclusionFilter(item.strCodigo || '');
-            if (config.isDevelopment && shouldExclude) {
+            console.log(`🔍 [Exclusions Debug] Product "${item.strCodigo}": exclude = ${shouldExclude}`);
+            if (shouldExclude) {
               console.log(`🚫 [Exclusions] Excluding product: ${item.strCodigo}`);
             }
             return !shouldExclude;
