@@ -34,11 +34,17 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
     e.preventDefault();
     
     console.log('=== ADD MATERIAL DEBUG ===');
-    console.log('selectedProductId:', selectedProductId);
-    console.log('selectedProduct:', selectedProduct);
-    console.log('pecas:', pecas);
-    console.log('norc:', norc);
-    console.log('location:', location);
+    console.log('🔍 Function started, checking variables...');
+    console.log('🔍 selectedProductId:', selectedProductId);
+    console.log('🔍 selectedProductId type:', typeof selectedProductId);
+    console.log('🔍 selectedProduct exists:', !!selectedProduct);
+    console.log('🔍 selectedProduct:', selectedProduct);
+    console.log('🔍 pecas:', pecas);
+    console.log('🔍 pecas type:', typeof pecas);
+    console.log('🔍 norc:', norc);
+    console.log('🔍 norc type:', typeof norc);
+    console.log('🔍 location:', location);
+    console.log('🔍 About to start validation...');
     
     if (!selectedProductId || !selectedProduct) {
       console.log('ERROR: No product selected');
