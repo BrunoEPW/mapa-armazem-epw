@@ -62,14 +62,23 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
 
     try {
       console.log('=== STARTING ADD MATERIAL PROCESS ===');
+      console.log('🔍 selectedProduct:', JSON.stringify(selectedProduct, null, 2));
+      console.log('🔍 selectedProduct.id:', selectedProduct.id);
+      console.log('🔍 selectedProduct.id type:', typeof selectedProduct.id);
+      
       let productToUse = selectedProduct;
 
       // Safety check for selectedProduct.id
       if (!selectedProduct.id || typeof selectedProduct.id !== 'string') {
-        console.error('ERROR: selectedProduct.id is invalid:', selectedProduct.id);
+        console.error('❌ ERROR: selectedProduct.id is invalid:', selectedProduct.id);
+        console.error('❌ selectedProduct.id type:', typeof selectedProduct.id);
+        console.error('❌ Full selectedProduct:', JSON.stringify(selectedProduct, null, 2));
         toast.error('Erro: ID do produto inválido');
         return;
       }
+      
+      console.log('✅ selectedProduct.id validation passed');
+      console.log('🔍 About to check if API product...');
 
       // If it's an API product, create it locally first
       if (selectedProduct.id.startsWith('api_')) {
