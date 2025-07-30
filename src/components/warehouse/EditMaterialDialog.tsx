@@ -101,13 +101,10 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
         </DialogHeader>
         
         <div className="mb-4 p-4 bg-muted rounded-lg">
-          <h4 className="font-medium mb-2">Detalhes do Produto</h4>
-          <p><strong>Modelo:</strong> {material.product.modelo}</p>
-          <p><strong>Acabamento:</strong> {material.product.acabamento}</p>
-          <p><strong>Cor:</strong> {material.product.cor}</p>
-          <p><strong>Comprimento:</strong> {material.product.comprimento}mm</p>
-          <p><strong>Localização:</strong> {material.location.estante}{material.location.prateleira}</p>
-          <p><strong>Quantidade Atual:</strong> {material.pecas} peças</p>
+          <h4 className="font-medium mb-2">Artigo</h4>
+          <p className="text-sm text-muted-foreground">
+            {material.product.descricao || `${material.product.familia} ${material.product.modelo}`}
+          </p>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
