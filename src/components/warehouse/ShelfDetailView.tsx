@@ -14,13 +14,29 @@ import { MovementHistoryDialog } from './MovementHistoryDialog';
 const ShelfDetailView: React.FC = () => {
   const navigate = useNavigate();
   const { estante, prateleira } = useParams<{ estante: string; prateleira: string }>();
-  const { getMaterialsByShelf, removeMaterial } = useWarehouse();
+  
+  // Add debugging for warehouse context
+  console.log('🔍 ShelfDetailView - Attempting to use warehouse context...');
+  
+  let warehouseContext;
+  try {
+    warehouseContext = useWarehouse();
+    console.log('✅ ShelfDetailView - Warehouse context loaded successfully');
+  } catch (error) {
+    console.error('❌ ShelfDetailView - Error loading warehouse context:', error);
+    // Fallback - redirect to home if context fails
+    navigate('/');
+    return <div>Erro: Contexto do armazém não disponível. A redirecionar...</div>;
+  }
+  
+  const { getMaterialsByShelf, removeMaterial } = warehouseContext;
   
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [showHistoryFor, setShowHistoryFor] = useState<string | null>(null);
 
   if (!estante || !prateleira) {
+    console.log('❌ ShelfDetailView - Missing route params, navigating to home');
     navigate('/');
     return null;
   }
