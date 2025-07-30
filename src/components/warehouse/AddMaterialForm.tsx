@@ -73,20 +73,38 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
 
       // If it's an API product, create it locally first
       if (selectedProduct.id.startsWith('api_')) {
-        console.log('Creating local product from API data:', selectedProduct);
+        console.log('🔄 Creating local product from API data...');
+        console.log('🔍 API Product details:', JSON.stringify(selectedProduct, null, 2));
         
         try {
-          console.log('About to call createProductFromApi with original product...');
+          console.log('📞 About to call createProductFromApi...');
           const createdProduct = await createProductFromApi(selectedProduct);
-          console.log('Product created from API successfully:', createdProduct);
+          console.log('✅ Product created from API successfully:', createdProduct);
           productToUse = createdProduct;
         } catch (createError) {
-          console.error('Error creating product from API:', createError);
-          toast.error('Erro ao criar produto localmente');
+          console.error('❌ Error creating product from API:', createError);
+          console.error('❌ Create error details:', {
+            message: createError?.message,
+            stack: createError?.stack,
+            name: createError?.name,
+            cause: createError?.cause
+          });
+          
+          // More specific error message based on error type
+          let userMessage = 'Erro ao criar produto localmente';
+          if (createError?.message?.includes('Campo obrigatório')) {
+            userMessage = `Dados incompletos: ${createError.message}`;
+          } else if (createError?.message?.includes('Supabase')) {
+            userMessage = 'Erro de conexão com a base de dados';
+          } else if (createError?.message?.includes('conversão')) {
+            userMessage = 'Erro na conversão dos dados do produto';
+          }
+          
+          toast.error(userMessage);
           return;
         }
       } else {
-        console.log('Using existing local product:', productToUse);
+        console.log('📋 Using existing local product:', productToUse);
       }
 
       const materialId = `${productToUse.id}_${location.estante}${location.prateleira}_${Date.now()}`;

@@ -67,48 +67,95 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useRealTimeSync(refreshData, refreshData, refreshData);
 
   const createProductFromApi = async (apiProduct: any): Promise<Product> => {
-    console.log('=== CREATE PRODUCT FROM API DEBUG ===');
-    console.log('Input apiProduct:', JSON.stringify(apiProduct, null, 2));
+    console.log('🚀 === CREATE PRODUCT FROM API DEBUG ===');
+    console.log('🔍 Input apiProduct:', JSON.stringify(apiProduct, null, 2));
+    console.log('🔍 Type of apiProduct:', typeof apiProduct);
+    console.log('🔍 apiProduct keys:', Object.keys(apiProduct || {}));
     
-    // Validate required fields
+    // Enhanced validation with detailed error messages
+    if (!apiProduct) {
+      const error = 'apiProduct is null or undefined';
+      console.error('❌', error);
+      throw new Error(`Dados do produto inválidos: ${error}`);
+    }
+
+    // Validate required fields with detailed checks
     const requiredFields = ['familia', 'modelo', 'acabamento', 'cor', 'comprimento'];
+    console.log('🔍 Checking required fields:', requiredFields);
+    
     for (const field of requiredFields) {
-      if (!apiProduct[field]) {
-        console.error(`Missing required field: ${field}`);
-        throw new Error(`Campo obrigatório em falta: ${field}`);
+      const value = apiProduct[field];
+      console.log(`🔍 Field "${field}":`, value, `(type: ${typeof value})`);
+      
+      if (!value && value !== 0) { // Allow 0 as valid value
+        const error = `Campo obrigatório em falta ou vazio: ${field}`;
+        console.error('❌', error);
+        throw new Error(error);
       }
     }
-    console.log('✓ All required fields present');
+    console.log('✅ All required fields validation passed');
     
-    // Generate a clean ID (remove api_ prefix if present)
+    // Enhanced ID generation with validation
+    if (!apiProduct.id) {
+      const error = 'Product ID is missing';
+      console.error('❌', error);
+      throw new Error(`ID do produto em falta: ${error}`);
+    }
+    
     const cleanId = apiProduct.id.startsWith('api_') ? apiProduct.id.replace('api_', '') : apiProduct.id;
-    console.log('Clean ID:', cleanId);
+    console.log('🆔 Clean ID generated:', cleanId);
     
-    // Create product data with proper type conversion
-    const newProduct: Omit<Product, 'id'> = {
-      familia: String(apiProduct.familia),
-      modelo: String(apiProduct.modelo),
-      acabamento: String(apiProduct.acabamento),
-      cor: String(apiProduct.cor),
-      comprimento: String(apiProduct.comprimento), // Always convert to string for Supabase
-      foto: apiProduct.foto || undefined, // Handle optional field
-      // Add EPW fields only if they exist
-      ...(apiProduct.epwTipo && { epwTipo: apiProduct.epwTipo }),
-      ...(apiProduct.epwCertificacao && { epwCertificacao: apiProduct.epwCertificacao }),
-      ...(apiProduct.epwModelo && { epwModelo: apiProduct.epwModelo }),
-      ...(apiProduct.epwComprimento && { epwComprimento: apiProduct.epwComprimento }),
-      ...(apiProduct.epwCor && { epwCor: apiProduct.epwCor }),
-      ...(apiProduct.epwAcabamento && { epwAcabamento: apiProduct.epwAcabamento }),
-      ...(apiProduct.epwOriginalCode && { epwOriginalCode: apiProduct.epwOriginalCode }),
-    };
-
-    console.log('Product formatted for Supabase:', JSON.stringify(newProduct, null, 2));
-
+    // Check if product already exists
+    const existingProduct = products.find(p => p.id === cleanId);
+    if (existingProduct) {
+      console.log('ℹ️ Product already exists locally, returning existing:', existingProduct);
+      return existingProduct;
+    }
+    
+    // Create product data with enhanced type conversion and validation
+    console.log('🔧 Converting and validating product data...');
+    
     try {
-      // Add the product to Supabase
-      console.log('Calling operations.addProduct...');
+      const newProduct: Omit<Product, 'id'> = {
+        familia: String(apiProduct.familia || '').trim(),
+        modelo: String(apiProduct.modelo || '').trim(),
+        acabamento: String(apiProduct.acabamento || '').trim(),
+        cor: String(apiProduct.cor || '').trim(),
+        comprimento: String(apiProduct.comprimento || '').trim(),
+        foto: apiProduct.foto || undefined,
+        // Preserve API fields if they exist
+        ...(apiProduct.codigo && { codigo: apiProduct.codigo }),
+        ...(apiProduct.descricao && { descricao: apiProduct.descricao }),
+        // Add EPW fields only if they exist
+        ...(apiProduct.epwTipo && { epwTipo: apiProduct.epwTipo }),
+        ...(apiProduct.epwCertificacao && { epwCertificacao: apiProduct.epwCertificacao }),
+        ...(apiProduct.epwModelo && { epwModelo: apiProduct.epwModelo }),
+        ...(apiProduct.epwComprimento && { epwComprimento: apiProduct.epwComprimento }),
+        ...(apiProduct.epwCor && { epwCor: apiProduct.epwCor }),
+        ...(apiProduct.epwAcabamento && { epwAcabamento: apiProduct.epwAcabamento }),
+        ...(apiProduct.epwOriginalCode && { epwOriginalCode: apiProduct.epwOriginalCode }),
+      };
+
+      console.log('✅ Product formatted for Supabase:', JSON.stringify(newProduct, null, 2));
+
+      // Double-check that all required fields are still valid after conversion
+      const finalValidation = ['familia', 'modelo', 'acabamento', 'cor', 'comprimento'];
+      for (const field of finalValidation) {
+        if (!newProduct[field] || newProduct[field].trim() === '') {
+          const error = `Campo ${field} está vazio após conversão`;
+          console.error('❌', error);
+          throw new Error(error);
+        }
+      }
+      console.log('✅ Final validation passed');
+
+      // Ready to add product to Supabase
+      console.log('🔗 Ready to add product to Supabase...');
+
+      // Add the product to Supabase with detailed error handling
+      console.log('💾 Calling operations.addProduct...');
       await operations.addProduct(newProduct);
-      console.log('✓ Product added to Supabase successfully');
+      console.log('✅ Product added to Supabase successfully');
       
       // Return the product with the clean ID
       const resultProduct: Product = {
@@ -116,12 +163,17 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         ...newProduct,
       };
       
-      console.log('✓ Returning product:', JSON.stringify(resultProduct, null, 2));
+      console.log('🎉 Successfully created product:', JSON.stringify(resultProduct, null, 2));
       return resultProduct;
       
-    } catch (error) {
-      console.error('Error creating product from API:', error);
-      throw error;
+    } catch (conversionError) {
+      console.error('❌ Error during product data conversion:', conversionError);
+      console.error('❌ Conversion error details:', {
+        message: conversionError?.message,
+        stack: conversionError?.stack,
+        originalData: apiProduct
+      });
+      throw new Error(`Erro na conversão dos dados do produto: ${conversionError?.message}`);
     }
   };
 
