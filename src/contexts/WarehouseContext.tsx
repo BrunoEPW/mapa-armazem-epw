@@ -154,8 +154,19 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       // Add the product to Supabase with detailed error handling
       console.log('💾 Calling operations.addProduct...');
-      await operations.addProduct(newProduct);
-      console.log('✅ Product added to Supabase successfully');
+      try {
+        await operations.addProduct(newProduct);
+        console.log('✅ Product added to Supabase successfully');
+      } catch (supabaseError) {
+        console.error('🔴 === SUPABASE ERROR DETAILS ===');
+        console.error('🔴 Error object:', supabaseError);
+        console.error('🔴 Error message:', supabaseError?.message);
+        console.error('🔴 Error name:', supabaseError?.name);
+        console.error('🔴 Error stack:', supabaseError?.stack);
+        console.error('🔴 Error cause:', supabaseError?.cause);
+        console.error('🔴 Product data that failed:', JSON.stringify(newProduct, null, 2));
+        throw new Error(`Erro ao guardar produto na base de dados: ${supabaseError?.message}`);
+      }
       
       // Return the product with the clean ID
       const resultProduct: Product = {
