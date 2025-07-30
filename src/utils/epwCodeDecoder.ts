@@ -232,6 +232,14 @@ export const decodeEPWReference = (ref: string, debug: boolean = false): EPWDeco
     }
   }
 
+  // Early detection for non-EPW codes (contains hyphens, starts with letters like OPT, etc.)
+  if (cleanRef.includes('-') || /^[A-Z]{3}\d/.test(cleanRef)) {
+    if (debug) {
+      console.log(`🔍 [EPW Decoder] Non-EPW format detected: ${cleanRef} - returning failure for API fallback`);
+    }
+    return { success: false, message: `Non-EPW format detected: ${cleanRef}. Use API description.` };
+  }
+
   // Special case for OSACAN001
   if (ref === 'OSACAN001') {
     return {

@@ -47,12 +47,12 @@ export const useApiProductsWithFilters = (
     const epwDecodeResult = decodeEPWReference(codigo, config.isDevelopment);
     
     if (config.isDevelopment) {
-      console.log('Mapping API product:', { 
+      console.log('🔍 [Product Mapping] Processing:', { 
         Id: apiProduct.Id, 
         strCodigo: codigo, 
         strDescricao: description,
         epwDecoded: epwDecodeResult.success,
-        epwData: epwDecodeResult.product
+        epwMessage: epwDecodeResult.message
       });
     }
     
@@ -78,18 +78,22 @@ export const useApiProductsWithFilters = (
         epwOriginalCode: codigo,
       };
     } else {
-      // Fallback to original mapping for non-EPW products
+      // Enhanced fallback for non-EPW products - prioritize API description
+      if (config.isDevelopment) {
+        console.log(`📋 [Product Mapping] Using API fallback for non-EPW code: ${codigo} -> "${description}"`);
+      }
+      
       return {
         id: `api_${apiProduct.Id}`,
-        familia: 'API',
-        modelo: codigo, // Keep for backward compatibility
-        acabamento: description, // Keep for backward compatibility
+        familia: 'Produto API',
+        modelo: codigo,
+        acabamento: description,
         cor: 'N/A',
         comprimento: 0,
         foto: apiProduct.strFoto || undefined,
-        // Correct mapping for API fields
-        codigo: codigo, // strCodigo da API
-        descricao: description, // strDescricao da API
+        // Ensure API fields are properly mapped for display
+        codigo: codigo,
+        descricao: description,
         epwOriginalCode: codigo,
       };
     }

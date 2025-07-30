@@ -16,6 +16,9 @@ export interface EPWException {
     comprim?: string;
     cor?: string;
     acabamento?: string;
+    // Add support for preserving API data
+    useApiDescription?: boolean;
+    apiDescricao?: string;
   };
   createdAt: string;
   updatedAt: string;
