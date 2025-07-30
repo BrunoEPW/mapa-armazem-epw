@@ -68,7 +68,7 @@ export const MovementHistoryDialog: React.FC<MovementHistoryDialogProps> = ({
             
             <Card>
               <CardContent className="p-4 text-center">
-                <div className="text-sm font-medium text-muted-foreground">Saldo</div>
+                <div className="text-sm font-medium text-muted-foreground">Stock</div>
                 <p className="text-2xl font-bold">{saldoAtual}</p>
               </CardContent>
             </Card>
