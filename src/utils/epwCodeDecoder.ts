@@ -1,5 +1,6 @@
-// EPW Code Decoder - Translates PHP algorithm to TypeScript
+// EPW Code Decoder - Uses real API data instead of hardcoded mappings
 // Decodes EPW article codes to extract: Tipo, Certificação, Modelo, Comprimento, Cor, Acabamento
+import { attributesApiService } from '@/services/attributesApiService';
 
 export interface EPWDecodedProduct {
   tipo: { l: string; d: string };
@@ -77,7 +78,7 @@ const EPW_MAPPINGS = {
     'Z': 'Zen'
   },
   
-  // Attribute 4: Comprimento - numeric values in mm
+  // Attribute 4: Comprimento - basic mappings, API will provide real ones
   comprim: {
     '10': '1000mm',
     '12': '1200mm',
@@ -92,17 +93,10 @@ const EPW_MAPPINGS = {
     '40': '4000mm',
     '45': '4500mm',
     '50': '5000mm',
-    '60': '6000mm',
-    // Códigos alfabéticos
-    'ML': 'Médio Longo',
-    'MC': 'Médio Curto',
-    'XL': 'Extra Longo',
-    'XS': 'Extra Pequeno',
-    'SM': 'Pequeno',
-    'LG': 'Grande'
+    '60': '6000mm'
   },
   
-  // Attribute 5: Cor
+  // Attribute 5: Cor - basic mappings, API will provide real ones
   cor: {
     'L': 'Branco',
     'P': 'Preto',
@@ -114,34 +108,12 @@ const EPW_MAPPINGS = {
     'D': 'Dourado',
     'E': 'Esmeralda',
     'F': 'Fume',
-    'H': 'Honey',
-    'J': 'Jade',
-    'K': 'Khaki',
     'M': 'Marrom',
     'N': 'Natural',
-    'O': 'Ocre',
-    'Q': 'Quartzo',
-    'R': 'Rosé',
-    'S': 'Silver',
-    'T': 'Titanium',
-    'U': 'Único',
-    'V': 'Verde',
-    'W': 'White',
-    'X': 'Xadrez',
-    'Y': 'Yellow',
-    'Z': 'Zinco',
-    // Códigos de 2 caracteres
-    'VL': 'Verde Claro',
-    'VE': 'Verde Escuro',
-    'CL': 'Cinza Claro',
-    'CE': 'Cinza Escuro',
-    'ML': 'Marrom Claro',
-    'ME': 'Marrom Escuro',
-    'AL': 'Azul Claro',
-    'AE': 'Azul Escuro'
+    'V': 'Verde'
   },
   
-  // Attribute 6: Acabamento
+  // Attribute 6: Acabamento - basic mappings, API will provide real ones
   acabamento: {
     'T': 'Texturado',
     'L': 'Liuxado',
@@ -149,25 +121,8 @@ const EPW_MAPPINGS = {
     'M': 'Mate',
     'R': 'Rugoso',
     'A': 'Acetinado',
-    'C': 'Cristal',
-    'D': 'Diamante',
-    'E': 'Espelhado',
-    'F': 'Fosco',
-    'G': 'Gloss',
-    'H': 'Hammered',
-    'J': 'Jateado',
-    'K': 'Kraft',
     'N': 'Natural',
-    'O': 'Oxidado',
-    'P': 'Polido',
-    'Q': 'Quartzo',
-    'S': 'Satin',
-    'U': 'Ultra',
-    'V': 'Vintage',
-    'W': 'Wood',
-    'X': 'Xadrez',
-    'Y': 'Yeso',
-    'Z': 'Zen'
+    'P': 'Polido'
   }
 };
 
@@ -176,9 +131,73 @@ const getAttributeOptions = (attribute: keyof typeof EPW_MAPPINGS): string[] => 
   return Object.keys(EPW_MAPPINGS[attribute]);
 };
 
-// Get attribute value description (equivalent to ArtigoAtribVal)
-const getAttributeValue = (attribute: keyof typeof EPW_MAPPINGS, code: string): string => {
-  return EPW_MAPPINGS[attribute][code] || code;
+// API-based attribute value lookup (replaces hardcoded mappings)
+let apiAttributesCache: { [key: string]: { [code: string]: string } } = {};
+
+// Get attribute value description using API data
+const getAttributeValue = async (attribute: keyof typeof EPW_MAPPINGS, code: string): Promise<string> => {
+  // Try static mappings first for performance
+  const staticValue = EPW_MAPPINGS[attribute][code];
+  if (staticValue) {
+    return staticValue;
+  }
+
+  // Use API data if not in static mappings
+  try {
+    if (!apiAttributesCache[attribute]) {
+      let apiData: any[] = [];
+      
+      switch (attribute) {
+        case 'tipo':
+          apiData = await attributesApiService.fetchTipos();
+          break;
+        case 'modelo':
+          apiData = await attributesApiService.fetchModelos();
+          break;
+        case 'cor':
+          apiData = await attributesApiService.fetchCores();
+          break;
+        case 'acabamento':
+          apiData = await attributesApiService.fetchAcabamentos();
+          break;
+        case 'comprim':
+          apiData = await attributesApiService.fetchComprimentos();
+          break;
+        case 'certif':
+          apiData = await attributesApiService.fetchCertificacoes();
+          break;
+      }
+      
+      // Cache the API data
+      apiAttributesCache[attribute] = {};
+      apiData.forEach(item => {
+        apiAttributesCache[attribute][item.l] = item.d;
+      });
+    }
+    
+    return apiAttributesCache[attribute][code] || code;
+  } catch (error) {
+    console.warn(`Failed to fetch API data for ${attribute}:`, error);
+    return code; // Return code if API fails
+  }
+};
+
+// Synchronous version for immediate use (returns code if no cached value)
+const getAttributeValueSync = (attribute: keyof typeof EPW_MAPPINGS, code: string): string => {
+  // Try static mappings first
+  const staticValue = EPW_MAPPINGS[attribute][code];
+  if (staticValue) {
+    return staticValue;
+  }
+  
+  // Try cached API data
+  const cachedValue = apiAttributesCache[attribute]?.[code];
+  if (cachedValue) {
+    return cachedValue;
+  }
+  
+  // Return code as fallback
+  return code;
 };
 
 export const decodeEPWReference = (ref: string, debug: boolean = false): EPWDecodeResult => {
@@ -192,8 +211,8 @@ export const decodeEPWReference = (ref: string, debug: boolean = false): EPWDeco
       success: true,
       message: 'Special case decoded',
       product: {
-        tipo: { l: 'X', d: getAttributeValue('tipo', 'X') },
-        certif: { l: 'S', d: getAttributeValue('certif', 'S') },
+        tipo: { l: 'X', d: getAttributeValueSync('tipo', 'X') },
+        certif: { l: 'S', d: getAttributeValueSync('certif', 'S') },
         modelo: { l: '--', d: 'Genérico' },
         comprim: { l: '', d: '' },
         cor: { l: '', d: '' },
@@ -260,12 +279,12 @@ function parseEPWCodeAdaptive(cleanRef: string, debug: boolean = false): EPWDeco
   }
 
   return {
-    tipo: { l: frontPart.tipo, d: getAttributeValue('tipo', frontPart.tipo) },
-    certif: { l: frontPart.certif, d: getAttributeValue('certif', frontPart.certif) },
-    modelo: { l: frontPart.modelo, d: getAttributeValue('modelo', frontPart.modelo) },
-    comprim: { l: comprim, d: getAttributeValue('comprim', comprim) },
-    cor: { l: cor, d: getAttributeValue('cor', cor) },
-    acabamento: { l: frontPart.acabamento, d: getAttributeValue('acabamento', frontPart.acabamento) }
+    tipo: { l: frontPart.tipo, d: getAttributeValueSync('tipo', frontPart.tipo) },
+    certif: { l: frontPart.certif, d: getAttributeValueSync('certif', frontPart.certif) },
+    modelo: { l: frontPart.modelo, d: getAttributeValueSync('modelo', frontPart.modelo) },
+    comprim: { l: comprim, d: getAttributeValueSync('comprim', comprim) },
+    cor: { l: cor, d: getAttributeValueSync('cor', cor) },
+    acabamento: { l: frontPart.acabamento, d: getAttributeValueSync('acabamento', frontPart.acabamento) }
   };
 }
 
@@ -388,11 +407,11 @@ function parseFrontPart(remaining: string, debug: boolean = false): {
 function validateFrontPart(tipo: string, certif: string, modelo: string, acabamento: string): number {
   let score = 0;
   
-  // Check if the extracted codes exist in our mappings (higher score = better match)
-  if (tipo && getAttributeValue('tipo', tipo) !== tipo) score += 3;
-  if (certif && getAttributeValue('certif', certif) !== certif) score += 3;
-  if (modelo && getAttributeValue('modelo', modelo) !== modelo) score += 3;
-  if (acabamento && getAttributeValue('acabamento', acabamento) !== acabamento) score += 1;
+  // Check static mappings and cached API data for better validation
+  if (tipo && getAttributeValueSync('tipo', tipo) !== tipo) score += 3;
+  if (certif && getAttributeValueSync('certif', certif) !== certif) score += 3;
+  if (modelo && getAttributeValueSync('modelo', modelo) !== modelo) score += 3;
+  if (acabamento && getAttributeValueSync('acabamento', acabamento) !== acabamento) score += 1;
   
   return score;
 }
