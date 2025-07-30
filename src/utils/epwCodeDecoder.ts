@@ -1,6 +1,7 @@
 // EPW Code Decoder - Uses real API data instead of hardcoded mappings
 // Decodes EPW article codes to extract: Tipo, Certificação, Modelo, Comprimento, Cor, Acabamento
 import { attributesApiService } from '@/services/attributesApiService';
+import { getEPWException, hasEPWException, applyEPWException, addEPWException } from '@/lib/epwExceptions';
 
 export interface EPWDecodedProduct {
   tipo: { l: string; d: string };
@@ -205,6 +206,32 @@ export const decodeEPWReference = (ref: string, debug: boolean = false): EPWDeco
     return { success: false, message: 'Invalid reference code' };
   }
 
+  const cleanRef = ref.trim().toUpperCase();
+  
+  // Check for exceptions first - these are permanently preserved
+  if (hasEPWException(cleanRef)) {
+    const exception = getEPWException(cleanRef);
+    if (debug) {
+      console.log(`🔧 [EPW Decoder] Using exception for code: ${cleanRef}`, exception);
+    }
+    
+    if (exception?.manualMapping) {
+      const mapping = exception.manualMapping;
+      return {
+        success: true,
+        message: `Exception applied: ${exception.reason}`,
+        product: {
+          tipo: { l: mapping.tipo || '', d: mapping.tipo || '' },
+          certif: { l: mapping.certif || '', d: mapping.certif || '' },
+          modelo: { l: mapping.modelo || '', d: mapping.modelo || '' },
+          comprim: { l: mapping.comprim || '', d: mapping.comprim || '' },
+          cor: { l: mapping.cor || '', d: mapping.cor || '' },
+          acabamento: { l: mapping.acabamento || '', d: mapping.acabamento || '' },
+        }
+      };
+    }
+  }
+
   // Special case for OSACAN001
   if (ref === 'OSACAN001') {
     return {
@@ -231,14 +258,20 @@ export const decodeEPWReference = (ref: string, debug: boolean = false): EPWDeco
   // Use adaptive parsing for all code lengths (7-11 characters)
   if (refLength >= 7 && refLength <= 11) {
     try {
-      const decoded = parseEPWCodeAdaptive(refUpper, debug);
+      const decoded = parseEPWCodeAdaptive(cleanRef, debug);
+      
+      // Apply any exception mappings
+      const finalDecoded = applyEPWException(cleanRef, decoded);
       
       return {
         success: true,
         message: `Successfully decoded using adaptive parsing (${refLength}-char)`,
-        product: decoded
+        product: finalDecoded
       };
     } catch (error) {
+      // Log failed decode for potential exception creation
+      console.warn(`⚠️ [EPW Decoder] Failed to decode: ${cleanRef}`, error);
+      
       return { success: false, message: `Decode error: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
