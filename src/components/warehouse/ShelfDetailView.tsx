@@ -133,25 +133,15 @@ const ShelfDetailView: React.FC = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Família</p>
-                      <p className="font-medium">{material.product.familia}</p>
+                      <p className="text-sm text-muted-foreground">Descrição</p>
+                      <p className="font-medium">
+                        {material.product.descricao || `${material.product.familia} ${material.product.modelo}`}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Acabamento</p>
-                      <p className="font-medium">{material.product.acabamento}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Cor</p>
-                      <p className="font-medium">{material.product.cor}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Comprimento</p>
-                      <p className="font-medium">{material.product.comprimento}mm</p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-muted-foreground">Quantidade</p>
+                      <p className="text-sm text-muted-foreground">Quantidade na Prateleira</p>
                       <Badge 
                         variant={material.pecas < 10 ? "destructive" : "default"}
                         className="text-lg px-3 py-1"
