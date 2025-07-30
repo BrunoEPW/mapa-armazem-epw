@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { Material } from '@/types/warehouse';
 import { toast } from 'sonner';
@@ -28,6 +29,8 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
   
   const [pecas, setPecas] = useState(material.pecas.toString());
   const [norc, setNorc] = useState('');
+  const [norcType, setNorcType] = useState<'escrever' | 'partidas' | 'amostras'>('escrever');
+  const [customNorc, setCustomNorc] = useState('');
   const [movementType, setMovementType] = useState<'entrada' | 'saida'>('entrada');
 
   console.log('📊 [EditMaterialDialog] Component state initialized:', {
@@ -42,7 +45,17 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!pecas || !norc) {
+    // Determine the final NORC value based on type
+    let finalNorc = '';
+    if (norcType === 'escrever') {
+      finalNorc = customNorc;
+    } else if (norcType === 'partidas') {
+      finalNorc = 'PARTIDAS';
+    } else if (norcType === 'amostras') {
+      finalNorc = `AMOSTRAS - ${customNorc}`;
+    }
+    
+    if (!pecas || !finalNorc) {
       toast.error('Preencha todos os campos');
       return;
     }
@@ -61,7 +74,7 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
           materialId: material.id,
           type: difference > 0 ? 'entrada' : 'saida',
           pecas: Math.abs(difference),
-          norc,
+          norc: finalNorc,
           date: new Date().toISOString().split('T')[0],
         });
 
@@ -111,14 +124,32 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="norc">NORC</Label>
-            <Input
-              id="norc"
-              value={norc}
-              onChange={(e) => setNorc(e.target.value)}
-              placeholder="Ex: NORC001"
-            />
+            <Label htmlFor="norcType">Tipo de NORC</Label>
+            <Select value={norcType} onValueChange={(value: 'escrever' | 'partidas' | 'amostras') => setNorcType(value)}>
+              <SelectTrigger className="w-full bg-background border border-border">
+                <SelectValue placeholder="Selecione o tipo de NORC" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border border-border shadow-lg z-50">
+                <SelectItem value="escrever">Escrever NORC</SelectItem>
+                <SelectItem value="partidas">Partidas</SelectItem>
+                <SelectItem value="amostras">Amostras</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {(norcType === 'escrever' || norcType === 'amostras') && (
+            <div>
+              <Label htmlFor="customNorc">
+                {norcType === 'escrever' ? 'NORC' : 'Nome da Amostra'}
+              </Label>
+              <Input
+                id="customNorc"
+                value={customNorc}
+                onChange={(e) => setCustomNorc(e.target.value)}
+                placeholder={norcType === 'escrever' ? 'Ex: NORC001' : 'Ex: Amostra Cliente X'}
+              />
+            </div>
+          )}
 
           <div className="flex gap-2 pt-4">
             <Button type="submit" className="flex-1">

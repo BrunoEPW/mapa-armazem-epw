@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { ShelfLocation, Product } from '@/types/warehouse';
 import { toast } from 'sonner';
@@ -23,7 +24,8 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [pecas, setPecas] = useState<number>(1);
-  const [norc, setNorc] = useState<string>('');
+  const [norcType, setNorcType] = useState<'escrever' | 'partidas' | 'amostras'>('escrever');
+  const [customNorc, setCustomNorc] = useState<string>('');
 
   const handleProductSelect = (productId: string, product: Product) => {
     setSelectedProductId(productId);
@@ -45,12 +47,30 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
       console.log('🔍 selectedProduct:', selectedProduct);
       console.log('🔍 pecas:', pecas);
       console.log('🔍 pecas type:', typeof pecas);
-      console.log('🔍 norc:', norc);
-      console.log('🔍 norc type:', typeof norc);
+      console.log('🔍 norcType:', norcType);
+      console.log('🔍 customNorc:', customNorc);
       console.log('🔍 location:', location);
       console.log('🔍 About to start validation...');
       
       document.title = `DEBUG: Step 2 - Starting validation`;
+      
+      // Determine the final NORC value based on type
+      let finalNorc = '';
+      if (norcType === 'escrever') {
+        finalNorc = customNorc;
+      } else if (norcType === 'partidas') {
+        finalNorc = 'PARTIDAS';
+      } else if (norcType === 'amostras') {
+        finalNorc = `AMOSTRAS - ${customNorc}`;
+      }
+      
+      // Validation checks
+      if (!selectedProduct || !pecas || !finalNorc) {
+        document.title = `DEBUG: ERROR - Missing required fields`;
+        console.log('❌ ERROR: Missing required fields');
+        toast.error('Por favor, preencha todos os campos');
+        return;
+      }
       
       if (!selectedProductId || !selectedProduct) {
         document.title = `DEBUG: ERROR - No product selected`;
@@ -62,12 +82,6 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
     if (pecas <= 0) {
       console.log('ERROR: Invalid pecas:', pecas);
       toast.error('Por favor, especifique uma quantidade válida');
-      return;
-    }
-
-    if (!norc.trim()) {
-      console.log('ERROR: No NORC provided');
-      toast.error('Por favor, especifique o NORC');
       return;
     }
 
@@ -156,7 +170,7 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
         materialId: createdMaterial.id,
         type: 'entrada',
         pecas,
-        norc: norc.trim(),
+        norc: finalNorc,
         date: new Date().toISOString(),
       });
 
@@ -164,7 +178,7 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
         materialId: createdMaterial.id,
         type: 'entrada',
         pecas,
-        norc: norc.trim(),
+        norc: finalNorc,
         date: new Date().toISOString(),
       });
 
@@ -209,17 +223,33 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
         </div>
 
         <div>
-          <Label htmlFor="norc">NORC</Label>
-          <Input
-            id="norc"
-            type="text"
-            value={norc}
-            onChange={(e) => setNorc(e.target.value)}
-            placeholder="Ex: OF123456"
-            required
-          />
+          <Label htmlFor="norcType">Tipo de NORC</Label>
+          <Select value={norcType} onValueChange={(value: 'escrever' | 'partidas' | 'amostras') => setNorcType(value)}>
+            <SelectTrigger className="w-full bg-background border border-border">
+              <SelectValue placeholder="Selecione o tipo de NORC" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border border-border shadow-lg z-50">
+              <SelectItem value="escrever">Escrever NORC</SelectItem>
+              <SelectItem value="partidas">Partidas</SelectItem>
+              <SelectItem value="amostras">Amostras</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
+
+      {(norcType === 'escrever' || norcType === 'amostras') && (
+        <div>
+          <Label htmlFor="customNorc">
+            {norcType === 'escrever' ? 'NORC' : 'Nome da Amostra'}
+          </Label>
+          <Input
+            id="customNorc"
+            value={customNorc}
+            onChange={(e) => setCustomNorc(e.target.value)}
+            placeholder={norcType === 'escrever' ? 'Ex: NORC001' : 'Ex: Amostra Cliente X'}
+          />
+        </div>
+      )}
 
       <div className="flex justify-end gap-3">
         <Button type="button" variant="outline" onClick={onCancel}>
