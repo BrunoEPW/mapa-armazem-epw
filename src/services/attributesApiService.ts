@@ -63,6 +63,13 @@ class AttributesApiService {
         return cached.data;
       }
       
+      // Fallback to basic static data for critical attributes
+      const fallbackData = this.getFallbackData(attributeType);
+      if (fallbackData.length > 0) {
+        console.warn(`🔄 [AttributesApiService] Using fallback data for ${attributeType}: ${fallbackData.length} items`);
+        return fallbackData;
+      }
+      
       throw error;
     }
   }
@@ -72,16 +79,16 @@ class AttributesApiService {
     
     const apiUrl = `${this.baseApiUrl}/${attributeType}`;
     
-    // Try multiple proxy options in sequence (corsproxy.io first as it's most reliable)
+    // Try multiple proxy options in sequence - prioritize allorigins as it's currently working
     const proxies = [
-      `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`,
       `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`,
+      `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`,
       `https://cors-anywhere.herokuapp.com/${apiUrl}`
     ];
 
     for (let i = 0; i < proxies.length; i++) {
       const proxyUrl = proxies[i];
-      const proxyName = ['corsproxy', 'allorigins', 'cors-anywhere'][i];
+      const proxyName = ['allorigins', 'corsproxy', 'cors-anywhere'][i];
       
       try {
         console.log(`🔄 [AttributesApiService] Trying ${proxyName} proxy for ${attributeType}...`);
@@ -176,6 +183,30 @@ class AttributesApiService {
 
   clearCache(): void {
     this.cache.clear();
+  }
+
+  private getFallbackData(attributeType: string): ApiAttribute[] {
+    const fallbacks: { [key: string]: ApiAttribute[] } = {
+      modelo: [
+        { l: 'Z', d: 'Zoom deck' },
+        { l: 'F', d: 'Flat' },
+        { l: 'S', d: 'Slim' },
+        { l: 'T', d: 'Titanium' },
+        { l: 'E', d: 'Ez' }
+      ],
+      tipo: [
+        { l: 'R', d: 'Régua' },
+        { l: 'C', d: 'Deck + Clip' },
+        { l: 'ML', d: 'Metro Linear' }
+      ],
+      certificacao: [
+        { l: 'S', d: 'Sem' },
+        { l: 'F', d: 'FSC' },
+        { l: 'P', d: 'PEFC' }
+      ]
+    };
+
+    return fallbacks[attributeType] || [];
   }
 }
 
