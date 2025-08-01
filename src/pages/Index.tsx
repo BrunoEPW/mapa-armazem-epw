@@ -18,8 +18,9 @@ import Footer from '@/components/ui/Footer';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { materials, selectedShelf } = useWarehouse();
+  const { materials, selectedShelf, populateTestData } = useWarehouse();
   const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [isPopulating, setIsPopulating] = useState(false);
   
 
   useEffect(() => {
@@ -57,6 +58,19 @@ const Index = () => {
 
   const handleShelfClick = (estante: string) => {
     navigate(`/estante/${estante}`);
+  };
+
+  const handlePopulateTestData = async () => {
+    if (isPopulating) return;
+    
+    setIsPopulating(true);
+    try {
+      await populateTestData();
+    } catch (error) {
+      console.error('Erro ao popular dados de teste:', error);
+    } finally {
+      setIsPopulating(false);
+    }
   };
 
   const renderSingleShelf = (estante: string) => (
@@ -155,6 +169,18 @@ const Index = () => {
         </div>
 
         
+        {/* Botão para popular dados de teste */}
+        <div className="flex justify-center mb-4">
+          <Button 
+            onClick={handlePopulateTestData}
+            disabled={isPopulating}
+            variant="outline"
+            className="bg-blue-600 hover:bg-blue-700 text-white border-blue-500"
+          >
+            {isPopulating ? 'A popular dados...' : 'Popular Dados de Teste'}
+          </Button>
+        </div>
+
         {/* Layout específico das estantes conforme imagem */}
         <div className="flex justify-center items-end gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12 overflow-x-auto pb-4">
           {/* Estante A - Isolada à esquerda */}

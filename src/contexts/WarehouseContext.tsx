@@ -33,6 +33,7 @@ interface WarehouseContextType {
   clearAllMaterials: () => Promise<boolean>;
   createProductFromApi: (apiProduct: any) => Promise<Product>;
   syncProducts: () => Promise<boolean>;
+  populateTestData: () => Promise<any>;
   syncStatus: {
     isLoading: boolean;
     lastSync: Date | null;
@@ -299,6 +300,16 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return success;
   };
 
+  const populateTestData = async () => {
+    const { populateTestData: populate } = await import('@/utils/populateTestData');
+    return populate({
+      addMaterial: operations.addMaterial,
+      addMovement: operations.addMovement,
+      createProductFromApi,
+      products,
+    });
+  };
+
   const contextValue: WarehouseContextType = {
     materials,
     products,
@@ -311,6 +322,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     clearAllMaterials: handleClearAllMaterials,
     createProductFromApi,
     syncProducts,
+    populateTestData,
     syncStatus,
     ...operations,
   };
