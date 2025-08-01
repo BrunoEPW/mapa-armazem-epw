@@ -18,12 +18,13 @@ export interface EPWDecodeResult {
   product?: EPWDecodedProduct;
 }
 
-// Corrected EPW mappings based on real examples
+// Enhanced EPW mappings with new prefixes and API integration
 const EPW_MAPPINGS = {
-  // Attribute 1: Tipo
+  // Attribute 1: Tipo - Enhanced with new prefixes
   tipo: {
+    // Single character types
     'C': 'Calha',
-    'R': 'Réga',
+    'R': 'Régua', 
     'F': 'Fixação', 
     'G': 'Grelha',
     'O': 'Outros',
@@ -35,10 +36,15 @@ const EPW_MAPPINGS = {
     'U': 'União',
     'M': 'Material',
     'L': 'Linear',
+    'B': 'Deck + Clip + Sarrafo',
+    'A': 'Deck + Clip + Travessa Alumínio',
+    // Two character types
     'CS': 'Calha Sistema',
     'TT': 'Tampa Técnica',
     'GG': 'Grelha Grande',
-    'ML': 'Material Linear'
+    'ML': 'Metro Linear',
+    'RF': 'Régua FSC',
+    'RS': 'Régua Standard'
   },
   
   // Attribute 2: Certificação
@@ -130,10 +136,27 @@ const getAttributeOptions = (attribute: keyof typeof EPW_MAPPINGS): string[] => 
   return Object.keys(EPW_MAPPINGS[attribute]);
 };
 
-// API-based attribute value lookup (replaces hardcoded mappings)
+// Enhanced API cache with pre-loading capabilities
 let apiAttributesCache: { [key: string]: { [code: string]: string } } = {};
+let apiLoadingPromises: { [key: string]: Promise<void> } = {};
 
-// Get attribute value description using API data
+// Pre-load all API attributes for better performance
+export const preloadApiAttributes = async (): Promise<void> => {
+  const attributes = ['tipo', 'modelo', 'cor', 'acabamento', 'comprim', 'certif'];
+  
+  try {
+    await Promise.all(attributes.map(async (attribute) => {
+      if (!apiAttributesCache[attribute]) {
+        await getAttributeValue(attribute as keyof typeof EPW_MAPPINGS, '__preload__');
+      }
+    }));
+    console.log('✅ [EPW Decoder] API attributes pre-loaded successfully');
+  } catch (error) {
+    console.warn('⚠️ [EPW Decoder] Failed to pre-load API attributes:', error);
+  }
+};
+
+// Get attribute value description using API data with enhanced caching
 const getAttributeValue = async (attribute: keyof typeof EPW_MAPPINGS, code: string): Promise<string> => {
   // Try static mappings first for performance
   const staticValue = EPW_MAPPINGS[attribute][code];
@@ -141,42 +164,58 @@ const getAttributeValue = async (attribute: keyof typeof EPW_MAPPINGS, code: str
     return staticValue;
   }
 
+  // Skip API call for pre-load trigger
+  if (code === '__preload__') {
+    // Just trigger the API loading
+  }
+
   // Use API data if not in static mappings
   try {
-    if (!apiAttributesCache[attribute]) {
-      let apiData: any[] = [];
-      
-      switch (attribute) {
-        case 'tipo':
-          apiData = await attributesApiService.fetchTipos();
-          break;
-        case 'modelo':
-          apiData = await attributesApiService.fetchModelos();
-          break;
-        case 'cor':
-          apiData = await attributesApiService.fetchCores();
-          break;
-        case 'acabamento':
-          apiData = await attributesApiService.fetchAcabamentos();
-          break;
-        case 'comprim':
-          apiData = await attributesApiService.fetchComprimentos();
-          break;
-        case 'certif':
-          apiData = await attributesApiService.fetchCertificacoes();
-          break;
-      }
-      
-      // Cache the API data
-      apiAttributesCache[attribute] = {};
-      apiData.forEach(item => {
-        apiAttributesCache[attribute][item.l] = item.d;
-      });
+    // Prevent multiple simultaneous API calls for the same attribute
+    if (!apiAttributesCache[attribute] && !apiLoadingPromises[attribute]) {
+      apiLoadingPromises[attribute] = (async () => {
+        let apiData: any[] = [];
+        
+        switch (attribute) {
+          case 'tipo':
+            apiData = await attributesApiService.fetchTipos();
+            break;
+          case 'modelo':
+            apiData = await attributesApiService.fetchModelos();
+            break;
+          case 'cor':
+            apiData = await attributesApiService.fetchCores();
+            break;
+          case 'acabamento':
+            apiData = await attributesApiService.fetchAcabamentos();
+            break;
+          case 'comprim':
+            apiData = await attributesApiService.fetchComprimentos();
+            break;
+          case 'certif':
+            apiData = await attributesApiService.fetchCertificacoes();
+            break;
+        }
+        
+        // Cache the API data
+        apiAttributesCache[attribute] = {};
+        apiData.forEach(item => {
+          apiAttributesCache[attribute][item.l] = item.d;
+        });
+        
+        delete apiLoadingPromises[attribute];
+      })();
     }
     
-    return apiAttributesCache[attribute][code] || code;
+    // Wait for loading to complete if in progress
+    if (apiLoadingPromises[attribute]) {
+      await apiLoadingPromises[attribute];
+    }
+    
+    return apiAttributesCache[attribute]?.[code] || code;
   } catch (error) {
     console.warn(`Failed to fetch API data for ${attribute}:`, error);
+    delete apiLoadingPromises[attribute];
     return code; // Return code if API fails
   }
 };
@@ -455,4 +494,85 @@ export const getEPWComprimento = (decoded: EPWDecodedProduct): string | number =
     return numMatch ? parseInt(numMatch[1]) : comprimDesc;
   }
   return comprimDesc || 'N/A';
+};
+
+// Test function for specific EPW codes mentioned in the plan
+export const testEPWCodes = async (debug: boolean = true): Promise<void> => {
+  const testCodes = ['RFL23AL01', 'RSZ32AG01', 'RSEZ23VL01'];
+  
+  console.log('🧪 [EPW Decoder] Testing specific EPW codes...');
+  
+  // Pre-load API attributes for better testing
+  await preloadApiAttributes();
+  
+  for (const code of testCodes) {
+    console.log(`\n🔍 Testing code: ${code}`);
+    const result = decodeEPWReference(code, debug);
+    
+    if (result.success && result.product) {
+      console.log(`✅ [${code}] Decoded successfully:`);
+      console.log(`   Tipo: ${result.product.tipo.l} (${result.product.tipo.d})`);
+      console.log(`   Certificação: ${result.product.certif.l} (${result.product.certif.d})`);
+      console.log(`   Modelo: ${result.product.modelo.l} (${result.product.modelo.d})`);
+      console.log(`   Comprimento: ${result.product.comprim.l} (${result.product.comprim.d})`);
+      console.log(`   Cor: ${result.product.cor.l} (${result.product.cor.d})`);
+      console.log(`   Acabamento: ${result.product.acabamento.l} (${result.product.acabamento.d})`);
+    } else {
+      console.log(`❌ [${code}] Failed to decode: ${result.message}`);
+    }
+  }
+  
+  console.log('\n🎯 [EPW Decoder] Testing completed');
+};
+
+// Enhanced decode function with API validation
+export const decodeEPWReferenceWithValidation = async (ref: string, debug: boolean = false): Promise<EPWDecodeResult> => {
+  // First try standard decoding
+  const standardResult = decodeEPWReference(ref, debug);
+  
+  if (!standardResult.success || !standardResult.product) {
+    return standardResult;
+  }
+  
+  // Validate decoded parts against API data
+  try {
+    const product = standardResult.product;
+    
+    // Get fresh API data for validation
+    const [tipoDesc, certifDesc, modeloDesc, comprimDesc, corDesc, acabamentoDesc] = await Promise.all([
+      getAttributeValue('tipo', product.tipo.l),
+      getAttributeValue('certif', product.certif.l),
+      getAttributeValue('modelo', product.modelo.l),
+      getAttributeValue('comprim', product.comprim.l),
+      getAttributeValue('cor', product.cor.l),
+      getAttributeValue('acabamento', product.acabamento.l)
+    ]);
+    
+    // Update descriptions with API data
+    const validatedProduct: EPWDecodedProduct = {
+      tipo: { l: product.tipo.l, d: tipoDesc },
+      certif: { l: product.certif.l, d: certifDesc },
+      modelo: { l: product.modelo.l, d: modeloDesc },
+      comprim: { l: product.comprim.l, d: comprimDesc },
+      cor: { l: product.cor.l, d: corDesc },
+      acabamento: { l: product.acabamento.l, d: acabamentoDesc }
+    };
+    
+    return {
+      ...standardResult,
+      product: validatedProduct,
+      message: `${standardResult.message} + API validation`
+    };
+    
+  } catch (error) {
+    console.warn('⚠️ [EPW Decoder] API validation failed, using standard result:', error);
+    return standardResult;
+  }
+};
+
+// Clear all caches (useful for testing and debugging)
+export const clearEPWCache = (): void => {
+  apiAttributesCache = {};
+  apiLoadingPromises = {};
+  console.log('🧹 [EPW Decoder] All caches cleared');
 };

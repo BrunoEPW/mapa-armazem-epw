@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Search, Wifi, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import { EPWFilters } from '@/components/warehouse/EPWFilters';
+import { EPWDecoderTester } from '@/components/warehouse/EPWDecoderTester';
 import Footer from '@/components/ui/Footer';
 import productsBanner from '@/assets/epw-products-banner.jpg';
 
@@ -23,6 +24,7 @@ interface EPWFiltersState {
 const Products: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [showEPWTester, setShowEPWTester] = useState(false);
   const [epwFilters, setEpwFilters] = useState<EPWFiltersState>({
     tipo: 'all',
     modelo: 'all',
@@ -379,6 +381,14 @@ const Products: React.FC = () => {
               comprimentosError={comprimentosError}
               coresError={coresError}
               excludedCount={excludedCount}
+            />
+          </div>
+
+          {/* EPW Decoder Tester */}
+          <div className="mb-4">
+            <EPWDecoderTester 
+              show={showEPWTester} 
+              onToggle={() => setShowEPWTester(!showEPWTester)} 
             />
           </div>
 
