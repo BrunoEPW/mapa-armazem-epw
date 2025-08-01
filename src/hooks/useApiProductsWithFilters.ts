@@ -68,6 +68,9 @@ export const useApiProductsWithFilters = (
         cor: getEPWCor(decoded),
         comprimento: getEPWComprimento(decoded),
         foto: apiProduct.strFoto || undefined,
+        // Always preserve API description when available
+        codigo: codigo,
+        descricao: description, // Use API description
         // Store EPW decoded details
         epwTipo: decoded.tipo,
         epwCertificacao: decoded.certif,
