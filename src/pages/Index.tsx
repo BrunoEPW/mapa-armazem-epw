@@ -142,7 +142,7 @@ const Index = () => {
                 <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-orange-400 tracking-wide drop-shadow-2xl">
                   GESTÃO DE ARMAZÉM
                 </h2>
-                <p className="text-sm sm:text-base lg:text-lg text-gray-200 mt-2 drop-shadow-lg">
+                <p className="text-2xl sm:text-3xl lg:text-5xl font-bold text-orange-400 tracking-wide drop-shadow-2xl">
                   EPW
                 </p>
               </div>
