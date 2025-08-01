@@ -65,10 +65,25 @@ const Products: React.FC = () => {
       if (filters.tipo !== 'all') {
         const extractedTipo = extractTipoFromCodigo(product.codigo);
         
+        if (shouldLog) {
+          console.log(`🔍 [Products] Tipo check for ${product.codigo}:`, {
+            filterTipo: filters.tipo,
+            extractedTipo,
+            startsWith: {
+              A: product.codigo?.startsWith('A'),
+              B: product.codigo?.startsWith('B'),
+              C: product.codigo?.startsWith('C'),
+              X: product.codigo?.startsWith('X')
+            }
+          });
+        }
+        
         // Strict filtering: only match exact type from first letter of code
         if (extractedTipo !== filters.tipo) {
+          if (shouldLog) console.log(`❌ [Products] Tipo mismatch: extracted '${extractedTipo}' != filter '${filters.tipo}'`);
           return false;
         }
+        if (shouldLog) console.log(`✅ [Products] Tipo match for ${filters.tipo}`);
       }
       
       if (filters.modelo !== 'all') {
