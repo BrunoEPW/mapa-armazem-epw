@@ -63,7 +63,6 @@ const Products: React.FC = () => {
       // Based on the API response format and useApiAttributes results
       
       if (filters.tipo !== 'all') {
-        // Enhanced tipo filtering with debug logs
         const extractedTipo = extractTipoFromCodigo(product.codigo);
         const familiaMatch = product.familia?.includes(filters.tipo);
         const codigoMatch = product.codigo?.includes(filters.tipo);
@@ -71,25 +70,9 @@ const Products: React.FC = () => {
         
         const matchesTipo = familiaMatch || codigoMatch || extractedTipo === filters.tipo || epwTipoMatch;
         
-        if (shouldLog && product.codigo) {
-          console.log(`🔍 [Products] Tipo filter check for ${product.codigo}:`, {
-            filterTipo: filters.tipo,
-            extractedTipo,
-            familiaMatch,
-            codigoMatch, 
-            epwTipoMatch,
-            familia: product.familia,
-            epwTipoLabel: product.epwTipo?.l,
-            epwTipoDesc: product.epwTipo?.d,
-            finalMatch: matchesTipo
-          });
-        }
-        
         if (!matchesTipo) {
-          if (shouldLog) console.log(`❌ [Products] Tipo mismatch for ${filters.tipo} on ${product.codigo}`);
           return false;
         }
-        if (shouldLog) console.log(`✅ [Products] Tipo match for ${filters.tipo} on ${product.codigo}`);
       }
       
       if (filters.modelo !== 'all') {
@@ -147,39 +130,14 @@ const Products: React.FC = () => {
     // Look for common patterns in EPW codes
     if (!codigo) return null;
     
-    console.log(`🔍 [Products] Extracting tipo from codigo: ${codigo}`);
+    // Distinct EPW types based on starting letter
+    if (codigo.startsWith('A')) return 'A'; // Deck + Clip + Travessa Alumínio
+    if (codigo.startsWith('B')) return 'B'; // Deck + Clip + Sarrafo Compósito
+    if (codigo.startsWith('C')) return 'C'; // Deck + Clip
     
-    // Enhanced Deck + Clip patterns detection
-    // Primary pattern: codes starting with 'C'
-    if (codigo.startsWith('C')) {
-      console.log(`✅ [Products] Found Deck + Clip (C pattern): ${codigo}`);
-      return 'C';
-    }
-    
-    // Secondary patterns: Deck + Clip variants
-    if (codigo.startsWith('A')) {
-      // A = Deck + Clip + Travessa Alumínio
-      console.log(`✅ [Products] Found Deck + Clip + Travessa Alumínio (A pattern): ${codigo}`);
-      return 'C';
-    }
-    
-    if (codigo.startsWith('B')) {
-      // B = Deck + Clip + Sarrafo  
-      console.log(`✅ [Products] Found Deck + Clip + Sarrafo (B pattern): ${codigo}`);
-      return 'C';
-    }
-    
-    // Additional patterns that may indicate Deck + Clip
-    if (codigo.includes('AF') || codigo.includes('CF') || codigo.includes('BF')) {
-      console.log(`✅ [Products] Found Deck + Clip (AF/CF/BF pattern): ${codigo}`);
-      return 'C'; // Deck + Clip
-    }
-    
-    // Metro Linear patterns
-    if (codigo.includes('ML')) {
-      console.log(`✅ [Products] Found Metro Linear: ${codigo}`);
-      return 'ML'; // Metro Linear
-    }
+    // Additional patterns
+    if (codigo.includes('AF') || codigo.includes('CF') || codigo.includes('BF')) return 'C'; // Deck + Clip
+    if (codigo.includes('ML')) return 'ML'; // Metro Linear
     if (codigo.includes('RF') || codigo.includes('RS')) return 'R'; // Régua
     if (codigo.startsWith('H')) return 'H'; // Calha (moved from C)
     
