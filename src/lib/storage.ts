@@ -13,7 +13,7 @@ export const STORAGE_KEYS = {
   MOVEMENTS_BACKUP: 'warehouse-movements-backup',
   MATERIALS_PRESERVE: 'warehouse-materials-preserve',
   BACKUP_METADATA: 'warehouse-backup-metadata',
-  // EPW Exceptions use separate keys - see /src/lib/epwExceptions.ts
+  
 } as const;
 
 export const loadFromStorage = <T>(key: string, fallback: T): T => {
