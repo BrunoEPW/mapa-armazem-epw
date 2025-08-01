@@ -128,10 +128,16 @@ const Products: React.FC = () => {
   const extractTipoFromCodigo = (codigo: string): string | null => {
     // Look for common patterns in EPW codes
     if (!codigo) return null;
-    // For now, return simple pattern matching - this can be improved
+    
+    // Check if code starts with 'C' - these should be Deck + Clip
+    if (codigo.startsWith('C')) return 'C';
+    
+    // Other specific patterns
     if (codigo.includes('AF') || codigo.includes('CF') || codigo.includes('BF')) return 'C'; // Deck + Clip
     if (codigo.includes('ML')) return 'ML'; // Metro Linear
     if (codigo.includes('RF') || codigo.includes('RS')) return 'R'; // Régua
+    if (codigo.startsWith('H')) return 'H'; // Calha (moved from C)
+    
     return null;
   };
 

@@ -23,10 +23,11 @@ const EPW_MAPPINGS = {
   // Attribute 1: Tipo - Enhanced with new prefixes
   tipo: {
     // Single character types
-    'C': 'Calha',
+    'C': 'Deck + Clip',
     'R': 'Régua', 
     'F': 'Fixação', 
     'G': 'Grelha',
+    'H': 'Calha',
     'O': 'Outros',
     'X': 'Especial',
     'T': 'Tampa',
