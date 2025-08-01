@@ -36,12 +36,39 @@ const Products: React.FC = () => {
   // Switch to local filtering due to proxy limitations with filtered requests
   const applyLocalFilters = (products: any[], filters: EPWFiltersState) => {
     return products.filter(product => {
+      // Log first few products to debug filter structure
+      if (products.indexOf(product) < 3) {
+        console.log(`🔍 [Products] Product ${products.indexOf(product)}:`, {
+          codigo: product.codigo,
+          epwTipo: product.epwTipo,
+          epwModelo: product.epwModelo,
+          epwComprimento: product.epwComprimento,
+          epwCor: product.epwCor,
+          epwAcabamento: product.epwAcabamento
+        });
+      }
+      
       // Apply EPW filters locally
-      if (filters.tipo !== 'all' && product.epwTipo?.l !== filters.tipo) return false;
-      if (filters.modelo !== 'all' && product.epwModelo?.l !== filters.modelo) return false;
-      if (filters.comprimento !== 'all' && product.epwComprimento?.l !== filters.comprimento) return false;
-      if (filters.cor !== 'all' && product.epwCor?.l !== filters.cor) return false;
-      if (filters.acabamento !== 'all' && product.epwAcabamento?.l !== filters.acabamento) return false;
+      if (filters.tipo !== 'all' && product.epwTipo?.l !== filters.tipo) {
+        console.log(`❌ [Products] Filtered out by tipo: ${product.epwTipo?.l} !== ${filters.tipo}`);
+        return false;
+      }
+      if (filters.modelo !== 'all' && product.epwModelo?.l !== filters.modelo) {
+        console.log(`❌ [Products] Filtered out by modelo: ${product.epwModelo?.l} !== ${filters.modelo}`);
+        return false;
+      }
+      if (filters.comprimento !== 'all' && product.epwComprimento?.l !== filters.comprimento) {
+        console.log(`❌ [Products] Filtered out by comprimento: ${product.epwComprimento?.l} !== ${filters.comprimento}`);
+        return false;
+      }
+      if (filters.cor !== 'all' && product.epwCor?.l !== filters.cor) {
+        console.log(`❌ [Products] Filtered out by cor: ${product.epwCor?.l} !== ${filters.cor}`);
+        return false;
+      }
+      if (filters.acabamento !== 'all' && product.epwAcabamento?.l !== filters.acabamento) {
+        console.log(`❌ [Products] Filtered out by acabamento: ${product.epwAcabamento?.l} !== ${filters.acabamento}`);
+        return false;
+      }
       return true;
     });
   };
@@ -109,7 +136,16 @@ const Products: React.FC = () => {
   // Apply filters locally to all loaded products
   const filteredByEpw = useMemo(() => {
     console.log(`🔄 [Products] Applying local filters:`, epwFilters);
-    return applyLocalFilters(products, epwFilters);
+    console.log(`📊 [Products] Total products to filter:`, products.length);
+    if (products.length > 0) {
+      console.log(`🔍 [Products] Sample product structure:`, {
+        first: products[0],
+        epwKeys: Object.keys(products[0]).filter(key => key.startsWith('epw'))
+      });
+    }
+    const filtered = applyLocalFilters(products, epwFilters);
+    console.log(`✅ [Products] Filtered results count:`, filtered.length);
+    return filtered;
   }, [products, epwFilters]);
 
   // Then apply search filter
