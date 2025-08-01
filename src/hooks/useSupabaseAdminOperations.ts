@@ -2,54 +2,81 @@
 import { supabase, testSupabaseConnection } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { createBackup, restoreFromBackup, STORAGE_KEYS } from '@/lib/storage';
 
 export const useSupabaseAdminOperations = () => {
   const { user } = useAuth();
 
-  const clearDatabase = async (): Promise<boolean> => {
+  const clearDatabase = async (preserveMaterials: boolean = false): Promise<boolean> => {
     // Skip permission check in development mode
     try {
+      console.log('🗑️ [clearDatabase] Starting database clear operation with preserveMaterials:', preserveMaterials);
+      
+      // Create backup before clearing if preserving materials
+      if (preserveMaterials) {
+        try {
+          const { data: materials } = await supabase.from('materials').select('*');
+          const { data: products } = await supabase.from('products').select('*');
+          const { data: movements } = await supabase.from('movements').select('*');
+          
+          createBackup(materials || [], products || [], movements || []);
+          console.log('💾 [clearDatabase] Backup created before clearing');
+        } catch (backupError) {
+          console.error('⚠️ [clearDatabase] Backup failed, continuing with clear:', backupError);
+        }
+      }
+      
       // Delete in order to respect foreign key constraints
-      // 1. Delete movements first
+      // 1. Delete movements first (always)
       const { error: movementsError } = await supabase
         .from('movements')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+        .neq('id', '00000000-0000-0000-0000-000000000000');
 
       if (movementsError) {
         console.error('Error deleting movements:', movementsError);
         throw new Error('Erro ao eliminar movimentos');
       }
 
-      // 2. Delete materials
-      const { error: materialsError } = await supabase
-        .from('materials')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+      // 2. Delete materials only if not preserving
+      if (!preserveMaterials) {
+        const { error: materialsError } = await supabase
+          .from('materials')
+          .delete()
+          .neq('id', '00000000-0000-0000-0000-000000000000');
 
-      if (materialsError) {
-        console.error('Error deleting materials:', materialsError);
-        throw new Error('Erro ao eliminar materiais');
+        if (materialsError) {
+          console.error('Error deleting materials:', materialsError);
+          throw new Error('Erro ao eliminar materiais');
+        }
+      } else {
+        console.log('🔒 [clearDatabase] Materials preserved in database');
       }
 
-      // 3. Delete products
+      // 3. Delete products (always)
       const { error: productsError } = await supabase
         .from('products')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+        .neq('id', '00000000-0000-0000-0000-000000000000');
 
       if (productsError) {
         console.error('Error deleting products:', productsError);
         throw new Error('Erro ao eliminar produtos');
       }
 
-      // Clear localStorage as well
+      // Clear localStorage selectively
       localStorage.removeItem('warehouse-migrated');
-      localStorage.removeItem('warehouse-materials');
-      localStorage.removeItem('warehouse-products');
-      localStorage.removeItem('warehouse-movements');
+      if (!preserveMaterials) {
+        localStorage.removeItem(STORAGE_KEYS.MATERIALS);
+      }
+      localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
+      localStorage.removeItem(STORAGE_KEYS.MOVEMENTS);
 
-      toast.success('Base de dados limpa com sucesso! A aplicação será recarregada.');
+      const message = preserveMaterials 
+        ? 'Base de dados limpa - materiais preservados! A aplicação será recarregada.'
+        : 'Base de dados limpa com sucesso! A aplicação será recarregada.';
+      
+      toast.success(message);
       
       // Reload the page to refresh all data
       setTimeout(() => {
@@ -107,10 +134,24 @@ export const useSupabaseAdminOperations = () => {
     }
   };
 
-  const clearAllMaterials = async (): Promise<boolean> => {
+  const clearAllMaterials = async (createBackupFirst: boolean = true): Promise<boolean> => {
     // Skip permission check in development mode
     try {
-      console.log('Starting to clear all materials...');
+      console.log('🗑️ [clearAllMaterials] Starting materials clear operation with backup:', createBackupFirst);
+      
+      // Create backup before clearing if requested
+      if (createBackupFirst) {
+        try {
+          const { data: materials } = await supabase.from('materials').select('*');
+          const { data: products } = await supabase.from('products').select('*');
+          const { data: movements } = await supabase.from('movements').select('*');
+          
+          createBackup(materials || [], products || [], movements || []);
+          console.log('💾 [clearAllMaterials] Backup created before clearing materials');
+        } catch (backupError) {
+          console.error('⚠️ [clearAllMaterials] Backup failed, continuing with clear:', backupError);
+        }
+      }
       
       // First test Supabase connection
       const connectionTest = await testSupabaseConnection();
@@ -118,7 +159,6 @@ export const useSupabaseAdminOperations = () => {
         throw new Error('Não foi possível conectar ao Supabase. Verifique a sua ligação à internet.');
       }
       
-      // Try a direct approach - delete everything using truncate-like approach
       console.log('Attempting to clear all movements and materials...');
       
       // Use a different approach - select and delete by chunks
@@ -170,6 +210,10 @@ export const useSupabaseAdminOperations = () => {
         deletedMaterials = materials.length;
       }
 
+      // Clear localStorage materials
+      localStorage.removeItem(STORAGE_KEYS.MATERIALS);
+      localStorage.removeItem(STORAGE_KEYS.MOVEMENTS);
+
       console.log(`Successfully deleted ${deletedMaterials} materials and ${deletedMovements} movements`);
       toast.success(`Todos os materiais foram removidos! (${deletedMaterials} materiais, ${deletedMovements} movimentos)`);
       return true;
@@ -180,9 +224,18 @@ export const useSupabaseAdminOperations = () => {
     }
   };
 
+  const clearDatabasePreservingMaterials = async (): Promise<boolean> => {
+    return clearDatabase(true);
+  };
+
+  const clearMaterialsWithBackup = async (): Promise<boolean> => {
+    return clearAllMaterials(true);
+  };
+
   return {
-    clearDatabase,
-    clearAllMaterials,
+    clearDatabase: () => clearDatabase(false),
+    clearDatabasePreservingMaterials,
+    clearAllMaterials: clearMaterialsWithBackup,
     exportData,
     canManageDatabase: true, // Always true in development mode
   };

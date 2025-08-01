@@ -29,6 +29,7 @@ interface WarehouseContextType {
   updateProduct: (productId: string, updates: Partial<Product>) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   clearAllData: () => Promise<boolean>;
+  clearDataPreservingMaterials: () => Promise<boolean>;
   clearAllMaterials: () => Promise<boolean>;
   createProductFromApi: (apiProduct: any) => Promise<Product>;
   syncProducts: () => Promise<boolean>;
@@ -50,7 +51,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   
   // All hooks must be called consistently
   const { materials, products, movements, loading, setMaterials, setProducts, setMovements, refreshData } = useSupabaseWarehouseData();
-  const { clearAllData } = useDataReset(setMaterials, setProducts, setMovements);
+  const { clearAllData, clearDataPreservingMaterials } = useDataReset(setMaterials, setProducts, setMovements);
   
   // Operations without auth checks for development
   const operations = useSupabaseWarehouseOperations({
@@ -308,6 +309,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     loading,
     setSelectedShelf,
     clearAllData,
+    clearDataPreservingMaterials,
     clearAllMaterials: handleClearAllMaterials,
     createProductFromApi,
     syncProducts,

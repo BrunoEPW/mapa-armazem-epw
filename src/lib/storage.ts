@@ -7,6 +7,12 @@ export const STORAGE_KEYS = {
   MATERIALS: 'warehouse-materials',
   MOVEMENTS: 'warehouse-movements',
   EXCLUSIONS: 'product-exclusions',
+  // 🔒 CRITICAL BACKUP KEYS - DO NOT MODIFY
+  MATERIALS_BACKUP: 'warehouse-materials-backup',
+  PRODUCTS_BACKUP: 'warehouse-products-backup',
+  MOVEMENTS_BACKUP: 'warehouse-movements-backup',
+  MATERIALS_PRESERVE: 'warehouse-materials-preserve',
+  BACKUP_METADATA: 'warehouse-backup-metadata',
   // EPW Exceptions use separate keys - see /src/lib/epwExceptions.ts
 } as const;
 
@@ -53,4 +59,78 @@ export const saveExclusions = (exclusions: ExclusionSettings): void => {
   };
   console.log('🔍 [saveExclusions] Saving exclusions to storage:', exclusionsToSave);
   saveToStorage(STORAGE_KEYS.EXCLUSIONS, exclusionsToSave);
+};
+
+// 🔒 CRITICAL: Material preservation system - prevents data loss during updates
+export interface BackupMetadata {
+  version: string;
+  createdAt: string;
+  preserveMaterials: boolean;
+  lastBackup: string;
+  backupCount: number;
+}
+
+export const createBackup = (materials: any[], products: any[], movements: any[]): void => {
+  try {
+    console.log('🔒 [createBackup] Creating backup of all warehouse data');
+    
+    // Create backup with timestamp
+    const timestamp = new Date().toISOString();
+    saveToStorage(STORAGE_KEYS.MATERIALS_BACKUP, materials);
+    saveToStorage(STORAGE_KEYS.PRODUCTS_BACKUP, products);
+    saveToStorage(STORAGE_KEYS.MOVEMENTS_BACKUP, movements);
+    
+    // Update backup metadata
+    const metadata: BackupMetadata = {
+      version: '1.0.0',
+      createdAt: timestamp,
+      preserveMaterials: true,
+      lastBackup: timestamp,
+      backupCount: (loadFromStorage(STORAGE_KEYS.BACKUP_METADATA, { backupCount: 0 }) as any).backupCount + 1,
+    };
+    
+    saveToStorage(STORAGE_KEYS.BACKUP_METADATA, metadata);
+    console.log('✅ [createBackup] Backup created successfully', metadata);
+  } catch (error) {
+    console.error('❌ [createBackup] Failed to create backup:', error);
+  }
+};
+
+export const restoreFromBackup = (): { materials: any[]; products: any[]; movements: any[] } | null => {
+  try {
+    console.log('🔄 [restoreFromBackup] Attempting to restore from backup');
+    
+    const materials = loadFromStorage(STORAGE_KEYS.MATERIALS_BACKUP, []);
+    const products = loadFromStorage(STORAGE_KEYS.PRODUCTS_BACKUP, []);
+    const movements = loadFromStorage(STORAGE_KEYS.MOVEMENTS_BACKUP, []);
+    const metadata = loadFromStorage(STORAGE_KEYS.BACKUP_METADATA, null);
+    
+    if (!metadata) {
+      console.log('ℹ️ [restoreFromBackup] No backup metadata found');
+      return null;
+    }
+    
+    console.log('✅ [restoreFromBackup] Backup restored successfully', {
+      materialsCount: materials.length,
+      productsCount: products.length,
+      movementsCount: movements.length,
+      metadata
+    });
+    
+    return { materials, products, movements };
+  } catch (error) {
+    console.error('❌ [restoreFromBackup] Failed to restore backup:', error);
+    return null;
+  }
+};
+
+export const shouldPreserveMaterials = (): boolean => {
+  const preserveFlag = loadFromStorage(STORAGE_KEYS.MATERIALS_PRESERVE, true);
+  console.log('🔍 [shouldPreserveMaterials] Preserve materials flag:', preserveFlag);
+  return preserveFlag;
+};
+
+export const setMaterialsPreservation = (preserve: boolean): void => {
+  console.log('🔧 [setMaterialsPreservation] Setting materials preservation:', preserve);
+  saveToStorage(STORAGE_KEYS.MATERIALS_PRESERVE, preserve);
 };

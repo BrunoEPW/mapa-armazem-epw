@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface QuickResetDialogProps {
   open: boolean;
@@ -23,11 +24,14 @@ export const QuickResetDialog: React.FC<QuickResetDialogProps> = ({
 }) => {
   const [isResetting, setIsResetting] = useState(false);
   const [isClearingMaterials, setIsClearingMaterials] = useState(false);
-  const { clearAllData, clearAllMaterials } = useWarehouse();
+  const [preserveMaterials, setPreserveMaterials] = useState(true);
+  const { clearAllData, clearDataPreservingMaterials, clearAllMaterials } = useWarehouse();
 
   const handleConfirm = async () => {
     setIsResetting(true);
-    const success = await clearAllData();
+    const success = preserveMaterials 
+      ? await clearDataPreservingMaterials()
+      : await clearAllData();
     if (success) {
       onClose();
     }
@@ -59,11 +63,25 @@ export const QuickResetDialog: React.FC<QuickResetDialogProps> = ({
         <Alert className="border-destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Escolha uma opção:</strong>
+            <strong>🔒 Proteção de Materiais Ativa</strong><br/>
+            Os materiais serão automaticamente preservados durante atualizações.
           </AlertDescription>
         </Alert>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2 p-3 border rounded-lg bg-muted/50">
+            <Checkbox 
+              id="preserve-materials" 
+              checked={preserveMaterials}
+              onCheckedChange={(checked) => setPreserveMaterials(checked as boolean)}
+            />
+            <label 
+              htmlFor="preserve-materials" 
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Preservar materiais das prateleiras
+            </label>
+          </div>
           <Button 
             variant="destructive" 
             onClick={handleClearMaterials}
@@ -81,7 +99,10 @@ export const QuickResetDialog: React.FC<QuickResetDialogProps> = ({
             className="w-full flex items-center gap-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
           >
             <Trash2 className="w-4 h-4" />
-            {isResetting ? 'A limpar tudo...' : 'Limpar Tudo (Materiais + Produtos)'}
+            {isResetting 
+              ? (preserveMaterials ? 'A limpar produtos...' : 'A limpar tudo...') 
+              : (preserveMaterials ? 'Limpar Apenas Produtos' : 'Limpar Tudo (Materiais + Produtos)')
+            }
           </Button>
         </div>
 

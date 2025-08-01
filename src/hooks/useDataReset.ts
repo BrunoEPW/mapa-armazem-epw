@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createBackup, restoreFromBackup, shouldPreserveMaterials, STORAGE_KEYS } from '@/lib/storage';
 
 export const useDataReset = (
   setMaterials: React.Dispatch<React.SetStateAction<any[]>>,
@@ -9,31 +10,57 @@ export const useDataReset = (
 ) => {
   const [isResetting, setIsResetting] = useState(false);
 
-  const clearAllData = async () => {
+  const clearAllData = async (preserveMaterials: boolean = false) => {
     try {
       setIsResetting(true);
+      console.log('🗑️ [clearAllData] Starting data clear with preserveMaterials:', preserveMaterials);
 
-      // Clear Supabase data
-      await supabase.from('movements').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('materials').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      // Step 1: Get current data from localStorage for backup
+      const currentMaterials = JSON.parse(localStorage.getItem(STORAGE_KEYS.MATERIALS) || '[]');
+      const currentProducts = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS) || '[]');
+      const currentMovements = JSON.parse(localStorage.getItem(STORAGE_KEYS.MOVEMENTS) || '[]');
+      
+      if (preserveMaterials && currentMaterials.length > 0) {
+        createBackup(currentMaterials, currentProducts, currentMovements);
+        console.log('💾 [clearAllData] Backup created for material preservation');
+      }
+
+      // Step 2: Clear Supabase data
+      if (!preserveMaterials) {
+        await supabase.from('movements').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('materials').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      } else {
+        // Only clear movements when preserving materials
+        await supabase.from('movements').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        console.log('🔒 [clearAllData] Materials preserved in database');
+      }
       await supabase.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
-      // Clear local state
-      setMaterials([]);
+      // Step 3: Clear local state (selectively)
+      if (!preserveMaterials) {
+        setMaterials([]);
+      }
       setProducts([]);
       setMovements([]);
 
-      // Clear localStorage
+      // Step 4: Clear localStorage (selectively)
       localStorage.removeItem('warehouse-migrated');
-      localStorage.removeItem('warehouse-materials');
-      localStorage.removeItem('warehouse-products');
-      localStorage.removeItem('warehouse-movements');
+      if (!preserveMaterials) {
+        localStorage.removeItem(STORAGE_KEYS.MATERIALS);
+      }
+      localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
+      localStorage.removeItem(STORAGE_KEYS.MOVEMENTS);
       localStorage.removeItem('supabase-migration-completed');
 
-      toast.success('Todos os dados foram limpos com sucesso!');
+      const message = preserveMaterials 
+        ? 'Produtos limpos - materiais preservados!'
+        : 'Todos os dados foram limpos com sucesso!';
+      
+      toast.success(message);
+      console.log('✅ [clearAllData] Data clear completed successfully');
       return true;
     } catch (error) {
-      console.error('Error clearing data:', error);
+      console.error('❌ [clearAllData] Error clearing data:', error);
       toast.error('Erro ao limpar dados');
       return false;
     } finally {
@@ -41,8 +68,17 @@ export const useDataReset = (
     }
   };
 
+  const clearAllDataFull = async () => {
+    return clearAllData(false);
+  };
+
+  const clearDataPreservingMaterials = async () => {
+    return clearAllData(true);
+  };
+
   return {
-    clearAllData,
+    clearAllData: clearAllDataFull,
+    clearDataPreservingMaterials,
     isResetting,
   };
 };
