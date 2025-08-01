@@ -424,25 +424,60 @@ const Products: React.FC = () => {
 
           {/* Pagination - show only if we have filtered results or multiple pages */}
           {(filteredProducts.length > itemsPerPage || totalFilteredPages > 1) && (
-            <div className="flex justify-center mt-6">
+            <div className="flex flex-col items-center mt-6 space-y-2">
+              <div className="text-sm text-muted-foreground">
+                Exibindo {Math.min(itemsPerPage, paginatedProducts.length)} de {filteredProducts.length} produtos 
+                (página {currentPage} de {totalFilteredPages})
+              </div>
               <div className="flex items-center space-x-2">
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 text-sm border rounded disabled:opacity-50"
+                  className="flex items-center gap-1"
                 >
+                  <ChevronLeft className="w-4 h-4" />
                   Anterior
-                </button>
-                <span className="px-3 py-1 text-sm">
-                  Página {currentPage} de {totalFilteredPages} ({filteredProducts.length} produtos)
-                </span>
-                <button
+                </Button>
+                
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, totalFilteredPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalFilteredPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalFilteredPages - 2) {
+                      pageNum = totalFilteredPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setCurrentPage(Math.min(totalFilteredPages, currentPage + 1))}
                   disabled={currentPage === totalFilteredPages}
-                  className="px-3 py-1 text-sm border rounded disabled:opacity-50"
+                  className="flex items-center gap-1"
                 >
                   Próxima
-                </button>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
               </div>
             </div>
           )}
