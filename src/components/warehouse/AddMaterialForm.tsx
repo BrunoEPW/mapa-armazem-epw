@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { ShelfLocation, Product } from '@/types/warehouse';
 import { toast } from 'sonner';
-import { ProductSelectorAdvanced } from './ProductSelectorAdvanced';
+import { OptimizedProductSelector } from './OptimizedProductSelector';
 
 interface AddMaterialFormProps {
   location: ShelfLocation;
@@ -171,10 +171,10 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <ProductSelectorAdvanced
-        selectedProductId={selectedProductId}
-        onProductSelect={handleProductSelect}
-      />
+        <OptimizedProductSelector
+          selectedProductId={selectedProductId}
+          onProductSelect={handleProductSelect}
+        />
 
       <div className="grid grid-cols-2 gap-4">
         <div>
