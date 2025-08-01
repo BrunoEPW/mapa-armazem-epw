@@ -5,13 +5,18 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Settings, Plus, Trash2, Save, AlertTriangle } from 'lucide-react';
+import { Settings, Plus, Trash2, Save, AlertTriangle, Download, Upload, Shield, CheckCircle } from 'lucide-react';
 import { 
   loadEPWExceptions, 
   addEPWException, 
   removeEPWException,
   EPWException,
-  EPWExceptionsData 
+  EPWExceptionsData,
+  exportEPWExceptions,
+  importEPWExceptions,
+  getBackupInfo,
+  restoreFromBackup,
+  validateExceptionsIntegrity
 } from '@/lib/epwExceptions';
 import { decodeEPWReference } from '@/utils/epwCodeDecoder';
 import { toast } from 'sonner';
@@ -37,14 +42,21 @@ export const EPWExceptionsManager: React.FC<EPWExceptionsManagerProps> = ({
     cor: '',
     acabamento: ''
   });
+  const [backupInfo, setBackupInfo] = useState<{ hasBackup: boolean; backupDate?: string; exceptionsCount?: number }>({ hasBackup: false });
 
   useEffect(() => {
     loadExceptions();
+    loadBackupInfo();
   }, []);
 
   const loadExceptions = () => {
     const data = loadEPWExceptions();
     setExceptionsData(data);
+  };
+
+  const loadBackupInfo = () => {
+    const info = getBackupInfo();
+    setBackupInfo(info);
   };
 
   const handleAddException = () => {
@@ -83,6 +95,7 @@ export const EPWExceptionsManager: React.FC<EPWExceptionsManagerProps> = ({
 
     // Reload data
     loadExceptions();
+    loadBackupInfo();
 
     toast.success(`Exceção criada para código: ${newCode.toUpperCase()}`);
   };
@@ -90,7 +103,74 @@ export const EPWExceptionsManager: React.FC<EPWExceptionsManagerProps> = ({
   const handleRemoveException = (code: string) => {
     removeEPWException(code);
     loadExceptions();
+    loadBackupInfo();
     toast.success(`Exceção removida: ${code}`);
+  };
+
+  const handleExportExceptions = () => {
+    try {
+      const exportData = exportEPWExceptions();
+      const blob = new Blob([exportData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `epw-exceptions-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success('✅ Backup exportado com sucesso');
+    } catch (error) {
+      toast.error('❌ Erro ao exportar backup');
+    }
+  };
+
+  const handleImportExceptions = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const success = importEPWExceptions(content);
+        
+        if (success) {
+          loadExceptions();
+          loadBackupInfo();
+          toast.success('✅ Backup importado com sucesso');
+        } else {
+          throw new Error('Import failed');
+        }
+      } catch (error) {
+        toast.error('❌ Erro ao importar backup. Verifique o formato do arquivo.');
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    event.target.value = '';
+  };
+
+  const handleRestoreBackup = () => {
+    const success = restoreFromBackup();
+    if (success) {
+      loadExceptions();
+      loadBackupInfo();
+      toast.success('✅ Backup restaurado com sucesso');
+    } else {
+      toast.error('❌ Erro ao restaurar backup');
+    }
+  };
+
+  const handleValidateIntegrity = () => {
+    const validation = validateExceptionsIntegrity();
+    
+    if (validation.isValid) {
+      toast.success('✅ Todas as exceções estão válidas e íntegras');
+    } else {
+      toast.error(`⚠️ ${validation.errors.length} erro(s) encontrado(s)`);
+    }
   };
 
   const testCode = (code: string) => {
@@ -133,6 +213,51 @@ export const EPWExceptionsManager: React.FC<EPWExceptionsManagerProps> = ({
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* Backup and Management Tools */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium text-blue-800 flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Sistema de Backup
+            </h4>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={handleValidateIntegrity}>
+                <CheckCircle className="w-4 h-4" />
+              </Button>
+              {backupInfo.hasBackup && (
+                <Button size="sm" variant="outline" onClick={handleRestoreBackup}>
+                  Restaurar Auto-Backup
+                </Button>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={handleExportExceptions} className="gap-2">
+              <Download className="w-4 h-4" />
+              Exportar Backup
+            </Button>
+            
+            <label className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+              <Upload className="w-4 h-4" />
+              Importar Backup
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleImportExceptions}
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          {backupInfo.hasBackup && (
+            <div className="text-xs text-blue-700">
+              💾 Auto-backup disponível: {backupInfo.exceptionsCount} exceções 
+              ({backupInfo.backupDate ? new Date(backupInfo.backupDate).toLocaleString() : 'Data desconhecida'})
+            </div>
+          )}
+        </div>
+
         {/* Current Exceptions */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -281,9 +406,17 @@ export const EPWExceptionsManager: React.FC<EPWExceptionsManagerProps> = ({
           </div>
         </div>
 
-        <div className="text-xs text-orange-700 bg-orange-100 p-2 rounded">
-          💾 <strong>Importante:</strong> As exceções são guardadas permanentemente no localStorage 
-          e NÃO são apagadas quando o código é alterado.
+        <div className="text-xs text-orange-700 bg-orange-100 p-3 rounded space-y-1">
+          <div className="flex items-center gap-2 font-semibold">
+            <Shield className="w-4 h-4" />
+            ARMAZENAMENTO PERMANENTE GARANTIDO
+          </div>
+          <div>
+            ✅ Exceções guardadas permanentemente no localStorage<br/>
+            ✅ Auto-backup criado em cada operação<br/>
+            ✅ NÃO são apagadas durante atualizações de código<br/>
+            ✅ Sistema de backup/restore integrado
+          </div>
         </div>
       </CardContent>
     </Card>

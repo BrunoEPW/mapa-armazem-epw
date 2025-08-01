@@ -1,10 +1,13 @@
-// Storage utilities for warehouse data management
+// 🔒 CRITICAL: Storage utilities for warehouse data management
+// ⚠️ NEVER modify storage keys - data persistence depends on them
+// 🔒 See EPW_EXCEPTIONS.md for EPW exceptions documentation
 
 export const STORAGE_KEYS = {
   PRODUCTS: 'warehouse-products',
   MATERIALS: 'warehouse-materials',
   MOVEMENTS: 'warehouse-movements',
   EXCLUSIONS: 'product-exclusions',
+  // EPW Exceptions use separate keys - see /src/lib/epwExceptions.ts
 } as const;
 
 export const loadFromStorage = <T>(key: string, fallback: T): T => {
