@@ -1,4 +1,4 @@
-import { config } from '@/lib/config';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ApiAttribute {
   l: string; // Letter/Code
@@ -6,12 +6,6 @@ interface ApiAttribute {
 }
 
 class AttributesApiService {
-  private corsProxies = [
-    'https://api.allorigins.win/get',
-    'https://cors-anywhere.herokuapp.com/',
-    'https://corsproxy.io/?'
-  ];
-  
   private baseApiUrl = 'https://pituxa.epw.pt/api/atributos';
   private cache = new Map<string, { data: ApiAttribute[]; timestamp: number }>();
   private cacheTimeout = 10 * 60 * 1000; // 10 minutes
@@ -61,11 +55,7 @@ class AttributesApiService {
 
       return result;
     } catch (error) {
-      console.error(`❌ [AttributesApiService] Fetch ${attributeType} error:`, {
-        error,
-        name: error instanceof Error ? error.name : 'Unknown',
-        message: error instanceof Error ? error.message : String(error),
-      });
+      console.error(`❌ [AttributesApiService] Fetch ${attributeType} error:`, error);
       
       // Return cached data if available, even if expired
       if (cached) {
@@ -78,143 +68,50 @@ class AttributesApiService {
   }
 
   private async makeRequest(attributeType: string): Promise<ApiAttribute[]> {
-    console.log(`🌐 [AttributesApiService] Fetching ${attributeType} data`);
+    console.log(`🌐 [AttributesApiService] Fetching ${attributeType} via Supabase Edge Function`);
     
     const apiUrl = `${this.baseApiUrl}/${attributeType}`;
     
-    // Try each proxy with fallback
-    for (let i = 0; i < this.corsProxies.length; i++) {
-      const proxyUrl = this.corsProxies[i];
+    try {
+      const { data, error } = await supabase.functions.invoke('epw-api-proxy', {
+        body: { url: apiUrl },
+      });
+
+      if (error) {
+        throw new Error(`Supabase function error: ${error.message}`);
+      }
+
+      console.log(`📋 [AttributesApiService] Raw response for ${attributeType}:`, {
+        type: typeof data,
+        isArray: Array.isArray(data),
+        length: data?.length || 0
+      });
+
+      if (!Array.isArray(data)) {
+        throw new Error(`Invalid response format for ${attributeType}: expected array`);
+      }
+
+      // Validate and transform the data
+      const validItems: ApiAttribute[] = [];
       
-      try {
-        console.log(`🔄 [AttributesApiService] Trying proxy ${i + 1}/${this.corsProxies.length}: ${proxyUrl}`);
-        
-        const result = await this.tryProxy(proxyUrl, apiUrl);
-        
-        console.log(`✅ [AttributesApiService] Proxy ${i + 1} successful for ${attributeType}`);
-        return result;
-      } catch (error) {
-        console.warn(`⚠️ [AttributesApiService] Proxy ${i + 1} failed:`, error instanceof Error ? error.message : String(error));
-        
-        // If this is the last proxy and all failed, throw the error
-        if (i === this.corsProxies.length - 1) {
-          throw error;
+      data.forEach((item: any, index: number) => {
+        if (item && typeof item === 'object' && item.codigo && item.descricao) {
+          validItems.push({
+            l: item.codigo,
+            d: item.descricao
+          });
+        } else {
+          console.warn(`[AttributesApiService] Invalid item at index ${index} for ${attributeType}:`, item);
         }
-      }
+      });
+
+      console.log(`✅ [AttributesApiService] Successfully processed ${validItems.length}/${data.length} items for ${attributeType}`);
+      return validItems;
+
+    } catch (error) {
+      console.error(`❌ [AttributesApiService] Error fetching ${attributeType}:`, error);
+      throw new Error(`Failed to fetch ${attributeType}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-    
-    throw new Error('All proxy attempts failed');
-  }
-
-  private async tryProxy(proxyUrl: string, apiUrl: string): Promise<ApiAttribute[]> {
-    let finalUrl: string;
-    let fetchOptions: RequestInit;
-    
-    console.log(`🔄 [AttributesApiService] Testing proxy: ${proxyUrl}`);
-    console.log(`🎯 [AttributesApiService] Target API: ${apiUrl}`);
-    
-    // Configure request based on proxy type
-    if (proxyUrl.includes('allorigins.win')) {
-      const url = new URL(proxyUrl);
-      url.searchParams.set('url', apiUrl);
-      finalUrl = url.toString();
-      fetchOptions = {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        signal: AbortSignal.timeout(8000),
-      };
-    } else if (proxyUrl.includes('cors-anywhere')) {
-      finalUrl = proxyUrl + apiUrl;
-      fetchOptions = {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        signal: AbortSignal.timeout(8000),
-      };
-    } else if (proxyUrl.includes('corsproxy.io')) {
-      finalUrl = proxyUrl + apiUrl;
-      fetchOptions = {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        signal: AbortSignal.timeout(8000),
-      };
-    } else {
-      finalUrl = proxyUrl + apiUrl;
-      fetchOptions = {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        signal: AbortSignal.timeout(8000),
-      };
-    }
-    
-    console.log(`🌐 [AttributesApiService] Final URL: ${finalUrl}`);
-    
-    const response = await fetch(finalUrl, fetchOptions);
-    
-    console.log('📡 [AttributesApiService] Response status:', response.status, response.statusText);
-    console.log('📡 [AttributesApiService] Response headers:', Object.fromEntries(response.headers.entries()));
-
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-    }
-
-    let result: any[];
-    let rawData: any;
-    
-    if (proxyUrl.includes('allorigins.win')) {
-      const proxyResponse = await response.json();
-      console.log('📦 [AttributesApiService] AllOrigins proxy response:', proxyResponse);
-      
-      if (!proxyResponse.contents) {
-        throw new Error(`Proxy failed: ${proxyResponse.status?.http_code || 'unknown error'}`);
-      }
-      
-      rawData = proxyResponse.contents;
-      result = JSON.parse(rawData);
-    } else {
-      rawData = await response.text();
-      console.log('📦 [AttributesApiService] Raw response text (first 500 chars):', rawData.substring(0, 500));
-      result = JSON.parse(rawData);
-    }
-    
-    console.log('📋 [AttributesApiService] Parsed API response:', {
-      isArray: Array.isArray(result),
-      dataLength: result?.length || 0,
-      firstItem: result?.[0] || 'No items',
-      dataType: typeof result,
-    });
-
-    // Validate data structure
-    if (!Array.isArray(result)) {
-      console.error('❌ [AttributesApiService] API response is not an array:', result);
-      throw new Error('API response is not an array');
-    }
-
-    // Validate and transform each item from API format {codigo, descricao} to {l, d}
-    const validItems = result.map((item, index) => {
-      // Check if item has the expected API structure
-      const isValid = item && typeof item === 'object' && 
-                     typeof item.codigo === 'string' && 
-                     typeof item.descricao === 'string';
-      
-      if (!isValid) {
-        console.warn(`⚠️ [AttributesApiService] Invalid item at index ${index}:`, item);
-        return null;
-      }
-      
-      // Transform API format to expected format
-      return {
-        l: item.codigo,
-        d: item.descricao
-      };
-    }).filter(Boolean) as ApiAttribute[];
-
-    console.log(`✅ [AttributesApiService] Validated ${validItems.length}/${result.length} items`);
-    
-    if (validItems.length > 0) {
-      console.log('📋 [AttributesApiService] Sample valid items:', validItems.slice(0, 3));
-    }
-
-    return validItems;
   }
 
   clearCache(): void {
