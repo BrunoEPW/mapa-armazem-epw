@@ -143,7 +143,7 @@ const Index = () => {
                   GESTÃO DE ARMAZÉM
                 </h2>
                 <p className="text-sm sm:text-base lg:text-lg text-gray-200 mt-2 drop-shadow-lg">
-                  Controlo Inteligente de Stock • Localização Precisa • Gestão Eficiente
+                  EPW
                 </p>
               </div>
             </div>
