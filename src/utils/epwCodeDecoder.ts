@@ -81,7 +81,7 @@ const EPW_MAPPINGS = {
     'V': 'Value',
     'W': 'Wide',
     'Y': 'Young',
-    'Z': 'Zen'
+    'Z': 'Zoom deck'
   },
   
   // Attribute 4: Comprimento - basic mappings, API will provide real ones
@@ -116,7 +116,7 @@ const EPW_MAPPINGS = {
     'F': 'Fume',
     'M': 'Marrom',
     'N': 'Natural',
-    'V': 'Verde'
+    'V': 'Vulcan'
   },
   
   // Attribute 6: Acabamento - basic mappings, API will provide real ones
@@ -128,7 +128,8 @@ const EPW_MAPPINGS = {
     'R': 'Rugoso',
     'A': 'Acetinado',
     'N': 'Natural',
-    'P': 'Polido'
+    'P': 'Polido',
+    'G': 'Lixado + gravado wood grain'
   }
 };
 
@@ -499,7 +500,7 @@ export const getEPWComprimento = (decoded: EPWDecodedProduct): string | number =
 
 // Test function for specific EPW codes mentioned in the plan
 export const testEPWCodes = async (debug: boolean = true): Promise<void> => {
-  const testCodes = ['RFL23AL01', 'RSZ32AG01', 'RSEZ23VL01'];
+  const testCodes = ['RFL23AL01', 'RSZ32AG01', 'RSEZ23VL01', 'RSZ32VG01'];
   
   console.log('🧪 [EPW Decoder] Testing specific EPW codes...');
   
