@@ -33,7 +33,7 @@ const Products: React.FC = () => {
   
   const { shouldExcludeProduct, exclusions } = useExclusions();
   
-  // Switch to local filtering due to proxy limitations with filtered requests
+  // Switch to local filtering - use actual product properties, not EPW decoded ones
   const applyLocalFilters = (products: any[], filters: EPWFiltersState) => {
     if (products.length === 0) {
       console.log('⚠️ [Products] No products to filter');
@@ -47,61 +47,124 @@ const Products: React.FC = () => {
       if (shouldLog) {
         console.log(`🔍 [Products] Checking product ${index}:`, {
           codigo: product.codigo,
-          epwTipo: product.epwTipo,
-          epwModelo: product.epwModelo,
-          epwCor: product.epwCor
+          familia: product.familia,
+          modelo: product.modelo,
+          acabamento: product.acabamento,
+          cor: product.cor,
+          hasEpwProps: !!(product.epwTipo || product.epwModelo)
         });
       }
       
-      // Apply EPW filters locally - check each filter
+      // Use the actual product properties that exist, not EPW decoded ones
+      // Based on the API response format and useApiAttributes results
+      
       if (filters.tipo !== 'all') {
-        const productTipo = product.epwTipo?.l;
-        if (productTipo !== filters.tipo) {
-          if (shouldLog) console.log(`❌ [Products] Tipo mismatch: ${productTipo} !== ${filters.tipo}`);
+        // Try to match against familia or extract from codigo
+        const matchesTipo = product.familia?.includes(filters.tipo) || 
+                           product.codigo?.includes(filters.tipo) ||
+                           extractTipoFromCodigo(product.codigo) === filters.tipo;
+        if (!matchesTipo) {
+          if (shouldLog) console.log(`❌ [Products] Tipo mismatch for ${filters.tipo}`);
           return false;
         }
-        if (shouldLog) console.log(`✅ [Products] Tipo match: ${productTipo}`);
+        if (shouldLog) console.log(`✅ [Products] Tipo match for ${filters.tipo}`);
       }
       
       if (filters.modelo !== 'all') {
-        const productModelo = product.epwModelo?.l;
-        if (productModelo !== filters.modelo) {
-          if (shouldLog) console.log(`❌ [Products] Modelo mismatch: ${productModelo} !== ${filters.modelo}`);
+        // Match against modelo field or codigo pattern
+        const matchesModelo = product.modelo?.includes(filters.modelo) ||
+                             product.codigo?.includes(filters.modelo) ||
+                             extractModeloFromCodigo(product.codigo) === filters.modelo;
+        if (!matchesModelo) {
+          if (shouldLog) console.log(`❌ [Products] Modelo mismatch for ${filters.modelo}`);
           return false;
         }
-        if (shouldLog) console.log(`✅ [Products] Modelo match: ${productModelo}`);
+        if (shouldLog) console.log(`✅ [Products] Modelo match for ${filters.modelo}`);
       }
       
       if (filters.cor !== 'all') {
-        const productCor = product.epwCor?.l;
-        if (productCor !== filters.cor) {
-          if (shouldLog) console.log(`❌ [Products] Cor mismatch: ${productCor} !== ${filters.cor}`);
+        const matchesCor = product.cor?.includes(filters.cor) ||
+                          product.codigo?.includes(filters.cor) ||
+                          extractCorFromCodigo(product.codigo) === filters.cor;
+        if (!matchesCor) {
+          if (shouldLog) console.log(`❌ [Products] Cor mismatch for ${filters.cor}`);
           return false;
         }
-        if (shouldLog) console.log(`✅ [Products] Cor match: ${productCor}`);
-      }
-      
-      if (filters.comprimento !== 'all') {
-        const productComprimento = product.epwComprimento?.l;
-        if (productComprimento !== filters.comprimento) {
-          if (shouldLog) console.log(`❌ [Products] Comprimento mismatch: ${productComprimento} !== ${filters.comprimento}`);
-          return false;
-        }
-        if (shouldLog) console.log(`✅ [Products] Comprimento match: ${productComprimento}`);
+        if (shouldLog) console.log(`✅ [Products] Cor match for ${filters.cor}`);
       }
       
       if (filters.acabamento !== 'all') {
-        const productAcabamento = product.epwAcabamento?.l;
-        if (productAcabamento !== filters.acabamento) {
-          if (shouldLog) console.log(`❌ [Products] Acabamento mismatch: ${productAcabamento} !== ${filters.acabamento}`);
+        const matchesAcabamento = product.acabamento?.includes(filters.acabamento) ||
+                                 product.codigo?.includes(filters.acabamento) ||
+                                 extractAcabamentoFromCodigo(product.codigo) === filters.acabamento;
+        if (!matchesAcabamento) {
+          if (shouldLog) console.log(`❌ [Products] Acabamento mismatch for ${filters.acabamento}`);
           return false;
         }
-        if (shouldLog) console.log(`✅ [Products] Acabamento match: ${productAcabamento}`);
+        if (shouldLog) console.log(`✅ [Products] Acabamento match for ${filters.acabamento}`);
+      }
+      
+      if (filters.comprimento !== 'all') {
+        const matchesComprimento = product.comprimento?.toString().includes(filters.comprimento) ||
+                                  product.codigo?.includes(filters.comprimento) ||
+                                  extractComprimentoFromCodigo(product.codigo) === filters.comprimento;
+        if (!matchesComprimento) {
+          if (shouldLog) console.log(`❌ [Products] Comprimento mismatch for ${filters.comprimento}`);
+          return false;
+        }
+        if (shouldLog) console.log(`✅ [Products] Comprimento match for ${filters.comprimento}`);
       }
       
       if (shouldLog) console.log(`✅ [Products] Product ${index} passed all filters`);
       return true;
     });
+  };
+
+  // Helper functions to extract attributes from product codes
+  const extractTipoFromCodigo = (codigo: string): string | null => {
+    // Look for common patterns in EPW codes
+    if (!codigo) return null;
+    // For now, return simple pattern matching - this can be improved
+    if (codigo.includes('AF') || codigo.includes('CF') || codigo.includes('BF')) return 'C'; // Deck + Clip
+    if (codigo.includes('ML')) return 'ML'; // Metro Linear
+    if (codigo.includes('RF') || codigo.includes('RS')) return 'R'; // Régua
+    return null;
+  };
+
+  const extractModeloFromCodigo = (codigo: string): string | null => {
+    if (!codigo) return null;
+    // Extract modelo patterns - this needs to match API attributes
+    if (codigo.includes('3F') || codigo.includes('F3')) return '3F';
+    if (codigo.includes('XR') || codigo.includes('RX')) return 'XR';
+    if (codigo.includes('TF') || codigo.includes('FT')) return 'TF';
+    return null;
+  };
+
+  const extractCorFromCodigo = (codigo: string): string | null => {
+    if (!codigo) return null;
+    // Common color codes in EPW
+    if (codigo.includes('AL')) return 'A'; // Antracite
+    if (codigo.includes('BL')) return 'B'; // Bronze
+    if (codigo.includes('CL')) return 'C'; // Chocolate
+    if (codigo.includes('LL')) return 'L'; // Camel
+    if (codigo.includes('VL')) return 'V'; // Vulcan
+    return null;
+  };
+
+  const extractAcabamentoFromCodigo = (codigo: string): string | null => {
+    if (!codigo) return null;
+    // Common finish patterns
+    if (codigo.includes('G01') || codigo.includes('GE')) return 'G'; // G/E
+    if (codigo.includes('L01') || codigo.includes('LS')) return 'L'; // L/S
+    if (codigo.includes('T01') || codigo.includes('TL')) return 'T'; // TL/TS
+    return null;
+  };
+
+  const extractComprimentoFromCodigo = (codigo: string): string | null => {
+    if (!codigo) return null;
+    // Extract length from patterns like "23", "32", "28", etc.
+    const lengthMatch = codigo.match(/(\d{2,4})(?:mm)?/);
+    return lengthMatch ? lengthMatch[1] : null;
   };
 
   // Use hook without filters (load all data) and filter locally
