@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import warehouseHeroBanner from '@/assets/warehouse-hero-banner.jpg';
 import EPWLogo from '@/components/ui/epw-logo';
 import InvertedTSeparator from '@/components/ui/inverted-t-separator';
-import { QuickResetDialog } from '@/components/warehouse/QuickResetDialog';
+
 import DebugConsole from '@/components/ui/debug-console';
 import Header from '@/components/Header';
 import Footer from '@/components/ui/Footer';
@@ -20,7 +20,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { materials, selectedShelf } = useWarehouse();
   const [lastUpdate, setLastUpdate] = useState(new Date());
-  const [showResetDialog, setShowResetDialog] = useState(false);
+  
 
   useEffect(() => {
     setLastUpdate(new Date());
@@ -154,18 +154,6 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Botão de limpeza rápida */}
-        <div className="absolute top-4 left-4">
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setShowResetDialog(true)}
-            className="flex items-center gap-2"
-          >
-            <Search className="w-4 h-4" />
-            Limpar
-          </Button>
-        </div>
         
         {/* Layout específico das estantes conforme imagem */}
         <div className="flex justify-center items-end gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12 overflow-x-auto pb-4">
@@ -206,12 +194,6 @@ const Index = () => {
 
         </div>
 
-        {showResetDialog && (
-          <QuickResetDialog
-            open={showResetDialog}
-            onClose={() => setShowResetDialog(false)}
-          />
-        )}
         
         <DebugConsole />
       </div>
