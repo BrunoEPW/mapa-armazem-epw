@@ -42,14 +42,28 @@ export interface ExclusionSettings {
 }
 
 export const loadExclusions = (): ExclusionSettings => {
-  const exclusions = loadFromStorage(STORAGE_KEYS.EXCLUSIONS, {
+  // 🔒 CRITICAL: Load existing exclusions from storage - NEVER reset user data
+  const stored = loadFromStorage(STORAGE_KEYS.EXCLUSIONS, null);
+  
+  if (stored && stored.prefixes) {
+    // User has existing exclusions - preserve them completely
+    console.log('🔍 [loadExclusions] Preserving existing user exclusions:', stored.prefixes);
+    return {
+      ...stored,
+      updatedAt: stored.updatedAt || new Date().toISOString(),
+    };
+  }
+  
+  // First time setup only - default exclusions
+  const defaultExclusions = {
     enabled: true,
-    prefixes: ['ZZZ'], // Default exclusion
+    prefixes: ['ZZZ'], // Default exclusion only for new users
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-  });
-  console.log('🔍 [loadExclusions] Loaded exclusions from storage:', exclusions);
-  return exclusions;
+  };
+  
+  console.log('🔍 [loadExclusions] Creating default exclusions for new user:', defaultExclusions);
+  return defaultExclusions;
 };
 
 export const saveExclusions = (exclusions: ExclusionSettings): void => {
