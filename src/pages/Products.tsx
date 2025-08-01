@@ -10,6 +10,7 @@ import { Search, Wifi, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import { EPWFilters } from '@/components/warehouse/EPWFilters';
 import { EPWDecoderTester } from '@/components/warehouse/EPWDecoderTester';
+import { mockProducts } from '@/data/mock-data';
 
 import Footer from '@/components/ui/Footer';
 import productsBanner from '@/assets/epw-products-banner.jpg';
@@ -193,7 +194,7 @@ const Products: React.FC = () => {
 
   // Use hook without filters (load all data) and filter locally
   const {
-    products,
+    products: apiProducts,
     loading,
     error,
     currentPage,
@@ -205,6 +206,9 @@ const Products: React.FC = () => {
     isConnected,
     connectionStatus,
   } = useApiProductsWithFilters(20, shouldExcludeProduct);
+
+  // Fallback to mock data when API is unavailable
+  const products = !isConnected && apiProducts.length === 0 ? mockProducts : apiProducts;
 
   const {
     modelos: apiModelos,
