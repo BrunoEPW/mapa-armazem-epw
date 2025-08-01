@@ -12,9 +12,9 @@ serve(async (req) => {
   }
 
   try {
-    // Get the target URL from query parameters
-    const url = new URL(req.url);
-    const targetUrl = url.searchParams.get("url");
+    // Get the target URL from request body
+    const body = await req.json();
+    const targetUrl = body.url;
     
     if (!targetUrl) {
       return new Response(
@@ -39,15 +39,13 @@ serve(async (req) => {
 
     console.log(`[EPW Proxy] Proxying request to: ${targetUrl}`);
 
-    // Forward the request to the EPW API
+    // Forward the request to the EPW API (using GET since we're proxying)
     const response = await fetch(targetUrl, {
-      method: req.method,
+      method: "GET",
       headers: {
         "User-Agent": "EPW-Warehouse-System/1.0",
         "Accept": "application/json",
-        // Don't forward authorization headers to external API
       },
-      body: req.method !== "GET" && req.method !== "HEAD" ? await req.text() : undefined,
     });
 
     // Get response body

@@ -109,8 +109,44 @@ class AttributesApiService {
       return validItems;
 
     } catch (error) {
-      console.error(`❌ [AttributesApiService] Error fetching ${attributeType}:`, error);
-      throw new Error(`Failed to fetch ${attributeType}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error(`❌ [AttributesApiService] Edge Function failed, trying fallback proxy for ${attributeType}:`, error);
+      
+      // Fallback para proxy público se Edge Function falhar
+      try {
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
+        const response = await fetch(proxyUrl);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!Array.isArray(data)) {
+          throw new Error(`Invalid response format for ${attributeType}: expected array`);
+        }
+
+        // Validate and transform the data
+        const validItems: ApiAttribute[] = [];
+        
+        data.forEach((item: any, index: number) => {
+          if (item && typeof item === 'object' && item.codigo && item.descricao) {
+            validItems.push({
+              l: item.codigo,
+              d: item.descricao
+            });
+          } else {
+            console.warn(`[AttributesApiService] Invalid fallback item at index ${index} for ${attributeType}:`, item);
+          }
+        });
+
+        console.log(`✅ [AttributesApiService] Fallback proxy successfully processed ${validItems.length}/${data.length} items for ${attributeType}`);
+        return validItems;
+        
+      } catch (fallbackError) {
+        console.error(`❌ [AttributesApiService] Fallback proxy also failed for ${attributeType}:`, fallbackError);
+        throw new Error(`Both Edge Function and fallback proxy failed for ${attributeType}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
   }
 

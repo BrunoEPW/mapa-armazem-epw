@@ -138,8 +138,35 @@ class ApiService {
         data: data.data || []
       };
     } catch (error) {
-      console.error('❌ [ApiService] Request failed:', error);
-      throw error;
+      console.error('❌ [ApiService] Edge Function failed, trying fallback proxy:', error);
+      
+      // Fallback para proxy público se Edge Function falhar
+      try {
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl.toString())}`;
+        const response = await fetch(proxyUrl);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('📋 [ApiService] Fallback proxy response:', {
+          draw: data.draw,
+          recordsTotal: data.recordsTotal,
+          recordsFiltered: data.recordsFiltered,
+          dataLength: data.data?.length || 0
+        });
+
+        return {
+          draw: data.draw || draw,
+          recordsTotal: data.recordsTotal || 0,
+          recordsFiltered: data.recordsFiltered || 0,
+          data: data.data || []
+        };
+      } catch (fallbackError) {
+        console.error('❌ [ApiService] Fallback proxy also failed:', fallbackError);
+        throw new Error(`Both Edge Function and fallback proxy failed: ${error.message}`);
+      }
     }
   }
 
