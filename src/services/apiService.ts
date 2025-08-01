@@ -108,12 +108,16 @@ class ApiService {
     
     // Add filter parameters if provided
     if (filters) {
+      console.log(`🔧 [ApiService] Adding filters to URL:`, filters);
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined) {
+          console.log(`📌 [ApiService] Adding filter: ${key} = ${value}`);
           apiUrl.searchParams.append(key, value);
         }
       });
     }
+    
+    console.log(`🌐 [ApiService] Final API URL:`, apiUrl.toString());
 
     // Try multiple proxy options in sequence
     const proxies = [
@@ -138,6 +142,11 @@ class ApiService {
         });
         
         if (!response.ok) {
+          console.error(`❌ [ApiService] ${proxyName} HTTP error:`, {
+            status: response.status,
+            statusText: response.statusText,
+            url: proxyUrl
+          });
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         

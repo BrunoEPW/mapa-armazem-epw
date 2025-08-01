@@ -86,7 +86,7 @@ const Products: React.FC = () => {
   } = useApiAttributes();
 
   const handleEpwFilterChange = (field: string, value: string) => {
-    
+    console.log(`🔍 [Products] Filter change: ${field} = ${value}`);
     
     const newEpwFilters = {
       ...epwFilters,
@@ -96,6 +96,7 @@ const Products: React.FC = () => {
     
     // Apply API filters immediately
     const apiFilters = convertToApiFilters(newEpwFilters);
+    console.log(`📤 [Products] Sending API filters:`, apiFilters);
     setFilters(apiFilters);
   };
 
