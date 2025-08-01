@@ -98,7 +98,7 @@ class ApiService {
   }
 
   private async makeRequest(draw: number, start: number, length: number, filters?: ApiFilters): Promise<ApiResponse> {
-    console.log(`🌐 [ApiService] Making request via Supabase Edge Function`);
+    console.log(`🌐 [ApiService] Making direct API request`);
     
     // Build the original API URL with parameters
     const apiUrl = new URL(this.originalApiUrl);
@@ -115,42 +115,42 @@ class ApiService {
       });
     }
 
-    try {
-      const { data, error } = await supabase.functions.invoke('epw-api-proxy', {
-        body: { url: apiUrl.toString() },
-      });
+    // Try multiple proxy options in sequence
+    const proxies = [
+      `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl.toString())}`,
+      `https://corsproxy.io/?${encodeURIComponent(apiUrl.toString())}`,
+      `https://cors-anywhere.herokuapp.com/${apiUrl.toString()}`
+    ];
 
-      if (error) {
-        throw new Error(`Supabase function error: ${error.message}`);
-      }
-
-      console.log('📋 [ApiService] API response:', {
-        draw: data.draw,
-        recordsTotal: data.recordsTotal,
-        recordsFiltered: data.recordsFiltered,
-        dataLength: data.data?.length || 0
-      });
-
-      return {
-        draw: data.draw || draw,
-        recordsTotal: data.recordsTotal || 0,
-        recordsFiltered: data.recordsFiltered || 0,
-        data: data.data || []
-      };
-    } catch (error) {
-      console.error('❌ [ApiService] Edge Function failed, trying fallback proxy:', error);
+    for (let i = 0; i < proxies.length; i++) {
+      const proxyUrl = proxies[i];
+      const proxyName = ['allorigins', 'corsproxy', 'cors-anywhere'][i];
       
-      // Fallback para proxy público se Edge Function falhar
       try {
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl.toString())}`;
-        const response = await fetch(proxyUrl);
+        console.log(`🔄 [ApiService] Trying ${proxyName} proxy...`);
+        
+        const response = await fetch(proxyUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        const data = await response.json();
-        console.log('📋 [ApiService] Fallback proxy response:', {
+        let data;
+        if (proxyName === 'allorigins') {
+          // allorigins wraps the response in a contents field
+          const wrapper = await response.json();
+          data = JSON.parse(wrapper.contents);
+        } else {
+          data = await response.json();
+        }
+        
+        console.log(`✅ [ApiService] Success with ${proxyName} proxy:`, {
           draw: data.draw,
           recordsTotal: data.recordsTotal,
           recordsFiltered: data.recordsFiltered,
@@ -163,11 +163,20 @@ class ApiService {
           recordsFiltered: data.recordsFiltered || 0,
           data: data.data || []
         };
-      } catch (fallbackError) {
-        console.error('❌ [ApiService] Fallback proxy also failed:', fallbackError);
-        throw new Error(`Both Edge Function and fallback proxy failed: ${error.message}`);
+        
+      } catch (error) {
+        console.warn(`⚠️ [ApiService] ${proxyName} proxy failed:`, error.message);
+        
+        // If this is the last proxy, throw the error
+        if (i === proxies.length - 1) {
+          throw new Error(`All proxy services failed. Last error: ${error.message}`);
+        }
+        // Otherwise, continue to the next proxy
       }
     }
+
+    // This should never be reached, but just in case
+    throw new Error('No proxy services available');
   }
 
   private prefetchNextPage(currentStart: number, length: number): void {

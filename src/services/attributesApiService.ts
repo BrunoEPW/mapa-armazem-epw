@@ -68,59 +68,44 @@ class AttributesApiService {
   }
 
   private async makeRequest(attributeType: string): Promise<ApiAttribute[]> {
-    console.log(`🌐 [AttributesApiService] Fetching ${attributeType} via Supabase Edge Function`);
+    console.log(`🌐 [AttributesApiService] Fetching ${attributeType} via proxy`);
     
     const apiUrl = `${this.baseApiUrl}/${attributeType}`;
     
-    try {
-      const { data, error } = await supabase.functions.invoke('epw-api-proxy', {
-        body: { url: apiUrl },
-      });
+    // Try multiple proxy options in sequence
+    const proxies = [
+      `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`,
+      `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`,
+      `https://cors-anywhere.herokuapp.com/${apiUrl}`
+    ];
 
-      if (error) {
-        throw new Error(`Supabase function error: ${error.message}`);
-      }
-
-      console.log(`📋 [AttributesApiService] Raw response for ${attributeType}:`, {
-        type: typeof data,
-        isArray: Array.isArray(data),
-        length: data?.length || 0
-      });
-
-      if (!Array.isArray(data)) {
-        throw new Error(`Invalid response format for ${attributeType}: expected array`);
-      }
-
-      // Validate and transform the data
-      const validItems: ApiAttribute[] = [];
+    for (let i = 0; i < proxies.length; i++) {
+      const proxyUrl = proxies[i];
+      const proxyName = ['allorigins', 'corsproxy', 'cors-anywhere'][i];
       
-      data.forEach((item: any, index: number) => {
-        if (item && typeof item === 'object' && item.codigo && item.descricao) {
-          validItems.push({
-            l: item.codigo,
-            d: item.descricao
-          });
-        } else {
-          console.warn(`[AttributesApiService] Invalid item at index ${index} for ${attributeType}:`, item);
-        }
-      });
-
-      console.log(`✅ [AttributesApiService] Successfully processed ${validItems.length}/${data.length} items for ${attributeType}`);
-      return validItems;
-
-    } catch (error) {
-      console.error(`❌ [AttributesApiService] Edge Function failed, trying fallback proxy for ${attributeType}:`, error);
-      
-      // Fallback para proxy público se Edge Function falhar
       try {
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
-        const response = await fetch(proxyUrl);
+        console.log(`🔄 [AttributesApiService] Trying ${proxyName} proxy for ${attributeType}...`);
+        
+        const response = await fetch(proxyUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        const data = await response.json();
+        let data;
+        if (proxyName === 'allorigins') {
+          // allorigins wraps the response in a contents field
+          const wrapper = await response.json();
+          data = JSON.parse(wrapper.contents);
+        } else {
+          data = await response.json();
+        }
         
         if (!Array.isArray(data)) {
           throw new Error(`Invalid response format for ${attributeType}: expected array`);
@@ -136,18 +121,26 @@ class AttributesApiService {
               d: item.descricao
             });
           } else {
-            console.warn(`[AttributesApiService] Invalid fallback item at index ${index} for ${attributeType}:`, item);
+            console.warn(`[AttributesApiService] Invalid item at index ${index} for ${attributeType}:`, item);
           }
         });
 
-        console.log(`✅ [AttributesApiService] Fallback proxy successfully processed ${validItems.length}/${data.length} items for ${attributeType}`);
+        console.log(`✅ [AttributesApiService] Success with ${proxyName} for ${attributeType}: ${validItems.length}/${data.length} items`);
         return validItems;
         
-      } catch (fallbackError) {
-        console.error(`❌ [AttributesApiService] Fallback proxy also failed for ${attributeType}:`, fallbackError);
-        throw new Error(`Both Edge Function and fallback proxy failed for ${attributeType}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } catch (error) {
+        console.warn(`⚠️ [AttributesApiService] ${proxyName} proxy failed for ${attributeType}:`, error.message);
+        
+        // If this is the last proxy, throw the error
+        if (i === proxies.length - 1) {
+          throw new Error(`All proxy services failed for ${attributeType}. Last error: ${error.message}`);
+        }
+        // Otherwise, continue to the next proxy
       }
     }
+
+    // This should never be reached, but just in case
+    throw new Error(`No proxy services available for ${attributeType}`);
   }
 
   clearCache(): void {
