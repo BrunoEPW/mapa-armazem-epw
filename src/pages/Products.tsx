@@ -35,40 +35,71 @@ const Products: React.FC = () => {
   
   // Switch to local filtering due to proxy limitations with filtered requests
   const applyLocalFilters = (products: any[], filters: EPWFiltersState) => {
-    return products.filter(product => {
-      // Log first few products to debug filter structure
-      if (products.indexOf(product) < 3) {
-        console.log(`🔍 [Products] Product ${products.indexOf(product)}:`, {
+    if (products.length === 0) {
+      console.log('⚠️ [Products] No products to filter');
+      return [];
+    }
+
+    return products.filter((product, index) => {
+      // Only log first few products to avoid spam
+      const shouldLog = index < 2;
+      
+      if (shouldLog) {
+        console.log(`🔍 [Products] Checking product ${index}:`, {
           codigo: product.codigo,
           epwTipo: product.epwTipo,
           epwModelo: product.epwModelo,
-          epwComprimento: product.epwComprimento,
-          epwCor: product.epwCor,
-          epwAcabamento: product.epwAcabamento
+          epwCor: product.epwCor
         });
       }
       
-      // Apply EPW filters locally
-      if (filters.tipo !== 'all' && product.epwTipo?.l !== filters.tipo) {
-        console.log(`❌ [Products] Filtered out by tipo: ${product.epwTipo?.l} !== ${filters.tipo}`);
-        return false;
+      // Apply EPW filters locally - check each filter
+      if (filters.tipo !== 'all') {
+        const productTipo = product.epwTipo?.l;
+        if (productTipo !== filters.tipo) {
+          if (shouldLog) console.log(`❌ [Products] Tipo mismatch: ${productTipo} !== ${filters.tipo}`);
+          return false;
+        }
+        if (shouldLog) console.log(`✅ [Products] Tipo match: ${productTipo}`);
       }
-      if (filters.modelo !== 'all' && product.epwModelo?.l !== filters.modelo) {
-        console.log(`❌ [Products] Filtered out by modelo: ${product.epwModelo?.l} !== ${filters.modelo}`);
-        return false;
+      
+      if (filters.modelo !== 'all') {
+        const productModelo = product.epwModelo?.l;
+        if (productModelo !== filters.modelo) {
+          if (shouldLog) console.log(`❌ [Products] Modelo mismatch: ${productModelo} !== ${filters.modelo}`);
+          return false;
+        }
+        if (shouldLog) console.log(`✅ [Products] Modelo match: ${productModelo}`);
       }
-      if (filters.comprimento !== 'all' && product.epwComprimento?.l !== filters.comprimento) {
-        console.log(`❌ [Products] Filtered out by comprimento: ${product.epwComprimento?.l} !== ${filters.comprimento}`);
-        return false;
+      
+      if (filters.cor !== 'all') {
+        const productCor = product.epwCor?.l;
+        if (productCor !== filters.cor) {
+          if (shouldLog) console.log(`❌ [Products] Cor mismatch: ${productCor} !== ${filters.cor}`);
+          return false;
+        }
+        if (shouldLog) console.log(`✅ [Products] Cor match: ${productCor}`);
       }
-      if (filters.cor !== 'all' && product.epwCor?.l !== filters.cor) {
-        console.log(`❌ [Products] Filtered out by cor: ${product.epwCor?.l} !== ${filters.cor}`);
-        return false;
+      
+      if (filters.comprimento !== 'all') {
+        const productComprimento = product.epwComprimento?.l;
+        if (productComprimento !== filters.comprimento) {
+          if (shouldLog) console.log(`❌ [Products] Comprimento mismatch: ${productComprimento} !== ${filters.comprimento}`);
+          return false;
+        }
+        if (shouldLog) console.log(`✅ [Products] Comprimento match: ${productComprimento}`);
       }
-      if (filters.acabamento !== 'all' && product.epwAcabamento?.l !== filters.acabamento) {
-        console.log(`❌ [Products] Filtered out by acabamento: ${product.epwAcabamento?.l} !== ${filters.acabamento}`);
-        return false;
+      
+      if (filters.acabamento !== 'all') {
+        const productAcabamento = product.epwAcabamento?.l;
+        if (productAcabamento !== filters.acabamento) {
+          if (shouldLog) console.log(`❌ [Products] Acabamento mismatch: ${productAcabamento} !== ${filters.acabamento}`);
+          return false;
+        }
+        if (shouldLog) console.log(`✅ [Products] Acabamento match: ${productAcabamento}`);
       }
+      
+      if (shouldLog) console.log(`✅ [Products] Product ${index} passed all filters`);
       return true;
     });
   };
@@ -137,12 +168,25 @@ const Products: React.FC = () => {
   const filteredByEpw = useMemo(() => {
     console.log(`🔄 [Products] Applying local filters:`, epwFilters);
     console.log(`📊 [Products] Total products to filter:`, products.length);
+    
     if (products.length > 0) {
+      const sample = products[0];
       console.log(`🔍 [Products] Sample product structure:`, {
-        first: products[0],
-        epwKeys: Object.keys(products[0]).filter(key => key.startsWith('epw'))
+        codigo: sample.codigo,
+        hasEpwTipo: !!sample.epwTipo,
+        epwTipo: sample.epwTipo,
+        hasEpwModelo: !!sample.epwModelo,
+        epwModelo: sample.epwModelo,
+        hasEpwCor: !!sample.epwCor,
+        epwCor: sample.epwCor,
+        allKeys: Object.keys(sample)
       });
+      
+      // Check what filters are actually active
+      const activeFilters = Object.entries(epwFilters).filter(([key, value]) => value !== 'all');
+      console.log(`🎯 [Products] Active filters:`, activeFilters);
     }
+    
     const filtered = applyLocalFilters(products, epwFilters);
     console.log(`✅ [Products] Filtered results count:`, filtered.length);
     return filtered;
