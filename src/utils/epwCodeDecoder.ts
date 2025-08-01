@@ -44,9 +44,7 @@ const EPW_MAPPINGS = {
   // Attribute 2: Certificação
   certif: {
     'S': 'Sem',
-    'P': 'Premium',
-    'E': 'Especial',
-    'N': 'Normal'
+    'F': 'FSC'
   },
   
   // Attribute 3: Modelo
@@ -292,27 +290,31 @@ function parseEPWCodeAdaptive(cleanRef: string, debug: boolean = false): EPWDeco
     console.log(`🔧 EPW Adaptive Parser - Processing: "${cleanRef}"`);
   }
 
-  // Step 1: Extract sequential numbers (always 2 digits at the end)
-  const sequentialNumbers = cleanRef.slice(-2);
+  // Step 1: Remove the last 2 digits (FINAL part to ignore)
+  const finalPart = cleanRef.slice(-2);
   let remaining = cleanRef.slice(0, -2);
   
   if (debug) {
-    console.log(`📊 Sequential numbers: ${sequentialNumbers}, Remaining: ${remaining}`);
+    console.log(`📊 Final part (ignored): ${finalPart}, Remaining: ${remaining}`);
   }
 
-  // Step 2: Extract cor (always 2 chars before sequential numbers)
-  const cor = remaining.slice(-2);
-  remaining = remaining.slice(0, -2);
+  // Step 2: Extract acabamento (last 1 char)
+  const acabamento = remaining.slice(-1);
+  remaining = remaining.slice(0, -1);
   
-  // Step 3: Extract comprimento (always 2 chars before cor)
+  // Step 3: Extract cor (last 1 char)
+  const cor = remaining.slice(-1);
+  remaining = remaining.slice(0, -1);
+  
+  // Step 4: Extract comprimento (last 2 chars)
   const comprim = remaining.slice(-2);
   remaining = remaining.slice(0, -2);
   
   if (debug) {
-    console.log(`🎨 Cor: ${cor}, Comprimento: ${comprim}, Front part: ${remaining}`);
+    console.log(`🎨 Acabamento: ${acabamento}, Cor: ${cor}, Comprimento: ${comprim}, Front part: ${remaining}`);
   }
 
-  // Step 4: Parse the front part (tipo, certif, modelo, acabamento)
+  // Step 5: Parse the front part (tipo, certif, modelo)
   const frontPart = parseFrontPart(remaining, debug);
   
   if (debug) {
@@ -325,7 +327,7 @@ function parseEPWCodeAdaptive(cleanRef: string, debug: boolean = false): EPWDeco
     modelo: { l: frontPart.modelo, d: getAttributeValueSync('modelo', frontPart.modelo) },
     comprim: { l: comprim, d: getAttributeValueSync('comprim', comprim) },
     cor: { l: cor, d: getAttributeValueSync('cor', cor) },
-    acabamento: { l: frontPart.acabamento, d: getAttributeValueSync('acabamento', frontPart.acabamento) }
+    acabamento: { l: acabamento, d: getAttributeValueSync('acabamento', acabamento) }
   };
 }
 
@@ -333,7 +335,6 @@ function parseFrontPart(remaining: string, debug: boolean = false): {
   tipo: string;
   certif: string;
   modelo: string;
-  acabamento: string;
 } {
   if (debug) {
     console.log(`🏗️ Parsing front part: "${remaining}" (length: ${remaining.length})`);
@@ -342,54 +343,27 @@ function parseFrontPart(remaining: string, debug: boolean = false): {
   // Define parsing strategies based on user description:
   // - Tipo: 1 or 2 characters
   // - Certificação: 1 character
-  // - Modelo: 1 or 2 characters  
-  // - Acabamento: variable (remaining chars)
+  // - Modelo: remaining characters
   
   const strategies = [
-    // Strategy 1: tipo=1, certif=1, modelo=1, acabamento=rest
+    // Strategy 1: tipo=1, certif=1, modelo=rest
+    () => {
+      if (remaining.length >= 2) {
+        const tipo = remaining[0];
+        const certif = remaining[1];
+        const modelo = remaining.slice(2);
+        return { tipo, certif, modelo, score: validateFrontPart(tipo, certif, modelo) };
+      }
+      return null;
+    },
+    
+    // Strategy 2: tipo=2, certif=1, modelo=rest
     () => {
       if (remaining.length >= 3) {
-        const tipo = remaining[0];
-        const certif = remaining[1];
-        const modelo = remaining[2];
-        const acabamento = remaining.slice(3);
-        return { tipo, certif, modelo, acabamento, score: validateFrontPart(tipo, certif, modelo, acabamento) };
-      }
-      return null;
-    },
-    
-    // Strategy 2: tipo=2, certif=1, modelo=1, acabamento=rest
-    () => {
-      if (remaining.length >= 4) {
         const tipo = remaining.substring(0, 2);
         const certif = remaining[2];
-        const modelo = remaining[3];
-        const acabamento = remaining.slice(4);
-        return { tipo, certif, modelo, acabamento, score: validateFrontPart(tipo, certif, modelo, acabamento) };
-      }
-      return null;
-    },
-    
-    // Strategy 3: tipo=1, certif=1, modelo=2, acabamento=rest
-    () => {
-      if (remaining.length >= 4) {
-        const tipo = remaining[0];
-        const certif = remaining[1];
-        const modelo = remaining.substring(2, 4);
-        const acabamento = remaining.slice(4);
-        return { tipo, certif, modelo, acabamento, score: validateFrontPart(tipo, certif, modelo, acabamento) };
-      }
-      return null;
-    },
-    
-    // Strategy 4: tipo=2, certif=1, modelo=2, acabamento=rest
-    () => {
-      if (remaining.length >= 5) {
-        const tipo = remaining.substring(0, 2);
-        const certif = remaining[2];
-        const modelo = remaining.substring(3, 5);
-        const acabamento = remaining.slice(5);
-        return { tipo, certif, modelo, acabamento, score: validateFrontPart(tipo, certif, modelo, acabamento) };
+        const modelo = remaining.slice(3);
+        return { tipo, certif, modelo, score: validateFrontPart(tipo, certif, modelo) };
       }
       return null;
     }
@@ -415,18 +389,16 @@ function parseFrontPart(remaining: string, debug: boolean = false): {
     return {
       tipo: bestResult.tipo,
       certif: bestResult.certif,
-      modelo: bestResult.modelo,
-      acabamento: bestResult.acabamento
+      modelo: bestResult.modelo
     };
   }
 
   // Fallback: use strategy 1 even if not validated
-  if (remaining.length >= 3) {
+  if (remaining.length >= 2) {
     const fallback = {
       tipo: remaining[0],
       certif: remaining[1],
-      modelo: remaining[2],
-      acabamento: remaining.slice(3)
+      modelo: remaining.slice(2)
     };
     
     if (debug) {
@@ -440,19 +412,17 @@ function parseFrontPart(remaining: string, debug: boolean = false): {
   return {
     tipo: remaining[0] || '',
     certif: remaining[1] || '',
-    modelo: remaining[2] || '',
-    acabamento: remaining.slice(3) || ''
+    modelo: remaining.slice(2) || ''
   };
 }
 
-function validateFrontPart(tipo: string, certif: string, modelo: string, acabamento: string): number {
+function validateFrontPart(tipo: string, certif: string, modelo: string): number {
   let score = 0;
   
   // Check static mappings and cached API data for better validation
   if (tipo && getAttributeValueSync('tipo', tipo) !== tipo) score += 3;
   if (certif && getAttributeValueSync('certif', certif) !== certif) score += 3;
   if (modelo && getAttributeValueSync('modelo', modelo) !== modelo) score += 3;
-  if (acabamento && getAttributeValueSync('acabamento', acabamento) !== acabamento) score += 1;
   
   return score;
 }
