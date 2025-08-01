@@ -21,6 +21,7 @@ export const populateTestData = async ({
     const testProducts = [
       { code: 'RSZ32AG01', quantidade: 120 },
       { code: 'RSEZ23VL01', quantidade: 58 },
+      { code: 'RFL23AL01', quantidade: 280 },
     ];
 
     // Verificar/criar produtos
@@ -74,6 +75,11 @@ export const populateTestData = async ({
       { estante: 'D', prateleira: 6 },
     ];
 
+    // Definir localizações para RFL23AL01 (estante A)
+    const rflLocations: ShelfLocation[] = [
+      { estante: 'A', prateleira: 1 },
+    ];
+
     let totalMaterials = 0;
 
     // Adicionar RSZ32AG01 às prateleiras ímpares de B e F
@@ -117,6 +123,28 @@ export const populateTestData = async ({
       });
 
       console.log(`✅ Adicionado: ${location.estante}${location.prateleira} - 58 peças RSEZ23VL01`);
+      totalMaterials++;
+    }
+
+    // Adicionar RFL23AL01 à estante A
+    console.log('📍 Adicionando RFL23AL01 à estante A...');
+    for (const location of rflLocations) {
+      const material = await addMaterial({
+        productId: createdProducts['RFL23AL01'].id,
+        product: createdProducts['RFL23AL01'],
+        pecas: 280,
+        location,
+      });
+
+      await addMovement({
+        materialId: material.id,
+        type: 'entrada',
+        pecas: 280,
+        norc: 'TESTE-INICIAL',
+        date: new Date().toISOString(),
+      });
+
+      console.log(`✅ Adicionado: ${location.estante}${location.prateleira} - 280 peças RFL23AL01`);
       totalMaterials++;
     }
 
