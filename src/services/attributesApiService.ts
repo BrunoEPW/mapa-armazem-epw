@@ -81,7 +81,7 @@ class AttributesApiService {
 
     for (let i = 0; i < proxies.length; i++) {
       const proxyUrl = proxies[i];
-      const proxyName = ['allorigins', 'corsproxy', 'cors-anywhere'][i];
+      const proxyName = ['corsproxy', 'allorigins', 'cors-anywhere'][i];
       
       try {
         console.log(`🔄 [AttributesApiService] Trying ${proxyName} proxy for ${attributeType}...`);
@@ -107,7 +107,12 @@ class AttributesApiService {
           data = await response.json();
         }
         
-        console.log(`📊 [AttributesApiService] Raw data sample for ${attributeType}:`, data?.slice(0, 2));
+        console.log(`📊 [AttributesApiService] Raw data received for ${attributeType}:`, { 
+          proxy: proxyName, 
+          dataType: Array.isArray(data) ? 'array' : typeof data,
+          length: Array.isArray(data) ? data.length : 'N/A',
+          sample: Array.isArray(data) ? data.slice(0, 2) : data
+        });
         
         if (!Array.isArray(data)) {
           throw new Error(`Invalid response format for ${attributeType}: expected array`);
@@ -151,7 +156,11 @@ class AttributesApiService {
         return validItems;
         
       } catch (error) {
-        console.warn(`⚠️ [AttributesApiService] ${proxyName} proxy failed for ${attributeType}:`, error.message);
+        console.error(`❌ [AttributesApiService] ${proxyName} proxy failed for ${attributeType}:`, {
+          error: error.message,
+          proxyUrl,
+          apiUrl
+        });
         
         // If this is the last proxy, throw the error
         if (i === proxies.length - 1) {
