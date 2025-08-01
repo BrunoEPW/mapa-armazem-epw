@@ -72,10 +72,10 @@ class AttributesApiService {
     
     const apiUrl = `${this.baseApiUrl}/${attributeType}`;
     
-    // Try multiple proxy options in sequence
+    // Try multiple proxy options in sequence (corsproxy.io first as it's most reliable)
     const proxies = [
-      `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`,
       `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`,
+      `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`,
       `https://cors-anywhere.herokuapp.com/${apiUrl}`
     ];
 
@@ -107,19 +107,41 @@ class AttributesApiService {
           data = await response.json();
         }
         
+        console.log(`📊 [AttributesApiService] Raw data sample for ${attributeType}:`, data?.slice(0, 2));
+        
         if (!Array.isArray(data)) {
           throw new Error(`Invalid response format for ${attributeType}: expected array`);
         }
 
-        // Validate and transform the data
+        // Validate and transform the data - handle multiple API response formats
         const validItems: ApiAttribute[] = [];
         
         data.forEach((item: any, index: number) => {
-          if (item && typeof item === 'object' && item.codigo && item.descricao) {
-            validItems.push({
-              l: item.codigo,
-              d: item.descricao
-            });
+          if (item && typeof item === 'object') {
+            // Try first format: codigo/descricao
+            if (item.codigo && item.descricao) {
+              validItems.push({
+                l: item.codigo,
+                d: item.descricao
+              });
+            }
+            // Try second format: strCodigo/strDescricao
+            else if (item.strCodigo && item.strDescricao) {
+              validItems.push({
+                l: item.strCodigo,
+                d: item.strDescricao
+              });
+            }
+            // Try third format: code/description
+            else if (item.code && item.description) {
+              validItems.push({
+                l: item.code,
+                d: item.description
+              });
+            }
+            else {
+              console.warn(`[AttributesApiService] Unknown format at index ${index} for ${attributeType}:`, item);
+            }
           } else {
             console.warn(`[AttributesApiService] Invalid item at index ${index} for ${attributeType}:`, item);
           }

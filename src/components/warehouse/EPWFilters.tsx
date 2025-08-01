@@ -83,7 +83,8 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
 
   // Modelo options from API (with fallback to products)
   const modeloOptions = useMemo(() => {
-    if (apiModelos.length > 0) {
+    console.log('🔍 [EPWFilters] API Modelos count:', apiModelos?.length, 'Sample:', apiModelos?.slice(0, 2));
+    if (apiModelos && apiModelos.length > 0) {
       // Use API data - return objects for easy mapping
       return apiModelos;
     }
@@ -96,14 +97,17 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
       }
     });
     
-    return Array.from(productModelos.entries())
+    const fallbackModelos = Array.from(productModelos.entries())
       .map(([l, d]) => ({ l, d }))
       .sort((a, b) => a.d.localeCompare(b.d));
+    console.log('📦 [EPWFilters] Fallback Modelos count:', fallbackModelos.length, 'Sample:', fallbackModelos.slice(0, 2));
+    return fallbackModelos;
   }, [apiModelos, products]);
 
   // Tipo options from API (with fallback to products)
   const tipoOptions = useMemo(() => {
-    if (apiTipos.length > 0) {
+    console.log('🔍 [EPWFilters] API Tipos count:', apiTipos?.length, 'Sample:', apiTipos?.slice(0, 2));
+    if (apiTipos && apiTipos.length > 0) {
       // Use API data - return objects for easy mapping
       return apiTipos;
     }
@@ -116,9 +120,11 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
       }
     });
     
-    return Array.from(productTipos.entries())
+    const fallbackTipos = Array.from(productTipos.entries())
       .map(([l, d]) => ({ l, d }))
       .sort((a, b) => a.d.localeCompare(b.d));
+    console.log('📦 [EPWFilters] Fallback Tipos count:', fallbackTipos.length, 'Sample:', fallbackTipos.slice(0, 2));
+    return fallbackTipos;
   }, [apiTipos, products]);
 
   // Acabamento options from API (with fallback to products)
