@@ -17,7 +17,7 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
   material,
   onClose,
 }) => {
-  console.log('🚀 [EditMaterialDialog] Component mounted with material:', material);
+  
   
   const { updateMaterial, addMovement } = useWarehouse();
   

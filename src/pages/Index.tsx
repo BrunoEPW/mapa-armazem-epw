@@ -10,7 +10,7 @@ import warehouseHeroBanner from '@/assets/warehouse-hero-banner.jpg';
 import EPWLogo from '@/components/ui/epw-logo';
 import InvertedTSeparator from '@/components/ui/inverted-t-separator';
 
-import DebugConsole from '@/components/ui/debug-console';
+
 import Header from '@/components/Header';
 import Footer from '@/components/ui/Footer';
 
@@ -195,7 +195,7 @@ const Index = () => {
         </div>
 
         
-        <DebugConsole />
+        
       </div>
       <Footer />
     </div>

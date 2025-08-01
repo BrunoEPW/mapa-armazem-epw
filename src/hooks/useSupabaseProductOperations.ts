@@ -18,7 +18,7 @@ export const useSupabaseProductOperations = ({
   
   const addProduct = async (product: Omit<Product, 'id'>) => {
     try {
-      console.log('🔵 === SUPABASE ADD PRODUCT DEBUG ===');
+      
       console.log('🔵 Input product:', JSON.stringify(product, null, 2));
       console.log('🔵 Supabase client:', !!supabase);
       console.log('🔵 Starting field validation...');

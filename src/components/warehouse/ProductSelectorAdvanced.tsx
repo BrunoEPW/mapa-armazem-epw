@@ -223,7 +223,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
                       size="sm"
                       variant={selectedProductId === product.id ? "default" : "outline"}
                       onClick={() => {
-                        console.log('=== PRODUCT SELECT DEBUG ===');
+                        
                         console.log('Product clicked:', product);
                         console.log('Product ID:', product.id);
                         console.log('Current selectedProductId:', selectedProductId);

@@ -10,10 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Search, Wifi, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import { EPWFilters } from '@/components/warehouse/EPWFilters';
-import { FilterDebugPanel } from '@/components/warehouse/FilterDebugPanel';
-import { EPWCodeDebugger } from '@/components/warehouse/EPWCodeDebugger';
-import { FilterCodeTester } from '@/components/warehouse/FilterCodeTester';
-import { ModelFilterDebugger } from '@/components/warehouse/ModelFilterDebugger';
 import { config } from '@/lib/config';
 import Footer from '@/components/ui/Footer';
 import productsBanner from '@/assets/epw-products-banner.jpg';
@@ -36,9 +32,6 @@ const Products: React.FC = () => {
     cor: 'all',
     acabamento: 'all',
   });
-  const [showDebugPanel, setShowDebugPanel] = useState(false);
-  const [showEpwDebugger, setShowEpwDebugger] = useState(false);
-  const [showModelDebugger, setShowModelDebugger] = useState(false);
   
   const { shouldExcludeProduct, exclusions } = useExclusions();
   
@@ -52,10 +45,6 @@ const Products: React.FC = () => {
       Acabamento: filters.acabamento !== 'all' ? filters.acabamento : undefined,
     };
     
-    console.log(`🔄 [Products] Converting EPW to API filters:`, {
-      input: filters,
-      output: result
-    });
     
     return result;
   };
@@ -97,16 +86,7 @@ const Products: React.FC = () => {
   } = useApiAttributes();
 
   const handleEpwFilterChange = (field: string, value: string) => {
-    console.log(`🎯 [Products] Filter change: ${field} = ${value}`);
     
-    // Special logging for modelo filters
-    if (field === 'modelo') {
-      console.log(`🔍 [Products] Modelo filter details:`, {
-        selectedValue: value,
-        availableModelos: apiModelos?.length ? apiModelos.slice(0, 5) : 'Loading or empty',
-        isValidCode: value !== 'all' && value !== ''
-      });
-    }
     
     const newEpwFilters = {
       ...epwFilters,
@@ -116,7 +96,6 @@ const Products: React.FC = () => {
     
     // Apply API filters immediately
     const apiFilters = convertToApiFilters(newEpwFilters);
-    console.log('🎯 [Products] Converted API filters:', apiFilters);
     setFilters(apiFilters);
   };
 
@@ -153,14 +132,6 @@ const Products: React.FC = () => {
   const hasServerFilters = Object.values(epwFilters).some(value => value !== 'all');
   const hasLocalSearchFilter = searchQuery.length > 0;
 
-  // Debug current filter state
-  console.log('🎯 [Products] Current filter state:', {
-    epwFilters,
-    hasActiveFilters,
-    hasServerFilters,
-    hasLocalSearchFilter,
-    activeApiFilters: activeFilters
-  });
 
   // For display purposes - use filtered products when search is active, otherwise use all products
   const displayProducts = hasLocalSearchFilter ? filteredProducts : products;
@@ -267,41 +238,6 @@ const Products: React.FC = () => {
               coresError={coresError}
               excludedCount={excludedCount}
             />
-            {config.isDevelopment && (
-              <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-                <strong>Debug API Modelos:</strong> {
-                  modelosLoading ? "Carregando..." :
-                  modelosError ? `Erro: ${modelosError}` :
-                  `${apiModelos.length} modelos carregados da API`
-                }
-                {apiModelos.length > 0 && (
-                  <div>Primeiro modelo: {JSON.stringify(apiModelos[0])}</div>
-                )}
-              </div>
-             )}
-
-              {/* Debug Panel for Development */}
-              {config.isDevelopment && (
-                <div className="flex gap-2 flex-wrap">
-                  <FilterDebugPanel
-                    show={showDebugPanel}
-                    onToggle={() => setShowDebugPanel(!showDebugPanel)}
-                    apiCores={apiCores}
-                    apiTipos={apiTipos}
-                    apiAcabamentos={apiAcabamentos}
-                    apiComprimentos={apiComprimentos}
-                  />
-                   <EPWCodeDebugger
-                     show={showEpwDebugger}
-                     onToggle={() => setShowEpwDebugger(!showEpwDebugger)}
-                   />
-                   <FilterCodeTester />
-                   <ModelFilterDebugger
-                     show={showModelDebugger}
-                     onToggle={() => setShowModelDebugger(!showModelDebugger)}
-                   />
-                </div>
-              )}
            </div>
 
            {/* Products Table */}

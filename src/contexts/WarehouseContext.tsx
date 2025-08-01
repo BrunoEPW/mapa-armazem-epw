@@ -71,8 +71,6 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useRealTimeSync(refreshData, refreshData, refreshData);
 
   const createProductFromApi = async (apiProduct: any): Promise<Product> => {
-    console.log('🚀 === CREATE PRODUCT FROM API DEBUG ===');
-    console.log('📦 Raw API Product:', apiProduct);
     
     try {
       // Step 1: Validate input data
@@ -80,7 +78,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         throw new Error('Dados do produto não fornecidos');
       }
 
-      console.log('🔍 Step 1: Input validation passed');
+      
 
       // Step 2: Generate valid UUID from API product ID
       if (!apiProduct.id && !apiProduct.codigo) {
@@ -126,7 +124,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return '0';
       };
 
-      console.log('🔍 Step 3: Creating safe field values');
+      
 
       // Step 4: Build product data with comprehensive fallbacks
       const productData: Omit<Product, 'id'> = {

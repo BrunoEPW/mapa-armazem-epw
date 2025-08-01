@@ -16,8 +16,8 @@ const ShelfDetailView: React.FC = () => {
   const navigate = useNavigate();
   const { estante, prateleira } = useParams<{ estante: string; prateleira: string }>();
   
-  // Add debugging for warehouse context
-  console.log('🔍 ShelfDetailView - Attempting to use warehouse context...');
+  
+  
   
   let warehouseContext;
   try {

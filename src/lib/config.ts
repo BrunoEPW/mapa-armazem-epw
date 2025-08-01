@@ -19,7 +19,7 @@ export const config = {
   // UI settings
   ui: {
     showDevBadge: isDevelopment && !import.meta.env.VITE_HIDE_DEV_BADGE,
-    enableDebugConsole: isDevelopment,
+    
   },
   
   // Supabase settings

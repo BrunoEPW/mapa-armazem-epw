@@ -35,33 +35,21 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
     try {
       e.preventDefault();
       
-      // Direct DOM manipulation to show debug info
-      document.title = `DEBUG: Step 1 - Function started`;
       
-      console.log('=== ADD MATERIAL DEBUG ===');
-      console.log('🔍 Function started, checking variables...');
-      console.log('🔍 selectedProductId:', selectedProductId);
-      console.log('🔍 selectedProductId type:', typeof selectedProductId);
-      console.log('🔍 selectedProduct exists:', !!selectedProduct);
-      console.log('🔍 selectedProduct:', selectedProduct);
-      console.log('🔍 pecas:', pecas);
-      console.log('🔍 pecas type:', typeof pecas);
-      console.log('🔍 norc:', norc);
-      console.log('🔍 location:', location);
-      console.log('🔍 About to start validation...');
       
-      document.title = `DEBUG: Step 2 - Starting validation`;
+      
+      
       
       // Validation checks
       if (!selectedProduct || !pecas || !norc.trim()) {
-        document.title = `DEBUG: ERROR - Missing required fields`;
+        
         console.log('❌ ERROR: Missing required fields');
         toast.error('Por favor, preencha todos os campos');
         return;
       }
       
       if (!selectedProductId || !selectedProduct) {
-        document.title = `DEBUG: ERROR - No product selected`;
+        
         console.log('❌ ERROR: No product selected');
         toast.error('Por favor, selecione um produto');
         return;
@@ -73,14 +61,10 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
       return;
     }
 
-      document.title = `DEBUG: Step 3 - Validation passed`;
-      console.log('=== VALIDATION PASSED ===');
+      
+      
 
     try {
-      console.log('=== STARTING ADD MATERIAL PROCESS ===');
-      console.log('🔍 selectedProduct:', JSON.stringify(selectedProduct, null, 2));
-      console.log('🔍 selectedProduct.id:', selectedProduct.id);
-      console.log('🔍 selectedProduct.id type:', typeof selectedProduct.id);
       
       let productToUse = selectedProduct;
 
@@ -94,14 +78,11 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
       }
       
       console.log('✅ selectedProduct.id validation passed');
-      console.log('🔍 About to check if API product...');
+      
 
       // If it's an API product, create it locally first
       if (selectedProduct.id.startsWith('api_')) {
         console.log('🔄 Creating local product from API data...');
-        console.log('🔍 API Product details:', JSON.stringify(selectedProduct, null, 2));
-        console.log('🔍 API Product ID:', selectedProduct.id);
-        console.log('🔍 createProductFromApi function exists:', !!createProductFromApi);
         
         try {
           console.log('📞 About to call createProductFromApi...');
@@ -169,7 +150,7 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
       });
 
       console.log('Movement added successfully');
-      console.log('=== PROCESS COMPLETED SUCCESSFULLY ===');
+      
       toast.success(`Material adicionado com sucesso! ${pecas} peças de ${selectedProduct.epwModelo?.d || selectedProduct.modelo} em ${location.estante}${location.prateleira}`);
       onSuccess();
     } catch (error) {

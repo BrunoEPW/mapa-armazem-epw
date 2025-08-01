@@ -26,7 +26,7 @@ export const useApiProductsWithFilters = (
   exclusionFilter?: (codigo: string) => boolean,
   initialFilters: ApiFilters = {}
 ): UseApiProductsWithFiltersReturn => {
-  console.log('🔍 [useApiProductsWithFilters] Hook inicializado com filtros:', initialFilters);
+  
   
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,15 +46,6 @@ export const useApiProductsWithFilters = (
     // Try to decode EPW reference if available
     const epwDecodeResult = decodeEPWReference(codigo, config.isDevelopment);
     
-    if (config.isDevelopment) {
-      console.log('🔍 [Product Mapping] Processing:', { 
-        Id: apiProduct.Id, 
-        strCodigo: codigo, 
-        strDescricao: description,
-        epwDecoded: epwDecodeResult.success,
-        epwMessage: epwDecodeResult.message
-      });
-    }
     
     // Use EPW decoded data if successful, otherwise fallback to API data
     if (epwDecodeResult.success && epwDecodeResult.product) {
@@ -81,10 +72,6 @@ export const useApiProductsWithFilters = (
         epwOriginalCode: codigo,
       };
     } else {
-      // Enhanced fallback for non-EPW products - prioritize API description
-      if (config.isDevelopment) {
-        console.log(`📋 [Product Mapping] Using API fallback for non-EPW code: ${codigo} -> "${description}"`);
-      }
       
       return {
         id: `api_${apiProduct.Id}`,
@@ -111,10 +98,10 @@ export const useApiProductsWithFilters = (
     setError(null);
     abortControllerRef.current = new AbortController();
 
-    console.log('🔍 [useApiProductsWithFilters] Fetching with filters:', filters);
+    
 
     try {
-      console.log(`🔍 [useApiProductsWithFilters] Fetching page ${page} with filters:`, filters);
+      
       setConnectionStatus('Conectando...');
       
       const start = (page - 1) * itemsPerPage;
@@ -129,36 +116,15 @@ export const useApiProductsWithFilters = (
       
       const apiResponse = await apiService.fetchArtigosWithTotal(1, start, itemsPerPage, apiFilters);
 
-      console.log('📊 [useApiProductsWithFilters] API Response:', {
-        recordsTotal: apiResponse.recordsTotal,
-        recordsFiltered: apiResponse.recordsFiltered,
-        dataLength: apiResponse.data?.length || 0,
-        filters: apiFilters
-      });
-      
-      console.log('📊 [useApiProductsWithFilters] API response:', {
-        dataLength: apiResponse.data?.length || 0,
-        recordsTotal: apiResponse.recordsTotal,
-        recordsFiltered: apiResponse.recordsFiltered,
-        totalCountUsed: apiResponse.recordsFiltered || apiResponse.recordsTotal || 0,
-        start,
-        length: itemsPerPage,
-        filtersApplied: Object.keys(apiFilters)
-      });
       
       if (!apiResponse.data || !Array.isArray(apiResponse.data)) {
         throw new Error('API retornou dados inválidos ou nulos');
       }
       
       // Apply exclusions filter if provided (client-side)
-      console.log('🔍 [Exclusions Debug] Applying exclusions filter:', !!exclusionFilter);
       const filteredData = exclusionFilter 
         ? apiResponse.data.filter(item => {
             const shouldExclude = exclusionFilter(item.strCodigo || '');
-            console.log(`🔍 [Exclusions Debug] Product "${item.strCodigo}": exclude = ${shouldExclude}`);
-            if (shouldExclude) {
-              console.log(`🚫 [Exclusions] Excluding product: ${item.strCodigo}`);
-            }
             return !shouldExclude;
           })
         : apiResponse.data;
@@ -171,10 +137,6 @@ export const useApiProductsWithFilters = (
         ? Math.max(1, Math.round(originalCount * (filteredData.length / apiResponse.data.length)))
         : originalCount;
       
-      if (config.isDevelopment && exclusionFilter) {
-        console.log(`📊 [Exclusions] Original: ${apiResponse.data.length}, Filtered: ${filteredData.length}, Excluded: ${excludedCount}`);
-        console.log(`📊 [Exclusions] Total count adjusted from ${originalCount} to ${estimatedTotalAfterExclusions}`);
-      }
       
       const mappedProducts = filteredData.map(mapApiProductToProduct);
       
@@ -183,9 +145,6 @@ export const useApiProductsWithFilters = (
       const exclusionInfo = exclusionFilter && excludedCount > 0 ? ` (${excludedCount} excluídos)` : '';
       setConnectionStatus(`Conectado via proxy CORS${Object.keys(apiFilters).length > 0 ? ' (com filtros)' : ''}${exclusionInfo}`);
       
-      if (config.isDevelopment) {
-        console.log(`✅ [useApiProductsWithFilters] Successfully loaded ${mappedProducts.length} products from API for page ${page} with filters:`, apiFilters);
-      }
     } catch (err) {
       console.error('❌ [useApiProductsWithFilters] Error details:', {
         error: err,
@@ -225,13 +184,13 @@ export const useApiProductsWithFilters = (
   };
 
   const setFilters = (filters: ApiFilters) => {
-    console.log('🔍 [useApiProductsWithFilters] Setting new filters:', filters);
+    
     setActiveFilters(filters);
     setCurrentPage(1); // Reset to first page when filters change
   };
 
   const clearFilters = () => {
-    console.log('🔍 [useApiProductsWithFilters] Clearing all filters');
+    
     setActiveFilters({});
     setCurrentPage(1);
   };
