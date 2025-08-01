@@ -26,7 +26,6 @@ export const useApiProductsWithFilters = (
   exclusionFilter?: (codigo: string) => boolean,
   initialFilters: ApiFilters = {}
 ): UseApiProductsWithFiltersReturn => {
-  const [products, setProducts] = useState<Product[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -171,7 +170,6 @@ export const useApiProductsWithFilters = (
       console.log(`✅ [useApiProductsWithFilters] Successfully loaded ${allLoadedProducts.length} products`);
       
       setAllProducts(allLoadedProducts);
-      updateLocalPagination(allLoadedProducts, 1);
       setConnectionStatus(`${allLoadedProducts.length} produtos carregados (limitado por restrições de proxy)`);
       
     } catch (err) {
@@ -198,13 +196,7 @@ export const useApiProductsWithFilters = (
     }
   };
 
-  // Update local pagination
-  const updateLocalPagination = (productsArray = allProducts, page = currentPage) => {
-    const startIndex = (page - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginatedProducts = productsArray.slice(startIndex, endIndex);
-    setProducts(paginatedProducts);
-  };
+  // Remove the updateLocalPagination function since we're sending all products to the component
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages && page !== currentPage) {
@@ -239,15 +231,15 @@ export const useApiProductsWithFilters = (
     };
   }, []);
 
-  // Update pagination when page changes
-  useEffect(() => {
-    if (!isInitialLoad && allProducts.length > 0) {
-      updateLocalPagination();
-    }
-  }, [currentPage, allProducts, itemsPerPage]);
+  // Update pagination when page changes - not needed since Products component handles pagination
+  // useEffect(() => {
+  //   if (!isInitialLoad && allProducts.length > 0) {
+  //     updateLocalPagination();
+  //   }
+  // }, [currentPage, allProducts, itemsPerPage]);
 
   return {
-    products,
+    products: allProducts, // Send ALL products to the component
     loading,
     error,
     currentPage,
