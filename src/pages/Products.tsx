@@ -64,13 +64,9 @@ const Products: React.FC = () => {
       
       if (filters.tipo !== 'all') {
         const extractedTipo = extractTipoFromCodigo(product.codigo);
-        const familiaMatch = product.familia?.includes(filters.tipo);
-        const codigoMatch = product.codigo?.includes(filters.tipo);
-        const epwTipoMatch = product.epwTipo?.l === filters.tipo;
         
-        const matchesTipo = familiaMatch || codigoMatch || extractedTipo === filters.tipo || epwTipoMatch;
-        
-        if (!matchesTipo) {
+        // Strict filtering: only match exact type from first letter of code
+        if (extractedTipo !== filters.tipo) {
           return false;
         }
       }
