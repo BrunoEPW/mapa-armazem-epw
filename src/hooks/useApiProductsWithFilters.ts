@@ -109,28 +109,34 @@ export const useApiProductsWithFilters = (
       const totalRecords = testResponse.recordsTotal || 0;
       console.log(`📊 [useApiProductsWithFilters] API working. Total records: ${totalRecords}`);
       
-      // Load more data in a conservative way
+      // Enhanced loading strategy with multiple retry attempts
       const allLoadedProducts: Product[] = [];
       let currentStart = 0;
-      const batchSize = 50; // Smaller batches to avoid proxy limits
-      const maxProducts = Math.min(totalRecords, 500); // Limit to first 500 products to avoid proxy issues
-      let attemptedRequests = 0;
-      const maxAttempts = 10; // Limit number of requests
+      const batchSize = 50;
+      const maxProducts = Math.min(totalRecords, 1000); // Try to load up to 1000 products
+      let consecutiveFailures = 0;
+      const maxConsecutiveFailures = 3; // Stop after 3 consecutive failures
+      let totalAttempts = 0;
+      const maxTotalAttempts = 20; // Maximum total attempts
       
       setConnectionStatus(`Carregando produtos... (máx. ${maxProducts})`);
       
-      while (currentStart < maxProducts && attemptedRequests < maxAttempts) {
+      while (currentStart < maxProducts && totalAttempts < maxTotalAttempts && consecutiveFailures < maxConsecutiveFailures) {
         if (controller.signal.aborted) {
           throw new Error('Request was aborted');
         }
 
-        attemptedRequests++;
-        console.log(`📦 [useApiProductsWithFilters] Loading batch ${attemptedRequests}: start=${currentStart}, length=${batchSize}`);
+        totalAttempts++;
+        console.log(`📦 [useApiProductsWithFilters] Attempt ${totalAttempts}: start=${currentStart}, length=${batchSize}`);
         
         try {
           const apiResponse = await apiService.fetchArtigosWithTotal(1, currentStart, batchSize, {});
           
-          if (!apiResponse.data || !Array.isArray(apiResponse.data) || apiResponse.data.length === 0) {
+          if (!apiResponse.data || !Array.isArray(apiResponse.data)) {
+            throw new Error(`Invalid response at start=${currentStart}`);
+          }
+
+          if (apiResponse.data.length === 0) {
             console.log(`✅ [useApiProductsWithFilters] No more data at start=${currentStart}`);
             break;
           }
@@ -143,22 +149,31 @@ export const useApiProductsWithFilters = (
           const mappedBatch = filteredBatch.map(mapApiProductToProduct);
           allLoadedProducts.push(...mappedBatch);
 
+          // Reset consecutive failures on success
+          consecutiveFailures = 0;
+          
           setConnectionStatus(`Carregados ${allLoadedProducts.length} produtos...`);
           
           currentStart += batchSize;
           
-          // Small delay to avoid overwhelming proxies
-          await new Promise(resolve => setTimeout(resolve, 200));
+          // Adaptive delay based on success rate
+          const delay = consecutiveFailures > 0 ? 500 : 300; // Longer delay if we've had failures
+          await new Promise(resolve => setTimeout(resolve, delay));
           
         } catch (batchError) {
-          console.warn(`⚠️ [useApiProductsWithFilters] Batch ${attemptedRequests} failed:`, batchError);
+          consecutiveFailures++;
+          console.warn(`⚠️ [useApiProductsWithFilters] Batch attempt ${totalAttempts} failed (consecutive failures: ${consecutiveFailures}):`, batchError);
           
-          // If we already have some products, continue with what we have
-          if (allLoadedProducts.length > 0) {
-            console.log(`📦 [useApiProductsWithFilters] Continuing with ${allLoadedProducts.length} products loaded so far`);
-            break;
+          if (consecutiveFailures < maxConsecutiveFailures) {
+            // Try the next batch position instead of retrying the same position
+            currentStart += batchSize;
+            console.log(`🔄 [useApiProductsWithFilters] Skipping to next batch at start=${currentStart}`);
+            
+            // Wait longer before next attempt
+            await new Promise(resolve => setTimeout(resolve, 1000));
           } else {
-            throw batchError; // If no products loaded yet, throw the error
+            console.log(`❌ [useApiProductsWithFilters] Too many consecutive failures, stopping at ${allLoadedProducts.length} products`);
+            break;
           }
         }
       }
@@ -167,10 +182,15 @@ export const useApiProductsWithFilters = (
         throw new Error('Nenhum produto foi carregado da API');
       }
 
-      console.log(`✅ [useApiProductsWithFilters] Successfully loaded ${allLoadedProducts.length} products`);
+      console.log(`✅ [useApiProductsWithFilters] Successfully loaded ${allLoadedProducts.length} products (attempted ${totalAttempts} requests)`);
       
       setAllProducts(allLoadedProducts);
-      setConnectionStatus(`${allLoadedProducts.length} produtos carregados (limitado por restrições de proxy)`);
+      
+      const statusMessage = consecutiveFailures >= maxConsecutiveFailures 
+        ? `${allLoadedProducts.length} produtos carregados (proxies instáveis - algumas páginas ignoradas)`
+        : `${allLoadedProducts.length} produtos carregados (limitado por restrições de proxy)`;
+      
+      setConnectionStatus(statusMessage);
       
     } catch (err) {
       console.error('❌ [useApiProductsWithFilters] Error loading products:', err);
