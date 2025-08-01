@@ -232,7 +232,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             <SelectContent className="bg-card border-border text-foreground z-50">
               <SelectItem value="all">Todos os tipos</SelectItem>
               {tiposError && (
-                <SelectItem value="" disabled className="text-muted-foreground">
+                <SelectItem value="api-error" disabled className="text-muted-foreground">
                   ⚠️ API EPW indisponível - usando dados locais
                 </SelectItem>
               )}
@@ -275,7 +275,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             <SelectContent className="bg-card border-border text-foreground z-50">
               <SelectItem value="all">Todos os modelos</SelectItem>
               {modelosError && (
-                <SelectItem value="" disabled className="text-muted-foreground">
+                <SelectItem value="api-error" disabled className="text-muted-foreground">
                   ⚠️ API EPW indisponível - usando dados locais
                 </SelectItem>
               )}
@@ -309,7 +309,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             <SelectContent className="bg-card border-border text-foreground z-50">
               <SelectItem value="all">Todos comprimentos</SelectItem>
               {comprimentosError && (
-                <SelectItem value="" disabled className="text-muted-foreground">
+                <SelectItem value="api-error" disabled className="text-muted-foreground">
                   ⚠️ API EPW indisponível - usando dados locais
                 </SelectItem>
               )}
@@ -343,7 +343,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             <SelectContent className="bg-card border-border text-foreground z-50">
               <SelectItem value="all">Todas as cores</SelectItem>
               {coresError && (
-                <SelectItem value="" disabled className="text-muted-foreground">
+                <SelectItem value="api-error" disabled className="text-muted-foreground">
                   ⚠️ API EPW indisponível - usando dados locais
                 </SelectItem>
               )}
@@ -377,7 +377,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             <SelectContent className="bg-card border-border text-foreground z-50">
               <SelectItem value="all">Todos acabamentos</SelectItem>
               {acabamentosError && (
-                <SelectItem value="" disabled className="text-muted-foreground">
+                <SelectItem value="api-error" disabled className="text-muted-foreground">
                   ⚠️ API EPW indisponível - usando dados locais
                 </SelectItem>
               )}

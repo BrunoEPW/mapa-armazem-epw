@@ -17,8 +17,8 @@ export const AuditLogDialog: React.FC<AuditLogDialogProps> = ({ onClose }) => {
   const { hasPermission } = useAuth();
   const { auditLogs, loading, getAuditLogs, getRecentActivity } = useAuditLog();
   const [filter, setFilter] = useState({
-    table: '',
-    action: '',
+    table: 'all',
+    action: 'all',
     timeRange: '24',
   });
 
@@ -27,10 +27,10 @@ export const AuditLogDialog: React.FC<AuditLogDialogProps> = ({ onClose }) => {
   }, []);
 
   const loadAuditLogs = async () => {
-    if (filter.timeRange) {
+    if (filter.timeRange !== 'all') {
       await getRecentActivity(parseInt(filter.timeRange));
     } else {
-      await getAuditLogs(filter.table || undefined);
+      await getAuditLogs(filter.table !== 'all' ? filter.table : undefined);
     }
   };
 
@@ -143,7 +143,7 @@ export const AuditLogDialog: React.FC<AuditLogDialogProps> = ({ onClose }) => {
                       <SelectValue placeholder="Todas as tabelas" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todas</SelectItem>
+                      <SelectItem value="all">Todas</SelectItem>
                       <SelectItem value="products">Produtos</SelectItem>
                       <SelectItem value="materials">Materiais</SelectItem>
                       <SelectItem value="movements">Movimentos</SelectItem>
@@ -158,7 +158,7 @@ export const AuditLogDialog: React.FC<AuditLogDialogProps> = ({ onClose }) => {
                       <SelectValue placeholder="Todas as ações" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todas</SelectItem>
+                      <SelectItem value="all">Todas</SelectItem>
                       <SelectItem value="INSERT">Criação</SelectItem>
                       <SelectItem value="UPDATE">Atualização</SelectItem>
                       <SelectItem value="DELETE">Eliminação</SelectItem>
@@ -177,7 +177,7 @@ export const AuditLogDialog: React.FC<AuditLogDialogProps> = ({ onClose }) => {
                       <SelectItem value="24">Últimas 24 horas</SelectItem>
                       <SelectItem value="168">Última semana</SelectItem>
                       <SelectItem value="720">Último mês</SelectItem>
-                      <SelectItem value="">Todos os registos</SelectItem>
+                      <SelectItem value="all">Todos os registos</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
