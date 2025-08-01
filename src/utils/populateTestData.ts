@@ -31,25 +31,22 @@ export const populateTestData = async ({
       
       if (!product) {
         console.log(`📦 Criando produto ${testProduct.code}...`);
-        const newProduct = await createProductFromApi(testProduct.code);
-        if (newProduct) {
-          product = newProduct;
-          createdProducts[testProduct.code] = newProduct;
-        } else {
-          // Se não conseguir da API, criar produto básico
-          const basicProduct: Product = {
-            id: `local-product-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            codigo: testProduct.code,
-            familia: 'TESTE',
-            modelo: testProduct.code.substring(0, 6),
-            acabamento: 'PADRÃO',
-            cor: 'NATURAL',
-            comprimento: 32,
-            descricao: `Produto de teste ${testProduct.code}`,
-          };
-          product = basicProduct;
-          createdProducts[testProduct.code] = basicProduct;
-        }
+        
+        // Criar produto básico diretamente (não usar API para dados de teste)
+        const basicProduct: Product = {
+          id: `local-product-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          codigo: testProduct.code,
+          familia: 'TESTE',
+          modelo: testProduct.code.substring(0, 6),
+          acabamento: 'PADRÃO',
+          cor: 'NATURAL',
+          comprimento: 32,
+          descricao: `Produto de teste ${testProduct.code}`,
+        };
+        
+        product = basicProduct;
+        createdProducts[testProduct.code] = basicProduct;
+        console.log(`✅ Produto criado: ${testProduct.code}`);
       } else {
         createdProducts[testProduct.code] = product;
       }
