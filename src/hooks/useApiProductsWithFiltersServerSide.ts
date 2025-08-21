@@ -131,14 +131,53 @@ export const useApiProductsWithFiltersServerSide = (
       const apiFilters = hasFilters ? filters : {};
       const response = await apiService.fetchArtigosWithTotal(1, start, itemsPerPage, apiFilters);
       
+      console.log(`🔍 [useApiProductsWithFiltersServerSide] Raw API response:`, {
+        draw: response.draw,
+        recordsTotal: response.recordsTotal,
+        recordsFiltered: response.recordsFiltered,
+        dataLength: response.data?.length || 0,
+        hasFilters,
+        apiFilters,
+        isEmpty: response.data?.length === 0,
+        shouldHaveData: response.recordsFiltered > 0 || response.recordsTotal > 0
+      });
+      
       if (!response.data || !Array.isArray(response.data)) {
         throw new Error('API não está a responder correctamente');
       }
+      
+      // 🚨 CRITICAL DEBUG: Log the empty data issue
+      if (response.data.length === 0 && (response.recordsFiltered > 0 || response.recordsTotal > 0)) {
+        console.error('🚨 [useApiProductsWithFiltersServerSide] CRITICAL ISSUE: API claims products exist but returns empty data array!', {
+          expectedFromAPI: response.recordsFiltered || response.recordsTotal,
+          actualReceived: response.data.length,
+          startOffset: start,
+          lengthRequested: itemsPerPage,
+          filtersApplied: apiFilters,
+          possibleCauses: [
+            'API pagination issue - start offset might be beyond available data',
+            'API filter bug - filters might be returning wrong recordsFiltered count',
+            'API internal error - server-side processing issue'
+          ]
+        });
+      }
 
       // Apply exclusions filter if provided
+      let excludedCount = 0;
       const filteredData = exclusionFilter 
-        ? response.data.filter(item => !exclusionFilter(item.strCodigo || ''))
+        ? response.data.filter(item => {
+            const shouldExclude = exclusionFilter(item.strCodigo || '');
+            if (shouldExclude) excludedCount++;
+            return !shouldExclude;
+          })
         : response.data;
+
+      console.log(`🚫 [useApiProductsWithFiltersServerSide] Exclusion filtering:`, {
+        apiDataLength: response.data.length,
+        excludedCount,
+        finalDataLength: filteredData.length,
+        exclusionFilterActive: !!exclusionFilter
+      });
 
       const mappedProducts = filteredData.map(mapApiProductToProduct);
       

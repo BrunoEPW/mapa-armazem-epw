@@ -209,8 +209,38 @@ class ApiService {
 
   private async makeRequest(draw: number, start: number, length: number, filters?: ApiFilters, timeout: number = this.defaultTimeout): Promise<ApiResponse> {
     console.log(`🌐 [ApiService] Making API request with ${timeout}ms timeout`);
+    console.log(`🎯 [ApiService] Request parameters: draw=${draw}, start=${start}, length=${length}, filters=`, filters);
     
-    // Build the original API URL with parameters
+    // 🐛 DEBUG: Try minimal URL format first when no filters (as suggested by user)
+    if (!filters || Object.keys(filters).length === 0) {
+      const minimalUrl = `${this.originalApiUrl}?start=${start}&length=${length}&order[0][column]=1&order[0][dir]=ASC`;
+      console.log(`🚀 [ApiService] TESTING MINIMAL URL (user suggested format):`, minimalUrl);
+      
+      try {
+        console.log('🔬 [ApiService] Trying minimal URL format (no draw parameter)...');
+        const response = await this.fetchWithTimeout(minimalUrl, timeout);
+        const data = await response.json();
+        
+        console.log('🎉 [ApiService] MINIMAL URL SUCCESS! Response data:', {
+          draw: data.draw,
+          recordsTotal: data.recordsTotal,
+          recordsFiltered: data.recordsFiltered,
+          dataLength: data.data?.length || 0,
+          firstFewItems: data.data?.slice(0, 3)?.map((item: any) => ({ Id: item.Id, codigo: item.strCodigo })) || []
+        });
+
+        return {
+          draw: data.draw || draw,
+          recordsTotal: data.recordsTotal || 0,
+          recordsFiltered: data.recordsFiltered || 0,
+          data: data.data || []
+        };
+      } catch (error) {
+        console.warn('⚠️ [ApiService] Minimal URL failed, trying standard format:', error.message);
+      }
+    }
+    
+    // Build the original API URL with parameters (standard format)
     const apiUrl = new URL(this.originalApiUrl);
     apiUrl.searchParams.set('draw', draw.toString());
     apiUrl.searchParams.set('start', start.toString());
@@ -231,7 +261,7 @@ class ApiService {
       });
     }
     
-    console.log(`🌐 [ApiService] Final API URL:`, apiUrl.toString());
+    console.log(`🌐 [ApiService] Final API URL (standard):`, apiUrl.toString());
 
     // Tentar primeiro a API direta (firewall desativada)
     try {
@@ -239,12 +269,14 @@ class ApiService {
       const response = await this.fetchWithTimeout(apiUrl.toString(), timeout);
       const data = await response.json();
       
-      console.log('✅ [ApiService] Success with direct API call:', {
-        draw: data.draw,
-        recordsTotal: data.recordsTotal,
-        recordsFiltered: data.recordsFiltered,
-        dataLength: data.data?.length || 0
-      });
+        console.log('✅ [ApiService] Success with direct API call:', {
+          draw: data.draw,
+          recordsTotal: data.recordsTotal,
+          recordsFiltered: data.recordsFiltered,
+          dataLength: data.data?.length || 0,
+          firstFewItems: data.data?.slice(0, 3)?.map((item: any) => ({ Id: item.Id, codigo: item.strCodigo })) || [],
+          emptyDataWarning: data.data?.length === 0 && data.recordsFiltered > 0 ? '⚠️ API claims products exist but returns empty data!' : null
+        });
 
       return {
         draw: data.draw || draw,
@@ -285,7 +317,9 @@ class ApiService {
           draw: data.draw,
           recordsTotal: data.recordsTotal,
           recordsFiltered: data.recordsFiltered,
-          dataLength: data.data?.length || 0
+          dataLength: data.data?.length || 0,
+          firstFewItems: data.data?.slice(0, 3)?.map((item: any) => ({ Id: item.Id, codigo: item.strCodigo })) || [],
+          emptyDataWarning: data.data?.length === 0 && data.recordsFiltered > 0 ? '⚠️ API claims products exist but returns empty data!' : null
         });
 
         // Marcar proxy como bem sucedido
