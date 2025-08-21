@@ -146,6 +146,14 @@ export const useApiProductsWithFiltersServerSide = (
         throw new Error('API não está a responder correctamente');
       }
       
+      // 🚨 CRITICAL FIX: Reset to page 1 when API returns empty data but claims products exist
+      if (response.data.length === 0 && (response.recordsFiltered > 0 || response.recordsTotal > 0) && page > 1) {
+        console.warn('🔄 [useApiProductsWithFiltersServerSide] API pagination issue detected - resetting to page 1');
+        setCurrentPage(1);
+        setTimeout(() => loadProducts(1, filters), 100); // Retry with page 1
+        return;
+      }
+      
       // 🚨 CRITICAL DEBUG: Log the empty data issue
       if (response.data.length === 0 && (response.recordsFiltered > 0 || response.recordsTotal > 0)) {
         console.error('🚨 [useApiProductsWithFiltersServerSide] CRITICAL ISSUE: API claims products exist but returns empty data array!', {
@@ -154,11 +162,7 @@ export const useApiProductsWithFiltersServerSide = (
           startOffset: start,
           lengthRequested: itemsPerPage,
           filtersApplied: apiFilters,
-          possibleCauses: [
-            'API pagination issue - start offset might be beyond available data',
-            'API filter bug - filters might be returning wrong recordsFiltered count',
-            'API internal error - server-side processing issue'
-          ]
+          suggestedFix: 'Reset to page 1 or clear filters'
         });
       }
 

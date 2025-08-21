@@ -10,6 +10,7 @@ import Header from '@/components/Header';
 import { EPWFilters } from '@/components/warehouse/EPWFilters';
 import { EPWDecoderTester } from '@/components/warehouse/EPWDecoderTester';
 import { ExclusionsAnalysisPanel } from '@/components/warehouse/ExclusionsAnalysisPanel';
+import { EmergencyResetDialog } from '@/components/warehouse/EmergencyResetDialog';
 import { mockProducts } from '@/data/mock-data';
 import { DebugPanel } from '@/components/ui/DebugPanel';
 
@@ -179,6 +180,15 @@ const Products: React.FC = () => {
               </div>
               
               <div className="flex gap-2">
+                <EmergencyResetDialog 
+                  excludedCount={Object.keys(exclusions.prefixes).length}
+                  onResetToPage1={() => setCurrentPage(1)}
+                  onClearCache={async () => {
+                    const { apiService } = await import('@/services/apiService');
+                    apiService.clearCache();
+                    refresh();
+                  }}
+                />
                 <Button
                   onClick={() => setDebugMode(!debugMode)}
                   variant={debugMode ? "default" : "outline"}

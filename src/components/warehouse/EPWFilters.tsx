@@ -39,8 +39,8 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
     acabamentosError
   } = useApiAttributes();
 
-
   const hasActiveFilters = Object.values(filters).some(filter => filter !== 'all');
+  const showExclusionWarning = excludedCount > 500;
 
   return (
     <div className="bg-card/20 rounded-lg p-4 mb-6">
@@ -66,6 +66,14 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
           )}
         </div>
       </div>
+      
+      {showExclusionWarning && (
+        <div className="bg-destructive/20 border border-destructive/30 rounded-lg p-3 mb-4">
+          <p className="text-destructive text-sm">
+            ⚠️ Atenção: {excludedCount} produtos excluídos. Muitas exclusões podem estar a impedir a visualização de produtos.
+          </p>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {/* Modelo Filter */}
