@@ -24,8 +24,7 @@ interface UseApiProductsWithFiltersServerSideReturn {
 export const useApiProductsWithFiltersServerSide = (
   itemsPerPage: number = 20,
   exclusionFilter?: (codigo: string) => boolean,
-  initialFilters: ApiFilters = {},
-  useLocalFiltering: boolean = false
+  initialFilters: ApiFilters = {}
 ): UseApiProductsWithFiltersServerSideReturn => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,6 +102,9 @@ export const useApiProductsWithFiltersServerSide = (
     setLoading(true);
     setError(null);
 
+    // Check if there are active filters
+    const hasFilters = Object.values(filters).some(value => value && value !== 'all' && value.trim() !== '');
+    
     // Verificar cache
     const cacheKey = generateCacheKey(page, filters);
     const cached = cacheRef.current.get(cacheKey);
@@ -114,24 +116,19 @@ export const useApiProductsWithFiltersServerSide = (
       setLoading(false);
       return;
     }
-
-    const hasFilters = Object.values(filters).some(value => value && value !== 'all');
-    const shouldApplyServerFilters = hasFilters && !useLocalFiltering;
     
     setConnectionStatus(
-      useLocalFiltering && hasFilters 
-        ? 'Decodificação EPW Local ativa...' 
-        : shouldApplyServerFilters 
-          ? 'Aplicando filtros no servidor...' 
-          : 'Carregando produtos...'
+      hasFilters 
+        ? 'Aplicando filtros no servidor...' 
+        : 'Carregando produtos...'
     );
 
     try {
       const start = (page - 1) * itemsPerPage;
-      console.log(`🔍 [useApiProductsWithFiltersServerSide] Fetching page ${page} with filters:`, filters, 'useLocalFiltering:', useLocalFiltering);
+      console.log(`🔍 [useApiProductsWithFiltersServerSide] Fetching page ${page} (start: ${start}) with filters:`, filters);
       
-      // If using local filtering, don't pass filters to API - load all products
-      const apiFilters = useLocalFiltering ? {} : filters;
+      // Send filters to API only when they exist
+      const apiFilters = hasFilters ? filters : {};
       const response = await apiService.fetchArtigosWithTotal(1, start, itemsPerPage, apiFilters);
       
       if (!response.data || !Array.isArray(response.data)) {
@@ -145,22 +142,23 @@ export const useApiProductsWithFiltersServerSide = (
 
       const mappedProducts = filteredData.map(mapApiProductToProduct);
       
+      // Use appropriate total count: recordsFiltered when filters applied, recordsTotal when no filters
+      const totalRecords = hasFilters ? (response.recordsFiltered || 0) : (response.recordsTotal || 0);
+      
       setProducts(mappedProducts);
-      setTotalCount(response.recordsFiltered || response.recordsTotal || 0);
-      setTotalPages(Math.ceil((response.recordsFiltered || response.recordsTotal || 0) / itemsPerPage));
+      setTotalCount(totalRecords);
+      setTotalPages(Math.ceil(totalRecords / itemsPerPage));
 
       // Cache do resultado
       cacheRef.current.set(cacheKey, {
         products: mappedProducts,
-        totalCount: response.recordsFiltered || response.recordsTotal || 0,
+        totalCount: totalRecords,
         timestamp: Date.now()
       });
 
-      const statusMessage = useLocalFiltering && hasFilters
-        ? `${mappedProducts.length} produtos carregados (Decodificação EPW Local)`
-        : hasFilters 
-          ? `${mappedProducts.length} produtos encontrados (filtrados no servidor)`
-          : `${mappedProducts.length} produtos carregados`;
+      const statusMessage = hasFilters 
+        ? `${mappedProducts.length} produtos encontrados (filtrados no servidor)`
+        : `${mappedProducts.length} produtos carregados`;
       
       setConnectionStatus(statusMessage);
       

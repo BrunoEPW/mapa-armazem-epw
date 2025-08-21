@@ -74,7 +74,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
     activeFilters,
     setFilters,
     clearFilters: clearApiFilters,
-  } = useApiProductsWithFiltersServerSide(20, exclusionFilter, {}, hasEPWFilters);
+  } = useApiProductsWithFiltersServerSide(20, exclusionFilter);
 
 
   const handleEpwFilterChange = (filterType: keyof EPWFilters, value: string) => {
