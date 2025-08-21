@@ -43,6 +43,7 @@ export interface ExclusionSettings {
 
 export const loadExclusions = (): ExclusionSettings => {
   // 🔒 CRITICAL: Load existing exclusions from storage - NEVER reset user data
+  // This function MUST preserve all user-configured exclusions across app updates
   const stored = loadFromStorage(STORAGE_KEYS.EXCLUSIONS, null);
   
   if (stored && stored.prefixes) {

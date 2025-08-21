@@ -64,13 +64,15 @@ export const useSupabaseAdminOperations = () => {
         throw new Error('Erro ao eliminar produtos');
       }
 
-      // Clear localStorage selectively
+      // Clear localStorage selectively - NEVER touch exclusions
+      console.log('🔒 [clearDatabase] Preserving user exclusions during database reset');
       localStorage.removeItem('warehouse-migrated');
       if (!preserveMaterials) {
         localStorage.removeItem(STORAGE_KEYS.MATERIALS);
       }
       localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
       localStorage.removeItem(STORAGE_KEYS.MOVEMENTS);
+      // 🔒 CRITICAL: EXCLUSIONS are intentionally NOT cleared to preserve user settings
 
       const message = preserveMaterials 
         ? 'Base de dados limpa - materiais preservados! A aplicação será recarregada.'
@@ -210,9 +212,11 @@ export const useSupabaseAdminOperations = () => {
         deletedMaterials = materials.length;
       }
 
-      // Clear localStorage materials
+      // Clear localStorage materials - NEVER touch exclusions
+      console.log('🔒 [clearAllMaterials] Preserving user exclusions during materials reset');
       localStorage.removeItem(STORAGE_KEYS.MATERIALS);
       localStorage.removeItem(STORAGE_KEYS.MOVEMENTS);
+      // 🔒 CRITICAL: EXCLUSIONS are intentionally NOT cleared to preserve user settings
 
       console.log(`Successfully deleted ${deletedMaterials} materials and ${deletedMovements} movements`);
       toast.success(`Todos os materiais foram removidos! (${deletedMaterials} materiais, ${deletedMovements} movimentos)`);

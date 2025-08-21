@@ -25,9 +25,12 @@ interface ExclusionsProviderProps {
 }
 
 export const ExclusionsProvider: React.FC<ExclusionsProviderProps> = ({ children }) => {
+  // 🔒 CRITICAL: Load exclusions from localStorage - these settings must NEVER be reset
+  // User-configured exclusions should persist across all app updates and data resets
   const [exclusions, setExclusions] = useState<ExclusionSettings>(loadExclusions);
 
   useEffect(() => {
+    // Always save exclusions to preserve user settings
     saveExclusions(exclusions);
   }, [exclusions]);
 

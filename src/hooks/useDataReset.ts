@@ -43,7 +43,8 @@ export const useDataReset = (
       setProducts([]);
       setMovements([]);
 
-      // Step 4: Clear localStorage (selectively)
+      // Step 4: Clear localStorage (selectively - NEVER touch exclusions)
+      console.log('🔒 [clearAllData] Preserving user exclusions during data reset');
       localStorage.removeItem('warehouse-migrated');
       if (!preserveMaterials) {
         localStorage.removeItem(STORAGE_KEYS.MATERIALS);
@@ -51,6 +52,7 @@ export const useDataReset = (
       localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
       localStorage.removeItem(STORAGE_KEYS.MOVEMENTS);
       localStorage.removeItem('supabase-migration-completed');
+      // 🔒 CRITICAL: EXCLUSIONS are intentionally NOT cleared to preserve user settings
 
       const message = preserveMaterials 
         ? 'Produtos limpos - materiais preservados!'
