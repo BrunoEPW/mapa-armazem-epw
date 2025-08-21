@@ -4,12 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { loadFromStorage, saveToStorage, STORAGE_KEYS } from '@/lib/storage';
 import { mockProducts, mockMaterials, mockMovements } from '@/data/mock-data';
 import { toast } from 'sonner';
+import { config } from '@/lib/config';
 
 export const useSupabaseWarehouseData = () => {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dataSource, setDataSource] = useState<'mock' | 'supabase' | 'error'>('mock');
 
   // Migrate localStorage data to Supabase (one-time operation)
   const migrateLocalStorageData = async () => {
@@ -110,21 +112,65 @@ export const useSupabaseWarehouseData = () => {
     }
   };
 
-  // Load data from Supabase
-  const loadData = async () => {
+  // Load mock data
+  const loadMockData = async () => {
     try {
       setLoading(true);
+      setDataSource('mock');
       
-      // Load products
-      const { data: productsData, error: productsError } = await supabase
+      console.log('📝 Loading mock data (development mode)');
+      
+      // Simulate a brief loading period
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setProducts(mockProducts);
+      setMaterials(mockMaterials);
+      setMovements(mockMovements);
+      
+      console.log('✅ Mock data loaded:', {
+        products: mockProducts.length,
+        materials: mockMaterials.length,
+        movements: mockMovements.length,
+      });
+      
+      toast.success('Dados mock carregados (modo desenvolvimento)');
+      
+    } catch (error) {
+      console.error('Error loading mock data:', error);
+      setDataSource('error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data from Supabase with timeout and fallback
+  const loadSupabaseData = async () => {
+    try {
+      setLoading(true);
+      setDataSource('supabase');
+      
+      console.log('🔄 Loading data from Supabase...');
+      
+      // Add timeout to Supabase calls
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Supabase timeout')), 10000)
+      );
+
+      // Load products with timeout
+      const productsPromise = supabase
         .from('products')
         .select('*')
         .order('familia', { ascending: true });
 
+      const { data: productsData, error: productsError } = await Promise.race([
+        productsPromise,
+        timeoutPromise
+      ]) as any;
+
       if (productsError) throw productsError;
 
       // Load materials with product data
-      const { data: materialsData, error: materialsError } = await supabase
+      const materialsPromise = supabase
         .from('materials')
         .select(`
           *,
@@ -132,13 +178,23 @@ export const useSupabaseWarehouseData = () => {
         `)
         .order('estante', { ascending: true });
 
+      const { data: materialsData, error: materialsError } = await Promise.race([
+        materialsPromise,
+        timeoutPromise
+      ]) as any;
+
       if (materialsError) throw materialsError;
 
       // Load movements
-      const { data: movementsData, error: movementsError } = await supabase
+      const movementsPromise = supabase
         .from('movements')
         .select('*')
         .order('created_at', { ascending: false });
+
+      const { data: movementsData, error: movementsError } = await Promise.race([
+        movementsPromise,
+        timeoutPromise
+      ]) as any;
 
       if (movementsError) throw movementsError;
 
@@ -186,17 +242,35 @@ export const useSupabaseWarehouseData = () => {
       setMaterials(transformedMaterials);
       setMovements(transformedMovements);
 
-      console.log('Data loaded from Supabase:', {
+      console.log('✅ Supabase data loaded:', {
         products: transformedProducts.length,
         materials: transformedMaterials.length,
         movements: transformedMovements.length,
       });
 
     } catch (error) {
-      console.error('Error loading data:', error);
-      toast.error('Erro ao carregar dados do Supabase');
+      console.error('💥 Supabase error, falling back to mock data:', error);
+      setDataSource('error');
+      
+      // Fallback to mock data
+      setProducts(mockProducts);
+      setMaterials(mockMaterials);
+      setMovements(mockMovements);
+      
+      toast.error('Erro no Supabase - usando dados mock');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Smart data loading based on configuration
+  const loadData = async () => {
+    if (config.auth.useMockAuth) {
+      console.log('🔧 Mock auth enabled - using mock data');
+      await loadMockData();
+    } else {
+      console.log('🏢 Production mode - using Supabase');
+      await loadSupabaseData();
     }
   };
 
@@ -204,10 +278,14 @@ export const useSupabaseWarehouseData = () => {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        await migrateLocalStorageData();
+        // Skip migration in mock mode
+        if (!config.auth.useMockAuth) {
+          await migrateLocalStorageData();
+        }
         await loadData();
       } catch (error) {
         console.error('Error initializing data, falling back to mock data:', error);
+        setDataSource('error');
         setProducts(mockProducts);
         setMaterials(mockMaterials);
         setMovements(mockMovements);
@@ -223,6 +301,7 @@ export const useSupabaseWarehouseData = () => {
     products,
     movements,
     loading,
+    dataSource,
     setMaterials,
     setProducts,
     setMovements,

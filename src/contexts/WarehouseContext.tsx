@@ -17,6 +17,7 @@ interface WarehouseContextType {
   movements: Movement[];
   selectedShelf: ShelfLocation | null;
   loading: boolean;
+  dataSource: 'mock' | 'supabase' | 'error';
   addMaterial: (material: Omit<Material, 'id'>) => Promise<Material>;
   removeMaterial: (materialId: string) => Promise<void>;
   updateMaterial: (materialId: string, updates: Partial<Material>) => Promise<void>;
@@ -51,7 +52,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // No authentication required
   
   // All hooks must be called consistently
-  const { materials, products, movements, loading, setMaterials, setProducts, setMovements, refreshData } = useSupabaseWarehouseData();
+  const { materials, products, movements, loading, dataSource, setMaterials, setProducts, setMovements, refreshData } = useSupabaseWarehouseData();
   const { clearAllData, clearDataPreservingMaterials } = useDataReset(setMaterials, setProducts, setMovements);
   
   // Operations without auth checks for development
@@ -316,6 +317,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     movements,
     selectedShelf,
     loading,
+    dataSource,
     setSelectedShelf,
     clearAllData,
     clearDataPreservingMaterials,
