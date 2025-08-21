@@ -9,6 +9,7 @@ import { ExclusionsDialog } from './ExclusionsDialog';
 interface EPWFiltersProps {
   products: Product[];
   filters: {
+    familia: string;
     tipo: string;
     modelo: string;
     comprimento: string;
@@ -199,6 +200,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
           {hasActiveFilters && (
               <Button
                 onClick={() => {
+                  onFilterChange('familia', 'all');
                   onFilterChange('tipo', 'all');
                   onFilterChange('modelo', 'all');
                   onFilterChange('comprimento', 'all');
@@ -216,7 +218,22 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {/* Familia Filter */}
+        <div>
+          <label className="text-white text-sm font-medium mb-2 block flex items-center gap-2">
+            Família
+          </label>
+          <SelectWithSearch
+            options={[]} // Familia será determinada pelos códigos EPW reais
+            value={filters.familia}
+            onValueChange={(value) => onFilterChange('familia', value)}
+            placeholder="Todas as famílias"
+            searchPlaceholder="Pesquisar famílias..."
+            className="bg-card border-border text-white"
+          />
+        </div>
+
         {/* Tipo Filter */}
         <div>
           <label className="text-white text-sm font-medium mb-2 block flex items-center gap-2">

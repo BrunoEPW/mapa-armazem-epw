@@ -42,15 +42,27 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
   const { shouldExcludeProduct } = useExclusions();
   const exclusionFilter = (codigo: string) => shouldExcludeProduct(codigo);
 
-  // Convert EPW filters to API filters
-  const convertToApiFilters = (epwFilters: EPWFilters): ApiFilters => ({
-    Familia: epwFilters.familia !== 'all' ? epwFilters.familia : undefined,
-    Tipo: epwFilters.tipo !== 'all' ? epwFilters.tipo : undefined,
-    Modelo: epwFilters.modelo !== 'all' ? epwFilters.modelo : undefined,
-    Comprimento: epwFilters.comprimento !== 'all' ? epwFilters.comprimento : undefined,
-    Cor: epwFilters.cor !== 'all' ? epwFilters.cor : undefined,
-    Acabamento: epwFilters.acabamento !== 'all' ? epwFilters.acabamento : undefined,
-  });
+  // Convert EPW filters to API filters - extract the code "l" from the filter value
+  const convertToApiFilters = (epwFilters: EPWFilters): ApiFilters => {
+    const extractCode = (filterValue: string): string | undefined => {
+      if (!filterValue || filterValue === 'all') return undefined;
+      // If the value contains " - " (format "l - d"), extract the code part
+      if (filterValue.includes(' - ')) {
+        return filterValue.split(' - ')[0];
+      }
+      // Otherwise use the value as is (for API attributes that are just codes)
+      return filterValue;
+    };
+
+    return {
+      Familia: extractCode(epwFilters.familia),
+      Tipo: extractCode(epwFilters.tipo),
+      Modelo: extractCode(epwFilters.modelo),
+      Comprimento: extractCode(epwFilters.comprimento),
+      Cor: extractCode(epwFilters.cor),
+      Acabamento: extractCode(epwFilters.acabamento),
+    };
+  };
 
   const {
     products,

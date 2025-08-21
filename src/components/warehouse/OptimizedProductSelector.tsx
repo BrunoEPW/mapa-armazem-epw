@@ -17,6 +17,7 @@ interface OptimizedProductSelectorProps {
 }
 
 interface EPWFiltersState {
+  familia: string;
   tipo: string;
   modelo: string;
   comprimento: string;
@@ -30,6 +31,7 @@ export const OptimizedProductSelector: React.FC<OptimizedProductSelectorProps> =
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [epwFilters, setEpwFilters] = useState<EPWFiltersState>({
+    familia: 'all',
     tipo: 'all',
     modelo: 'all',
     comprimento: 'all',
@@ -121,6 +123,7 @@ export const OptimizedProductSelector: React.FC<OptimizedProductSelectorProps> =
 
   const clearFilters = useCallback(() => {
     setEpwFilters({
+      familia: 'all',
       tipo: 'all',
       modelo: 'all',
       comprimento: 'all',
