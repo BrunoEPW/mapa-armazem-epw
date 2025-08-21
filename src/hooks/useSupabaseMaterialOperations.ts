@@ -29,6 +29,24 @@ export const useSupabaseMaterialOperations = ({
   const addMaterial = async (material: Omit<Material, 'id'>): Promise<Material> => {
     console.log('🔍 [addMaterial] Starting with material:', material);
     
+    // If using mock auth, create materials locally instead of trying Supabase
+    if (config.auth.useMockAuth) {
+      console.log('🔧 [addMaterial] Mock auth mode - creating material locally');
+      
+      const localMaterial: Material = {
+        id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        productId: material.productId,
+        product: material.product,
+        pecas: material.pecas,
+        location: material.location,
+      };
+
+      setMaterials(prev => [...prev, localMaterial]);
+      toast.success('Material adicionado com sucesso!');
+      console.log('✅ [addMaterial] Local material created:', localMaterial);
+      return localMaterial;
+    }
+    
     if (!user && !config.auth.useMockAuth) {
       console.error('🔴 [addMaterial] No authenticated user');
       toast.error('Utilizador não autenticado');

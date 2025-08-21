@@ -1,6 +1,7 @@
 import { Movement } from '@/types/warehouse';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { config } from '@/lib/config';
 
 interface UseSupabaseMovementOperationsProps {
   movements: Movement[];
@@ -16,6 +17,24 @@ export const useSupabaseMovementOperations = ({
     console.log('📝 [addMovement] Adding movement:', movement);
     
     try {
+      // If using mock auth, create movements locally instead of trying Supabase
+      if (config.auth.useMockAuth) {
+        console.log('🔧 [addMovement] Mock auth mode - creating movement locally');
+        
+        const localMovement: Movement = {
+          id: `local-movement-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          materialId: movement.materialId,
+          type: movement.type,
+          pecas: movement.pecas,
+          norc: movement.norc,
+          date: movement.date,
+        };
+
+        setMovements(prev => [...prev, localMovement]);
+        console.log('✅ [addMovement] Local movement created:', localMovement);
+        return;
+      }
+      
       // Check if this is for a local material
       if (movement.materialId.startsWith('local-')) {
         console.log('⚠️ [addMovement] Detected local material, creating local movement');
