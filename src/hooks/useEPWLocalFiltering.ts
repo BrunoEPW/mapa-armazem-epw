@@ -22,6 +22,13 @@ export const useEPWLocalFiltering = (
   searchQuery: string = ''
 ): UseEPWLocalFilteringReturn => {
   const filteredProducts = useMemo(() => {
+    console.log('🔍 [useEPWLocalFiltering] Starting filter with:', {
+      totalProducts: products.length,
+      filters,
+      searchQuery,
+      hasEPWFilters: Object.values(filters).some(value => value && value !== 'all')
+    });
+
     return products.filter(product => {
       // First apply search query filter
       const matchesSearch = !searchQuery || 
@@ -36,9 +43,7 @@ export const useEPWLocalFiltering = (
 
       // When EPW filters are active, ONLY accept products with valid EPW codes
       if (!product.epwOriginalCode) {
-        if (config.isDevelopment) {
-          console.log('Rejecting non-EPW product:', product.codigo);
-        }
+        console.log('🔍 [useEPWLocalFiltering] Rejecting non-EPW product:', product.codigo);
         return false;
       }
 
@@ -47,9 +52,18 @@ export const useEPWLocalFiltering = (
       if (!codigo) return false;
 
       const decoded = decodeEPWReference(codigo, config.isDevelopment);
-      if (!decoded.success || !decoded.product) return false;
+      if (!decoded.success || !decoded.product) {
+        console.log('🔍 [useEPWLocalFiltering] Failed to decode EPW code:', codigo);
+        return false;
+      }
 
       const decodedProduct = decoded.product;
+      console.log('🔍 [useEPWLocalFiltering] Decoded product:', codigo, '→', {
+        modelo: decodedProduct.modelo,
+        comprimento: decodedProduct.comprim,
+        cor: decodedProduct.cor,
+        acabamento: decodedProduct.acabamento
+      });
 
       // Check each filter
       const matchesModelo = filters.modelo === 'all' || 
@@ -68,7 +82,16 @@ export const useEPWLocalFiltering = (
         filters.acabamento === decodedProduct.acabamento.l ||
         filters.acabamento === `${decodedProduct.acabamento.l} - ${decodedProduct.acabamento.d}`;
 
-      return matchesModelo && matchesComprimento && matchesCor && matchesAcabamento;
+      const matches = matchesModelo && matchesComprimento && matchesCor && matchesAcabamento;
+      console.log('🔍 [useEPWLocalFiltering] Filter matches for', codigo, ':', {
+        modelo: { filter: filters.modelo, decoded: decodedProduct.modelo.l, matches: matchesModelo },
+        comprimento: { filter: filters.comprimento, decoded: decodedProduct.comprim.l, matches: matchesComprimento },
+        cor: { filter: filters.cor, decoded: decodedProduct.cor.l, matches: matchesCor },
+        acabamento: { filter: filters.acabamento, decoded: decodedProduct.acabamento.l, matches: matchesAcabamento },
+        overallMatch: matches
+      });
+
+      return matches;
     });
   }, [products, filters, searchQuery]);
 

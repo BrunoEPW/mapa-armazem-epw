@@ -72,8 +72,25 @@ const Products: React.FC = () => {
     refresh: refreshAttributes,
   } = useApiAttributes();
 
+  // 🔍 DEBUG: Log API attributes when they load
+  React.useEffect(() => {
+    if (apiModelos?.length > 0) {
+      console.log('🔍 [Products] API Modelos loaded:', apiModelos.length, 'samples:', apiModelos.slice(0, 3));
+    }
+    if (apiAcabamentos?.length > 0) {
+      console.log('🔍 [Products] API Acabamentos loaded:', apiAcabamentos.length, 'samples:', apiAcabamentos.slice(0, 3));
+    }
+    if (apiComprimentos?.length > 0) {
+      console.log('🔍 [Products] API Comprimentos loaded:', apiComprimentos.length, 'samples:', apiComprimentos.slice(0, 3));
+    }
+    if (apiCores?.length > 0) {
+      console.log('🔍 [Products] API Cores loaded:', apiCores.length, 'samples:', apiCores.slice(0, 3));
+    }
+  }, [apiModelos, apiAcabamentos, apiComprimentos, apiCores]);
+
   const handleEpwFilterChange = (field: string, value: string) => {
     console.log(`🔍 [Products] Filter change: ${field} = ${value}`);
+    console.log(`🔍 [Products] New filter state:`, { ...epwFilters, [field]: value });
     
     const newEpwFilters = {
       ...epwFilters,
@@ -103,6 +120,17 @@ const Products: React.FC = () => {
     filteredCount, 
     totalLoadedCount 
   } = useEPWLocalFiltering(products, epwFilters, searchQuery);
+
+  // 🔍 DEBUG: Log filtering results
+  React.useEffect(() => {
+    console.log('🔍 [Products] Filtering results:', {
+      totalProducts: products.length,
+      filteredProducts: epwFilteredProducts.length,
+      activeFilters: epwFilters,
+      searchQuery,
+      hasActiveFilters: Object.values(epwFilters).some(value => value !== 'all') || searchQuery.length > 0
+    });
+  }, [products.length, epwFilteredProducts.length, epwFilters, searchQuery]);
 
   const filteredProducts = epwFilteredProducts;
 

@@ -76,6 +76,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
     console.log('🔍 [EPWFilters] API Modelos count:', apiModelos?.length, 'Sample:', apiModelos?.slice(0, 2));
     if (apiModelos && apiModelos.length > 0) {
       // Use API data - return objects for easy mapping
+      console.log('🔍 [EPWFilters] Using API Modelos:', apiModelos.slice(0, 5));
       return apiModelos;
     }
     
@@ -96,8 +97,10 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
 
   // Acabamento options from API (with fallback to products)
   const acabamentoOptions = useMemo(() => {
+    console.log('🔍 [EPWFilters] API Acabamentos count:', apiAcabamentos?.length);
     if (apiAcabamentos.length > 0) {
       // Use API data - return objects for easy mapping
+      console.log('🔍 [EPWFilters] Using API Acabamentos:', apiAcabamentos.slice(0, 3));
       return apiAcabamentos;
     }
     
@@ -109,9 +112,11 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
       }
     });
     
-    return Array.from(productAcabamentos.entries())
+    const fallbackAcabamentos = Array.from(productAcabamentos.entries())
       .map(([l, d]) => ({ l, d }))
       .sort((a, b) => a.d.localeCompare(b.d));
+    console.log('📦 [EPWFilters] Fallback Acabamentos:', fallbackAcabamentos.slice(0, 3));
+    return fallbackAcabamentos;
   }, [apiAcabamentos, products]);
 
   // Comprimento options from API (with fallback to products)
