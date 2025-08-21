@@ -42,17 +42,58 @@ export interface ExclusionSettings {
 }
 
 export const loadExclusions = (): ExclusionSettings => {
+  console.log('🔍 [loadExclusions] Starting exclusions load process...');
+  
   // 🔒 CRITICAL: Load existing exclusions from storage - NEVER reset user data
   // This function MUST preserve all user-configured exclusions across app updates
-  const stored = loadFromStorage(STORAGE_KEYS.EXCLUSIONS, null);
   
-  if (stored && stored.prefixes) {
+  // Try multiple backup keys for maximum reliability
+  const backupKeys = [
+    STORAGE_KEYS.EXCLUSIONS,
+    `${STORAGE_KEYS.EXCLUSIONS}-backup-1`,
+    `${STORAGE_KEYS.EXCLUSIONS}-backup-2`
+  ];
+  
+  let stored = null;
+  let recoveredFromBackup = false;
+  
+  for (const key of backupKeys) {
+    try {
+      const data = loadFromStorage(key, null);
+      if (data && typeof data === 'object' && Array.isArray(data.prefixes)) {
+        console.log(`🔍 [loadExclusions] Found valid exclusions in key: ${key}`);
+        stored = data;
+        recoveredFromBackup = key !== STORAGE_KEYS.EXCLUSIONS;
+        break;
+      }
+    } catch (error) {
+      console.warn(`🔍 [loadExclusions] Failed to load from ${key}:`, error);
+    }
+  }
+  
+  if (stored && Array.isArray(stored.prefixes)) {
     // User has existing exclusions - preserve them completely
-    console.log('🔍 [loadExclusions] Preserving existing user exclusions:', stored.prefixes);
-    return {
-      ...stored,
-      updatedAt: stored.updatedAt || new Date().toISOString(),
+    console.log('🔍 [loadExclusions] Preserving existing user exclusions:', {
+      prefixes: stored.prefixes,
+      enabled: stored.enabled,
+      recoveredFromBackup,
+      backupUsed: recoveredFromBackup ? 'YES' : 'NO'
+    });
+    
+    const validExclusions = {
+      enabled: typeof stored.enabled === 'boolean' ? stored.enabled : true,
+      prefixes: stored.prefixes.filter(p => typeof p === 'string' && p.trim().length > 0),
+      createdAt: stored.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
+    
+    // If recovered from backup, save to main key
+    if (recoveredFromBackup) {
+      console.log('🔄 [loadExclusions] Restoring from backup to main storage');
+      saveExclusions(validExclusions);
+    }
+    
+    return validExclusions;
   }
   
   // First time setup only - default exclusions
@@ -68,12 +109,39 @@ export const loadExclusions = (): ExclusionSettings => {
 };
 
 export const saveExclusions = (exclusions: ExclusionSettings): void => {
-  const exclusionsToSave = {
-    ...exclusions,
-    updatedAt: new Date().toISOString(),
-  };
-  console.log('🔍 [saveExclusions] Saving exclusions to storage:', exclusionsToSave);
-  saveToStorage(STORAGE_KEYS.EXCLUSIONS, exclusionsToSave);
+  try {
+    const exclusionsToSave = {
+      ...exclusions,
+      updatedAt: new Date().toISOString(),
+    };
+    
+    console.log('🔍 [saveExclusions] Saving exclusions with multiple backups:', exclusionsToSave);
+    
+    // Save to main storage
+    saveToStorage(STORAGE_KEYS.EXCLUSIONS, exclusionsToSave);
+    
+    // Create multiple backups for reliability
+    saveToStorage(`${STORAGE_KEYS.EXCLUSIONS}-backup-1`, exclusionsToSave);
+    saveToStorage(`${STORAGE_KEYS.EXCLUSIONS}-backup-2`, exclusionsToSave);
+    
+    // Verify the save was successful
+    const verification = loadFromStorage(STORAGE_KEYS.EXCLUSIONS, null);
+    if (!verification || !Array.isArray(verification.prefixes)) {
+      console.error('❌ [saveExclusions] Save verification failed!');
+      throw new Error('Failed to verify exclusions save');
+    }
+    
+    console.log('✅ [saveExclusions] Exclusions saved and verified successfully');
+  } catch (error) {
+    console.error('❌ [saveExclusions] Failed to save exclusions:', error);
+    // Try to save to backup location if main fails
+    try {
+      saveToStorage(`${STORAGE_KEYS.EXCLUSIONS}-emergency`, exclusions);
+      console.log('🆘 [saveExclusions] Saved to emergency backup');
+    } catch (emergencyError) {
+      console.error('❌ [saveExclusions] Emergency backup also failed:', emergencyError);
+    }
+  }
 };
 
 // 🔒 CRITICAL: Material preservation system - prevents data loss during updates

@@ -27,11 +27,28 @@ interface ExclusionsProviderProps {
 export const ExclusionsProvider: React.FC<ExclusionsProviderProps> = ({ children }) => {
   // 🔒 CRITICAL: Load exclusions from localStorage - these settings must NEVER be reset
   // User-configured exclusions should persist across all app updates and data resets
-  const [exclusions, setExclusions] = useState<ExclusionSettings>(loadExclusions);
+  const [exclusions, setExclusions] = useState<ExclusionSettings>(() => {
+    console.log('🔄 [ExclusionsProvider] Initializing exclusions...');
+    const loaded = loadExclusions();
+    console.log('🔄 [ExclusionsProvider] Loaded exclusions:', loaded);
+    return loaded;
+  });
 
+  // Force save exclusions immediately and on every change
   useEffect(() => {
-    // Always save exclusions to preserve user settings
+    console.log('🔄 [ExclusionsProvider] Saving exclusions due to change:', exclusions);
     saveExclusions(exclusions);
+  }, [exclusions]);
+
+  // Additional safety: Force save before page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      console.log('🔄 [ExclusionsProvider] Saving exclusions before page unload');
+      saveExclusions(exclusions);
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [exclusions]);
 
   const addPrefix = (prefix: string) => {
@@ -66,22 +83,21 @@ export const ExclusionsProvider: React.FC<ExclusionsProviderProps> = ({ children
   };
 
   const shouldExcludeProduct = (codigo: string): boolean => {
+    // Ensure exclusions are always fresh from storage for critical decisions
+    const currentExclusions = loadExclusions();
     
-    if (!exclusions.enabled || !codigo) {
-      
+    if (!currentExclusions.enabled || !codigo) {
       return false;
     }
     
-    const shouldExclude = exclusions.prefixes.some(prefix => {
+    const shouldExclude = currentExclusions.prefixes.some(prefix => {
       const matches = codigo.toUpperCase().startsWith(prefix.toUpperCase());
-      
       return matches;
     });
     
+    // Only log exclusions, not inclusions (too verbose)
     if (shouldExclude) {
-      console.log(`🚫 [ExclusionsContext] Excluding product with code: ${codigo}, prefixes: ${exclusions.prefixes.join(', ')}`);
-    } else {
-      console.log(`✅ [ExclusionsContext] Keeping product with code: ${codigo}`);
+      console.log(`🚫 [ExclusionsContext] Excluding product with code: ${codigo}, prefixes: ${currentExclusions.prefixes.join(', ')}`);
     }
     
     return shouldExclude;
