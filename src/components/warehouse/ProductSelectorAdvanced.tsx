@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Product } from '@/types/warehouse';
 import { useApiProductsWithFiltersServerSide } from '@/hooks/useApiProductsWithFiltersServerSide';
+import { useEPWLocalFiltering } from '@/hooks/useEPWLocalFiltering';
 import { useApiAttributes } from '@/hooks/useApiAttributes';
 import { useExclusions } from '@/contexts/ExclusionsContext';
 import { ApiFilters } from '@/services/apiService';
@@ -38,7 +39,10 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
   const { shouldExcludeProduct } = useExclusions();
   const exclusionFilter = (codigo: string) => shouldExcludeProduct(codigo);
 
-  // Convert EPW filters to API filters - extract the code "l" from the filter value
+  // Check if we have any EPW filters active
+  const hasEPWFilters = Object.values(epwFilters).some(value => value && value !== 'all');
+  
+  // Convert EPW filters to API filters - only used when not using local filtering
   const convertToApiFilters = (epwFilters: EPWFilters): ApiFilters => {
     const extractCode = (filterValue: string): string | undefined => {
       if (!filterValue || filterValue === 'all') return undefined;
@@ -70,7 +74,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
     activeFilters,
     setFilters,
     clearFilters: clearApiFilters,
-  } = useApiProductsWithFiltersServerSide(20, exclusionFilter);
+  } = useApiProductsWithFiltersServerSide(20, exclusionFilter, {}, hasEPWFilters);
 
   const {
     modelos: apiModelos,
@@ -94,9 +98,12 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
     };
     setEpwFilters(newEpwFilters);
     
-    // Apply API filters immediately
-    const apiFilters = convertToApiFilters(newEpwFilters);
-    setFilters(apiFilters);
+    // When EPW filters are used, we rely on local filtering only
+    // No server-side API filters are applied
+    const newHasEPWFilters = Object.values(newEpwFilters).some(v => v && v !== 'all');
+    if (!newHasEPWFilters) {
+      clearApiFilters(); // Clear server filters when no EPW filters
+    }
   };
 
   const clearEpwFilters = () => {
@@ -110,23 +117,18 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
     clearApiFilters();
   };
 
-  // Since we're using server-side filtering, we only need to filter by search query locally
-  const filteredProducts = useMemo(() => {
-    return products.filter(product => {
-      // EPW code search (local filter)
-      const matchesEpwSearch = !searchQuery || 
-        (product.epwOriginalCode && product.epwOriginalCode.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      return matchesEpwSearch;
-    });
-  }, [products, searchQuery]);
+  // Use local EPW filtering when EPW filters are active
+  const { filteredProducts, filteredCount, totalLoadedCount } = useEPWLocalFiltering(
+    products, 
+    epwFilters, 
+    searchQuery
+  );
 
   const hasActiveFilters = Object.values(epwFilters).some(value => value !== 'all') || searchQuery.length > 0;
-  const hasServerFilters = Object.values(epwFilters).some(value => value !== 'all');
-  const hasLocalSearchFilter = searchQuery.length > 0;
+  const isUsingLocalFiltering = hasEPWFilters || searchQuery.length > 0;
 
-  // For display purposes - use filtered products when search is active, otherwise use all products from server
-  const displayProducts = hasLocalSearchFilter ? filteredProducts : products;
+  // Always use filtered products from EPW local filtering
+  const displayProducts = filteredProducts;
 
   return (
     <div className="space-y-4">
@@ -173,9 +175,12 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
       {/* Connection Status */}
       <div className="text-sm text-muted-foreground">
         Status: {connectionStatus}
-        {hasLocalSearchFilter ? ` | Busca local: ${filteredProducts.length}` : ''}
-        {hasServerFilters ? ' | Filtros: Servidor' : ' | Filtros: Nenhum'}
-        {totalCount > 0 ? ` | Total: ${totalCount} produtos` : ''}
+        {isUsingLocalFiltering ? (
+          <> | Filtros: <span className="font-semibold text-primary">Decodificação EPW Local</span> | 
+          Resultados: {filteredCount} de {totalLoadedCount} carregados</>
+        ) : (
+          <> | Filtros: Servidor | Total: {totalCount} produtos</>
+        )}
       </div>
 
       {/* Products Table */}
@@ -248,9 +253,11 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Página {currentPage} de {totalPages} 
-            {hasServerFilters ? ' (filtrado no servidor)' : ' (todos os produtos)'}
-            {hasLocalSearchFilter ? ` - ${displayProducts.length} resultados da busca local` : ''}
+            {isUsingLocalFiltering ? (
+              `Exibindo ${displayProducts.length} resultados filtrados localmente`
+            ) : (
+              `Página ${currentPage} de ${totalPages} (todos os produtos)`
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Button

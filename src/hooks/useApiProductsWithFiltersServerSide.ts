@@ -24,7 +24,8 @@ interface UseApiProductsWithFiltersServerSideReturn {
 export const useApiProductsWithFiltersServerSide = (
   itemsPerPage: number = 20,
   exclusionFilter?: (codigo: string) => boolean,
-  initialFilters: ApiFilters = {}
+  initialFilters: ApiFilters = {},
+  useLocalFiltering: boolean = false
 ): UseApiProductsWithFiltersServerSideReturn => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,13 +115,23 @@ export const useApiProductsWithFiltersServerSide = (
     }
 
     const hasFilters = Object.values(filters).some(value => value && value !== 'all');
-    setConnectionStatus(hasFilters ? 'Aplicando filtros no servidor...' : 'Carregando produtos...');
+    const shouldApplyServerFilters = hasFilters && !useLocalFiltering;
+    
+    setConnectionStatus(
+      useLocalFiltering && hasFilters 
+        ? 'Decodificação EPW Local ativa...' 
+        : shouldApplyServerFilters 
+          ? 'Aplicando filtros no servidor...' 
+          : 'Carregando produtos...'
+    );
 
     try {
       const start = (page - 1) * itemsPerPage;
-      console.log(`🔍 [useApiProductsWithFiltersServerSide] Fetching page ${page} with filters:`, filters);
+      console.log(`🔍 [useApiProductsWithFiltersServerSide] Fetching page ${page} with filters:`, filters, 'useLocalFiltering:', useLocalFiltering);
       
-      const response = await apiService.fetchArtigosWithTotal(1, start, itemsPerPage, filters);
+      // If using local filtering, don't pass filters to API - load all products
+      const apiFilters = useLocalFiltering ? {} : filters;
+      const response = await apiService.fetchArtigosWithTotal(1, start, itemsPerPage, apiFilters);
       
       if (!response.data || !Array.isArray(response.data)) {
         throw new Error('API não está a responder correctamente');
@@ -144,9 +155,11 @@ export const useApiProductsWithFiltersServerSide = (
         timestamp: Date.now()
       });
 
-      const statusMessage = hasFilters 
-        ? `${mappedProducts.length} produtos encontrados (filtrados no servidor)`
-        : `${mappedProducts.length} produtos carregados`;
+      const statusMessage = useLocalFiltering && hasFilters
+        ? `${mappedProducts.length} produtos carregados (Decodificação EPW Local)`
+        : hasFilters 
+          ? `${mappedProducts.length} produtos encontrados (filtrados no servidor)`
+          : `${mappedProducts.length} produtos carregados`;
       
       setConnectionStatus(statusMessage);
       
