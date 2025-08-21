@@ -3,19 +3,16 @@ import { attributesApiService, type ApiAttribute } from '@/services/attributesAp
 
 interface UseApiAttributesReturn {
   modelos: ApiAttribute[];
-  tipos: ApiAttribute[];
   acabamentos: ApiAttribute[];
   comprimentos: ApiAttribute[];
   cores: ApiAttribute[];
   certificacoes: ApiAttribute[];
   modelosLoading: boolean;
-  tiposLoading: boolean;
   acabamentosLoading: boolean;
   comprimentosLoading: boolean;
   coresLoading: boolean;
   certificacoesLoading: boolean;
   modelosError: string | null;
-  tiposError: string | null;
   acabamentosError: string | null;
   comprimentosError: string | null;
   coresError: string | null;
@@ -25,19 +22,16 @@ interface UseApiAttributesReturn {
 
 export const useApiAttributes = (): UseApiAttributesReturn => {
   const [modelos, setModelos] = useState<ApiAttribute[]>([]);
-  const [tipos, setTipos] = useState<ApiAttribute[]>([]);
   const [acabamentos, setAcabamentos] = useState<ApiAttribute[]>([]);
   const [comprimentos, setComprimentos] = useState<ApiAttribute[]>([]);
   const [cores, setCores] = useState<ApiAttribute[]>([]);
   const [certificacoes, setCertificacoes] = useState<ApiAttribute[]>([]);
   const [modelosLoading, setModelosLoading] = useState(true);
-  const [tiposLoading, setTiposLoading] = useState(true);
   const [acabamentosLoading, setAcabamentosLoading] = useState(true);
   const [comprimentosLoading, setComprimentosLoading] = useState(true);
   const [coresLoading, setCoresLoading] = useState(true);
   const [certificacoesLoading, setCertificacoesLoading] = useState(true);
   const [modelosError, setModelosError] = useState<string | null>(null);
-  const [tiposError, setTiposError] = useState<string | null>(null);
   const [acabamentosError, setAcabamentosError] = useState<string | null>(null);
   const [comprimentosError, setComprimentosError] = useState<string | null>(null);
   const [coresError, setCoresError] = useState<string | null>(null);
@@ -76,38 +70,7 @@ export const useApiAttributes = (): UseApiAttributesReturn => {
     }
   };
 
-  const fetchTipos = async () => {
-    try {
-      setTiposLoading(true);
-      setTiposError(null);
-      
-      console.log('🔄 [useApiAttributes] Starting to fetch tipos...');
-      
-      const data = await attributesApiService.fetchTipos();
-      setTipos(data);
-      
-      console.log('✅ [useApiAttributes] Successfully loaded tipos:', {
-        count: data.length,
-        firstItem: data[0] || 'No items',
-        sampleItems: data.slice(0, 3)
-      });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch tipos';
-      setTiposError(errorMessage);
-      console.error('❌ [useApiAttributes] Error fetching tipos:', {
-        error: errorMessage,
-        originalError: err,
-        existingData: tipos.length
-      });
-      
-      // Keep existing data if available
-      if (tipos.length === 0) {
-        setTipos([]);
-      }
-    } finally {
-      setTiposLoading(false);
-    }
-  };
+  // fetchTipos removed - tipos filter no longer needed
 
   const fetchAcabamentos = async () => {
     try {
@@ -226,12 +189,11 @@ export const useApiAttributes = (): UseApiAttributesReturn => {
 
   const refresh = async () => {
     attributesApiService.clearCache();
-    await Promise.all([fetchModelos(), fetchTipos(), fetchAcabamentos(), fetchComprimentos(), fetchCores(), fetchCertificacoes()]);
+    await Promise.all([fetchModelos(), fetchAcabamentos(), fetchComprimentos(), fetchCores(), fetchCertificacoes()]);
   };
 
   useEffect(() => {
     fetchModelos();
-    fetchTipos();
     fetchAcabamentos();
     fetchComprimentos();
     fetchCores();
@@ -240,19 +202,16 @@ export const useApiAttributes = (): UseApiAttributesReturn => {
 
   return {
     modelos,
-    tipos,
     acabamentos,
     comprimentos,
     cores,
     certificacoes,
     modelosLoading,
-    tiposLoading,
     acabamentosLoading,
     comprimentosLoading,
     coresLoading,
     certificacoesLoading,
     modelosError,
-    tiposError,
     acabamentosError,
     comprimentosError,
     coresError,

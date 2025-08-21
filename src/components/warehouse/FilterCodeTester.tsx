@@ -17,8 +17,8 @@ export const FilterCodeTester: React.FC<FilterCodeTesterProps> = ({
 }) => {
   const { testing, results, testAllCodes, clearResults } = useFilterTester();
   const { 
-    modelos, tipos, acabamentos, cores, comprimentos,
-    modelosLoading, tiposLoading, acabamentosLoading, coresLoading, comprimentosLoading,
+    modelos, acabamentos, cores, comprimentos,
+    modelosLoading, acabamentosLoading, coresLoading, comprimentosLoading,
     refresh
   } = useApiAttributes();
 
@@ -27,7 +27,6 @@ export const FilterCodeTester: React.FC<FilterCodeTesterProps> = ({
   const handleTestFilter = async (filterType: string) => {
     const attributeMap: any = {
       modelo: modelos,
-      tipo: tipos,
       acabamento: acabamentos,
       cor: cores,
       comprimento: comprimentos
@@ -44,7 +43,6 @@ export const FilterCodeTester: React.FC<FilterCodeTesterProps> = ({
 
   const filterTypes = [
     { key: 'modelo', label: 'Modelo', data: modelos, loading: modelosLoading },
-    { key: 'tipo', label: 'Tipo', data: tipos, loading: tiposLoading },
     { key: 'acabamento', label: 'Acabamento', data: acabamentos, loading: acabamentosLoading },
     { key: 'cor', label: 'Cor', data: cores, loading: coresLoading },
     { key: 'comprimento', label: 'Comprimento', data: comprimentos, loading: comprimentosLoading }
