@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApiProductsWithFiltersServerSide } from '@/hooks/useApiProductsWithFiltersServerSide';
-import { useApiAttributes } from '@/hooks/useApiAttributes';
 import { useExclusions } from '@/contexts/ExclusionsContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -54,38 +53,6 @@ const Products: React.FC = () => {
     setFilters,
     clearFilters,
   } = useApiProductsWithFiltersServerSide(20, shouldExcludeProduct);
-
-  const {
-    modelos: apiModelos,
-    acabamentos: apiAcabamentos,
-    comprimentos: apiComprimentos,
-    cores: apiCores,
-    modelosLoading,
-    acabamentosLoading,
-    comprimentosLoading,
-    coresLoading,
-    modelosError,
-    acabamentosError,
-    comprimentosError,
-    coresError,
-    refresh: refreshAttributes,
-  } = useApiAttributes();
-
-  // 🔍 DEBUG: Log API attributes when they load
-  React.useEffect(() => {
-    if (apiModelos?.length > 0) {
-      console.log('🔍 [Products] API Modelos loaded:', apiModelos.length, 'samples:', apiModelos.slice(0, 3));
-    }
-    if (apiAcabamentos?.length > 0) {
-      console.log('🔍 [Products] API Acabamentos loaded:', apiAcabamentos.length, 'samples:', apiAcabamentos.slice(0, 3));
-    }
-    if (apiComprimentos?.length > 0) {
-      console.log('🔍 [Products] API Comprimentos loaded:', apiComprimentos.length, 'samples:', apiComprimentos.slice(0, 3));
-    }
-    if (apiCores?.length > 0) {
-      console.log('🔍 [Products] API Cores loaded:', apiCores.length, 'samples:', apiCores.slice(0, 3));
-    }
-  }, [apiModelos, apiAcabamentos, apiComprimentos, apiCores]);
 
   const handleEpwFilterChange = (field: string, value: string) => {
     console.log(`🔍 [Products] Filter change: ${field} = ${value}`);
@@ -210,16 +177,6 @@ const Products: React.FC = () => {
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Refresh API'}
                 </Button>
-                <Button
-                  onClick={refreshAttributes}
-                  variant="outline"
-                  size="sm"
-                  disabled={modelosLoading || acabamentosLoading || comprimentosLoading || coresLoading}
-                  className="text-white border-white hover:bg-white hover:text-black"
-                >
-                  {(modelosLoading || acabamentosLoading || comprimentosLoading || coresLoading) ? 
-                    <Loader2 className="w-4 h-4 animate-spin" /> : 'Refresh Filtros'}
-                </Button>
               </div>
             </div>
             
@@ -239,24 +196,12 @@ const Products: React.FC = () => {
 
           {/* EPW Filters */}
           <div className="space-y-2">
-            <EPWFilters
-              products={products}
-              filters={epwFilters}
-              onFilterChange={handleEpwFilterChange}
-              apiModelos={apiModelos}
-              apiAcabamentos={apiAcabamentos}
-              apiComprimentos={apiComprimentos}
-              apiCores={apiCores}
-              modelosLoading={modelosLoading}
-              acabamentosLoading={acabamentosLoading}
-              comprimentosLoading={comprimentosLoading}
-              coresLoading={coresLoading}
-              modelosError={modelosError}
-              acabamentosError={acabamentosError}
-              comprimentosError={comprimentosError}
-              coresError={coresError}
-              excludedCount={excludedCount}
-            />
+          <EPWFilters
+            products={products}
+            filters={epwFilters}
+            onFilterChange={handleEpwFilterChange}
+            excludedCount={excludedCount}
+          />
           </div>
 
           {/* EPW Tools */}

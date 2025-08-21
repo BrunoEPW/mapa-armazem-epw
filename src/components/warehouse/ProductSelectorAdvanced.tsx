@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Product } from '@/types/warehouse';
 import { useApiProductsWithFiltersServerSide } from '@/hooks/useApiProductsWithFiltersServerSide';
 import { useEPWLocalFiltering } from '@/hooks/useEPWLocalFiltering';
-import { useApiAttributes } from '@/hooks/useApiAttributes';
+
 import { useExclusions } from '@/contexts/ExclusionsContext';
 import { ApiFilters } from '@/services/apiService';
 import { EPWFilters } from './EPWFilters';
@@ -76,20 +76,6 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
     clearFilters: clearApiFilters,
   } = useApiProductsWithFiltersServerSide(20, exclusionFilter, {}, hasEPWFilters);
 
-  const {
-    modelos: apiModelos,
-    acabamentos: apiAcabamentos,
-    comprimentos: apiComprimentos,
-    cores: apiCores,
-    modelosLoading,
-    acabamentosLoading,
-    comprimentosLoading,
-    coresLoading,
-    modelosError,
-    acabamentosError,
-    comprimentosError,
-    coresError,
-  } = useApiAttributes();
 
   const handleEpwFilterChange = (filterType: keyof EPWFilters, value: string) => {
     const newEpwFilters = {
@@ -148,18 +134,6 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
         products={products}
         filters={epwFilters}
         onFilterChange={handleEpwFilterChange}
-        apiModelos={apiModelos}
-        apiAcabamentos={apiAcabamentos}
-        apiComprimentos={apiComprimentos}
-        apiCores={apiCores}
-        modelosLoading={modelosLoading}
-        acabamentosLoading={acabamentosLoading}
-        comprimentosLoading={comprimentosLoading}
-        coresLoading={coresLoading}
-        modelosError={modelosError}
-        acabamentosError={acabamentosError}
-        comprimentosError={comprimentosError}
-        coresError={coresError}
         excludedCount={0}
       />
 

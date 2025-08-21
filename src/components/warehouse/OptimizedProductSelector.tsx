@@ -185,18 +185,6 @@ export const OptimizedProductSelector: React.FC<OptimizedProductSelectorProps> =
         products={products}
         filters={epwFilters}
         onFilterChange={handleEpwFilterChange}
-        apiModelos={apiModelos}
-        apiAcabamentos={apiAcabamentos}
-        apiComprimentos={apiComprimentos}
-        apiCores={apiCores}
-        modelosLoading={attributesLoading}
-        acabamentosLoading={attributesLoading}
-        comprimentosLoading={attributesLoading}
-        coresLoading={attributesLoading}
-        modelosError={attributesError}
-        acabamentosError={attributesError}
-        comprimentosError={attributesError}
-        coresError={attributesError}
         excludedCount={0}
       />
 
