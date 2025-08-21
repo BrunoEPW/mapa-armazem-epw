@@ -90,14 +90,29 @@ export const ExclusionsProvider: React.FC<ExclusionsProviderProps> = ({ children
       return false;
     }
     
+    const upperCodigo = codigo.toUpperCase();
+    
     const shouldExclude = currentExclusions.prefixes.some(prefix => {
-      const matches = codigo.toUpperCase().startsWith(prefix.toUpperCase());
-      return matches;
+      const upperPrefix = prefix.toUpperCase();
+      
+      // Smart exclusion logic:
+      // 1. Short prefixes (1-2 chars) must be followed by non-alphanumeric or end of string
+      // 2. Longer prefixes (3+ chars) use exact prefix matching
+      // 3. This prevents "AF" from excluding "AF3F2823ALG" but allows excluding "AF-something"
+      
+      if (upperPrefix.length <= 2) {
+        // For short prefixes, ensure they're not part of a larger alphanumeric code
+        const regex = new RegExp(`^${upperPrefix}(?![A-Z0-9])`, 'i');
+        return regex.test(upperCodigo);
+      } else {
+        // For longer prefixes, use exact prefix matching
+        return upperCodigo.startsWith(upperPrefix);
+      }
     });
     
     // Only log exclusions, not inclusions (too verbose)
     if (shouldExclude) {
-      console.log(`🚫 [ExclusionsContext] Excluding product with code: ${codigo}, prefixes: ${currentExclusions.prefixes.join(', ')}`);
+      console.log(`🚫 [ExclusionsContext] Excluding product with code: ${codigo}, matched prefix in: ${currentExclusions.prefixes.join(', ')}`);
     }
     
     return shouldExclude;
