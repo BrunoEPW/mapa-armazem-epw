@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Product } from '@/types/warehouse';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SelectWithSearch } from '@/components/ui/select-with-search';
 import { Button } from '@/components/ui/button';
 import { X, Loader2 } from 'lucide-react';
 import { ApiAttribute } from '@/services/attributesApiService';
@@ -224,31 +224,16 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             {tiposLoading && <Loader2 className="w-3 h-3 animate-spin" />}
             {tiposError && <span className="text-red-400 text-xs">(API erro)</span>}
           </label>
-          <Select
+          <SelectWithSearch
+            options={tipoOptions}
             value={filters.tipo}
             onValueChange={(value) => onFilterChange('tipo', value)}
-          >
-            <SelectTrigger className="bg-card border-border text-white">
-              <SelectValue placeholder={
-                tiposLoading ? "Carregando tipos da API..." :
-                tiposError ? "Erro na API - usando dados locais" :
-                "Todos os tipos"
-              } />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="all">Todos os tipos</SelectItem>
-              {tiposError && (
-                <SelectItem value="api-error" disabled className="text-muted-foreground">
-                  ⚠️ API EPW indisponível - usando dados locais
-                </SelectItem>
-              )}
-              {tipoOptions.map((tipo) => (
-                <SelectItem key={tipo.l} value={tipo.l}>
-                  {tipo.d}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Todos os tipos"
+            searchPlaceholder="Pesquisar tipos..."
+            loading={tiposLoading}
+            error={tiposError}
+            className="bg-card border-border text-white"
+          />
         </div>
 
 
@@ -259,31 +244,16 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             {modelosLoading && <Loader2 className="w-3 h-3 animate-spin" />}
             {modelosError && <span className="text-red-400 text-xs">(API erro)</span>}
           </label>
-          <Select
+          <SelectWithSearch
+            options={modeloOptions}
             value={filters.modelo}
             onValueChange={(value) => onFilterChange('modelo', value)}
-          >
-            <SelectTrigger className="bg-card border-border text-white">
-              <SelectValue placeholder={
-                modelosLoading ? "Carregando modelos da API..." :
-                modelosError ? "Erro na API - usando dados locais" :
-                "Todos os modelos"
-              } />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="all">Todos os modelos</SelectItem>
-              {modelosError && (
-                <SelectItem value="api-error" disabled className="text-muted-foreground">
-                  ⚠️ API EPW indisponível - usando dados locais
-                </SelectItem>
-              )}
-              {modeloOptions.map((modelo) => (
-                <SelectItem key={modelo.l} value={modelo.l}>
-                  {modelo.d} ({modelo.l})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Todos os modelos"
+            searchPlaceholder="Pesquisar modelos..."
+            loading={modelosLoading}
+            error={modelosError}
+            className="bg-card border-border text-white"
+          />
         </div>
 
         {/* Comprimento Filter */}
@@ -293,31 +263,16 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             {comprimentosLoading && <Loader2 className="w-3 h-3 animate-spin" />}
             {comprimentosError && <span className="text-red-400 text-xs">(API erro)</span>}
           </label>
-          <Select
+          <SelectWithSearch
+            options={comprimentoOptions}
             value={filters.comprimento}
             onValueChange={(value) => onFilterChange('comprimento', value)}
-          >
-            <SelectTrigger className="bg-card border-border text-white">
-              <SelectValue placeholder={
-                comprimentosLoading ? "Carregando comprimentos da API..." :
-                comprimentosError ? "Erro na API - usando dados locais" :
-                "Todos comprimentos"
-              } />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="all">Todos comprimentos</SelectItem>
-              {comprimentosError && (
-                <SelectItem value="api-error" disabled className="text-muted-foreground">
-                  ⚠️ API EPW indisponível - usando dados locais
-                </SelectItem>
-              )}
-              {comprimentoOptions.map((comprimento) => (
-                <SelectItem key={comprimento.l} value={comprimento.l}>
-                  {comprimento.d}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Todos comprimentos"
+            searchPlaceholder="Pesquisar comprimentos..."
+            loading={comprimentosLoading}
+            error={comprimentosError}
+            className="bg-card border-border text-white"
+          />
         </div>
 
         {/* Cor Filter */}
@@ -327,28 +282,16 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             {coresLoading && <Loader2 className="w-3 h-3 animate-spin" />}
             {coresError && <span className="text-red-400 text-xs">(API erro)</span>}
           </label>
-          <Select value={filters.cor} onValueChange={(value) => onFilterChange('cor', value)}>
-            <SelectTrigger className="bg-card border-border text-white">
-              <SelectValue placeholder={
-                coresLoading ? "Carregando cores da API..." :
-                coresError ? "Erro na API - usando dados locais" :
-                "Todas as cores"
-              } />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="all">Todas as cores</SelectItem>
-              {coresError && (
-                <SelectItem value="api-error" disabled className="text-muted-foreground">
-                  ⚠️ API EPW indisponível - usando dados locais
-                </SelectItem>
-              )}
-              {corOptions.map((cor) => (
-                <SelectItem key={cor.l} value={cor.l}>
-                  {cor.d} (código: {cor.l})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SelectWithSearch
+            options={corOptions}
+            value={filters.cor}
+            onValueChange={(value) => onFilterChange('cor', value)}
+            placeholder="Todas as cores"
+            searchPlaceholder="Pesquisar cores..."
+            loading={coresLoading}
+            error={coresError}
+            className="bg-card border-border text-white"
+          />
         </div>
 
         {/* Acabamento Filter */}
@@ -358,31 +301,16 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             {acabamentosLoading && <Loader2 className="w-3 h-3 animate-spin" />}
             {acabamentosError && <span className="text-red-400 text-xs">(API erro)</span>}
           </label>
-          <Select
+          <SelectWithSearch
+            options={acabamentoOptions}
             value={filters.acabamento}
             onValueChange={(value) => onFilterChange('acabamento', value)}
-          >
-            <SelectTrigger className="bg-card border-border text-white">
-              <SelectValue placeholder={
-                acabamentosLoading ? "Carregando acabamentos da API..." :
-                acabamentosError ? "Erro na API - usando dados locais" :
-                "Todos acabamentos"
-              } />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border text-foreground z-50">
-              <SelectItem value="all">Todos acabamentos</SelectItem>
-              {acabamentosError && (
-                <SelectItem value="api-error" disabled className="text-muted-foreground">
-                  ⚠️ API EPW indisponível - usando dados locais
-                </SelectItem>
-              )}
-              {acabamentoOptions.map((acabamento) => (
-                <SelectItem key={acabamento.l} value={acabamento.l}>
-                  {acabamento.d}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Todos acabamentos"
+            searchPlaceholder="Pesquisar acabamentos..."
+            loading={acabamentosLoading}
+            error={acabamentosError}
+            className="bg-card border-border text-white"
+          />
         </div>
       </div>
     </div>
