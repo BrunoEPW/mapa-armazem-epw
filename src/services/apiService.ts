@@ -15,6 +15,7 @@ interface ApiResponse {
 }
 
 interface ApiFilters {
+  Familia?: string;
   Modelo?: string;
   Tipo?: string;
   Cor?: string;
@@ -217,13 +218,17 @@ class ApiService {
     apiUrl.searchParams.set('start', start.toString());
     apiUrl.searchParams.set('length', length.toString());
     
+    // Add ordering parameters for consistent results
+    apiUrl.searchParams.set('order[0][column]', '1');
+    apiUrl.searchParams.set('order[0][dir]', 'ASC');
+    
     // Add filter parameters if provided
     if (filters) {
       console.log(`🔧 [ApiService] Adding filters to URL:`, filters);
       Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined) {
+        if (value !== undefined && value !== '' && value !== 'all') {
           console.log(`📌 [ApiService] Adding filter: ${key} = ${value}`);
-          apiUrl.searchParams.append(key, value);
+          apiUrl.searchParams.set(key, value);
         }
       });
     }

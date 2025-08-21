@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Product } from '@/types/warehouse';
-import { useApiProductsWithFilters } from '@/hooks/useApiProductsWithFilters';
+import { useApiProductsWithFiltersServerSide } from '@/hooks/useApiProductsWithFiltersServerSide';
 import { useApiAttributes } from '@/hooks/useApiAttributes';
 import { useExclusions } from '@/contexts/ExclusionsContext';
 import { ApiFilters } from '@/services/apiService';
@@ -17,6 +17,7 @@ interface ProductSelectorAdvancedProps {
 }
 
 interface EPWFilters {
+  familia: string;
   tipo: string;
   modelo: string;
   comprimento: string;
@@ -30,6 +31,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [epwFilters, setEpwFilters] = useState<EPWFilters>({
+    familia: 'all',
     tipo: 'all',
     modelo: 'all',
     comprimento: 'all',
@@ -42,6 +44,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
 
   // Convert EPW filters to API filters
   const convertToApiFilters = (epwFilters: EPWFilters): ApiFilters => ({
+    Familia: epwFilters.familia !== 'all' ? epwFilters.familia : undefined,
     Tipo: epwFilters.tipo !== 'all' ? epwFilters.tipo : undefined,
     Modelo: epwFilters.modelo !== 'all' ? epwFilters.modelo : undefined,
     Comprimento: epwFilters.comprimento !== 'all' ? epwFilters.comprimento : undefined,
@@ -61,7 +64,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
     activeFilters,
     setFilters,
     clearFilters: clearApiFilters,
-  } = useApiProductsWithFilters(20, exclusionFilter);
+  } = useApiProductsWithFiltersServerSide(20, exclusionFilter);
 
   const {
     modelos: apiModelos,
@@ -95,6 +98,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
 
   const clearEpwFilters = () => {
     setEpwFilters({
+      familia: 'all',
       tipo: 'all',
       modelo: 'all',
       comprimento: 'all',
@@ -120,7 +124,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
   const hasServerFilters = Object.values(epwFilters).some(value => value !== 'all');
   const hasLocalSearchFilter = searchQuery.length > 0;
 
-  // For display purposes - use filtered products when search is active, otherwise use all products
+  // For display purposes - use filtered products when search is active, otherwise use all products from server
   const displayProducts = hasLocalSearchFilter ? filteredProducts : products;
 
   return (
@@ -170,10 +174,10 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
 
       {/* Connection Status */}
       <div className="text-sm text-muted-foreground">
-        Status: {connectionStatus} | 
-        {hasLocalSearchFilter ? ` Busca local: ${filteredProducts.length} | ` : ''}
-        {hasServerFilters ? ' Filtros aplicados no servidor | ' : ''}
-        Total: {totalCount} produtos
+        Status: {connectionStatus}
+        {hasLocalSearchFilter ? ` | Busca local: ${filteredProducts.length}` : ''}
+        {hasServerFilters ? ' | Filtros: Servidor' : ' | Filtros: Nenhum'}
+        {totalCount > 0 ? ` | Total: ${totalCount} produtos` : ''}
       </div>
 
       {/* Products Table */}
