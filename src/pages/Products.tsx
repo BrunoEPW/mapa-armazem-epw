@@ -1,9 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useApiProductsWithFilters } from '@/hooks/useApiProductsWithFilters';
+import { useApiProductsWithFiltersServerSide } from '@/hooks/useApiProductsWithFiltersServerSide';
 import { useApiAttributes } from '@/hooks/useApiAttributes';
 import { useExclusions } from '@/contexts/ExclusionsContext';
-import { useEPWLocalFiltering } from '@/hooks/useEPWLocalFiltering';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,9 +37,9 @@ const Products: React.FC = () => {
   
   const { shouldExcludeProduct, exclusions } = useExclusions();
 
-  // Use hook without filters (load all data) and filter locally
+  // Use server-side filtering and pagination
   const {
-    products: apiProducts,
+    products,
     loading,
     error,
     currentPage,
@@ -51,10 +50,10 @@ const Products: React.FC = () => {
     refresh,
     isConnected,
     connectionStatus,
-  } = useApiProductsWithFilters(20, shouldExcludeProduct);
-
-  // Fallback to mock data when API is unavailable
-  const products = !isConnected && apiProducts.length === 0 ? mockProducts : apiProducts;
+    activeFilters,
+    setFilters,
+    clearFilters,
+  } = useApiProductsWithFiltersServerSide(20, shouldExcludeProduct);
 
   const {
     modelos: apiModelos,
@@ -90,15 +89,28 @@ const Products: React.FC = () => {
 
   const handleEpwFilterChange = (field: string, value: string) => {
     console.log(`🔍 [Products] Filter change: ${field} = ${value}`);
-    console.log(`🔍 [Products] New filter state:`, { ...epwFilters, [field]: value });
     
     const newEpwFilters = {
       ...epwFilters,
       [field]: value,
     };
     setEpwFilters(newEpwFilters);
-    // Reset to first page when filters change
-    setCurrentPage(1);
+    
+    // Convert EPW filters to API filters and send to server
+    const apiFilters: any = {};
+    Object.entries(newEpwFilters).forEach(([key, val]) => {
+      if (val && val !== 'all') {
+        apiFilters[key] = val;
+      }
+    });
+    
+    // Add search query to filters if present
+    if (searchQuery.trim()) {
+      apiFilters.search = searchQuery.trim();
+    }
+    
+    console.log(`🔍 [Products] Sending API filters:`, apiFilters);
+    setFilters(apiFilters);
   };
 
   const clearEpwFilters = () => {
@@ -108,42 +120,34 @@ const Products: React.FC = () => {
       cor: 'all',
       acabamento: 'all',
     });
-    setCurrentPage(1);
+    setSearchQuery('');
+    clearFilters();
+  };
+
+  // Handle search query changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    
+    // Convert EPW filters to API filters and add search
+    const apiFilters: any = {};
+    Object.entries(epwFilters).forEach(([key, val]) => {
+      if (val && val !== 'all') {
+        apiFilters[key] = val;
+      }
+    });
+    
+    if (value.trim()) {
+      apiFilters.search = value.trim();
+    }
+    
+    console.log(`🔍 [Products] Search changed, sending API filters:`, apiFilters);
+    setFilters(apiFilters);
   };
 
   // Count excluded products for display
-  const excludedCount = 0; // This would be calculated differently if we had access to original data
+  const excludedCount = 0;
 
-  // Use EPW Local Filtering (same as ProductSelectorAdvanced)
-  const { 
-    filteredProducts: epwFilteredProducts, 
-    filteredCount, 
-    totalLoadedCount 
-  } = useEPWLocalFiltering(products, epwFilters, searchQuery);
-
-  // 🔍 DEBUG: Log filtering results
-  React.useEffect(() => {
-    console.log('🔍 [Products] Filtering results:', {
-      totalProducts: products.length,
-      filteredProducts: epwFilteredProducts.length,
-      activeFilters: epwFilters,
-      searchQuery,
-      hasActiveFilters: Object.values(epwFilters).some(value => value !== 'all') || searchQuery.length > 0
-    });
-  }, [products.length, epwFilteredProducts.length, epwFilters, searchQuery]);
-
-  const filteredProducts = epwFilteredProducts;
-
-  // Pagination for local filtering
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredProducts.slice(startIndex, endIndex);
-  }, [filteredProducts, currentPage, itemsPerPage]);
-
-  const totalFilteredPages = Math.ceil(filteredProducts.length / itemsPerPage);
-
-  const hasActiveFilters = Object.values(epwFilters).some(value => value !== 'all') || searchQuery.length > 0;
+  
 
   return (
     <div className="min-h-screen bg-warehouse-bg flex flex-col">
@@ -175,12 +179,11 @@ const Products: React.FC = () => {
               <div className="flex flex-col gap-2">
                 <div className="text-white text-sm flex items-center gap-1">
                   <Wifi className={`w-4 h-4 ${isConnected ? 'text-green-400' : 'text-red-400'}`} />
-                  <span className="font-medium">Produtos: {filteredProducts.length}</span>
+                  <span className="font-medium">Produtos: {products.length} de {totalCount}</span>
                   {loading && <Loader2 className="w-4 h-4 animate-spin ml-1" />}
                 </div>
                 <div className="text-white/70 text-xs">
                   Status: {connectionStatus}
-                  {hasActiveFilters && ` | Decodificação EPW Local`}
                   {exclusions.enabled && exclusions.prefixes.length > 0 && (
                     <span className="text-yellow-400"> | Exclusões ativas: {exclusions.prefixes.join(', ')}</span>
                   )}
@@ -227,7 +230,7 @@ const Products: React.FC = () => {
                 <Input
                   placeholder="Pesquisar por código ou descrição..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -274,12 +277,12 @@ const Products: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-          ) : paginatedProducts.length === 0 ? (
+          ) : products.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
                 <p className="text-muted-foreground text-lg">
-                  {hasActiveFilters ? 'Nenhum produto encontrado com os filtros aplicados' : 
-                   'Nenhum produto encontrado na página atual'}
+                  {Object.keys(activeFilters).length > 0 ? 'Nenhum produto encontrado com os filtros aplicados' : 
+                   'Nenhum produto encontrado'}
                 </p>
               </CardContent>
             </Card>
@@ -295,7 +298,7 @@ const Products: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedProducts.map((product) => (
+                      {products.map((product) => (
                         <tr key={product.id} className="border-b hover:bg-muted/50">
                           <td className="p-3 sm:p-4 font-medium text-sm sm:text-base font-mono">
                             {product.codigo || product.epwOriginalCode || product.modelo}
@@ -312,12 +315,12 @@ const Products: React.FC = () => {
             </Card>
           )}
 
-          {/* Pagination - show only if we have filtered results or multiple pages */}
-          {(filteredProducts.length > itemsPerPage || totalFilteredPages > 1) && (
+          {/* Pagination */}
+          {totalPages > 1 && (
             <div className="flex flex-col items-center mt-6 space-y-2">
               <div className="text-sm text-muted-foreground">
-                Exibindo {Math.min(itemsPerPage, paginatedProducts.length)} de {filteredProducts.length} produtos 
-                (página {currentPage} de {totalFilteredPages})
+                Exibindo {products.length} de {totalCount} produtos 
+                (página {currentPage} de {totalPages})
               </div>
               <div className="flex items-center space-x-2">
                 <Button
@@ -332,14 +335,14 @@ const Products: React.FC = () => {
                 </Button>
                 
                 <div className="flex items-center space-x-1">
-                  {Array.from({ length: Math.min(5, totalFilteredPages) }, (_, i) => {
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let pageNum;
-                    if (totalFilteredPages <= 5) {
+                    if (totalPages <= 5) {
                       pageNum = i + 1;
                     } else if (currentPage <= 3) {
                       pageNum = i + 1;
-                    } else if (currentPage >= totalFilteredPages - 2) {
-                      pageNum = totalFilteredPages - 4 + i;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
                     } else {
                       pageNum = currentPage - 2 + i;
                     }
@@ -361,8 +364,8 @@ const Products: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage(Math.min(totalFilteredPages, currentPage + 1))}
-                  disabled={currentPage === totalFilteredPages}
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
                   className="flex items-center gap-1"
                 >
                   Próxima
