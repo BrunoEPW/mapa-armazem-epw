@@ -9,6 +9,7 @@ import { Search, Wifi, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import { EPWFilters } from '@/components/warehouse/EPWFilters';
 import { EPWDecoderTester } from '@/components/warehouse/EPWDecoderTester';
+import { ExclusionsAnalysisPanel } from '@/components/warehouse/ExclusionsAnalysisPanel';
 import { mockProducts } from '@/data/mock-data';
 import { DebugPanel } from '@/components/ui/DebugPanel';
 
@@ -231,6 +232,10 @@ const Products: React.FC = () => {
             <EPWDecoderTester 
               show={showEPWTester} 
               onToggle={() => setShowEPWTester(!showEPWTester)} 
+            />
+            <ExclusionsAnalysisPanel 
+              products={products}
+              allProducts={mockProducts}
             />
           </div>
 
