@@ -420,12 +420,20 @@ const Products: React.FC = () => {
           </div>
 
           {/* Products Table */}
-          {paginatedProducts.length === 0 ? (
+          {loading ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <p className="text-muted-foreground text-lg">A carregar produtos</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : paginatedProducts.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
                 <p className="text-muted-foreground text-lg">
-                  {loading ? 'Carregando produtos da API...' : 
-                   hasActiveFilters ? 'Nenhum produto encontrado com os filtros aplicados' : 
+                  {hasActiveFilters ? 'Nenhum produto encontrado com os filtros aplicados' : 
                    'Nenhum produto encontrado na página atual'}
                 </p>
               </CardContent>
