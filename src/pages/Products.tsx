@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApiProductsWithFilters } from '@/hooks/useApiProductsWithFilters';
 import { useApiAttributes } from '@/hooks/useApiAttributes';
 import { useExclusions } from '@/contexts/ExclusionsContext';
+import { useEPWLocalFiltering } from '@/hooks/useEPWLocalFiltering';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -36,138 +37,6 @@ const Products: React.FC = () => {
   });
   
   const { shouldExcludeProduct, exclusions } = useExclusions();
-  
-  // Switch to local filtering - use actual product properties, not EPW decoded ones
-  const applyLocalFilters = (products: any[], filters: EPWFiltersState) => {
-    if (products.length === 0) {
-      console.log('⚠️ [Products] No products to filter');
-      return [];
-    }
-
-    return products.filter((product, index) => {
-      // Only log first few products to avoid spam
-      const shouldLog = index < 2;
-      
-      if (shouldLog) {
-        console.log(`🔍 [Products] Checking product ${index}:`, {
-          codigo: product.codigo,
-          familia: product.familia,
-          modelo: product.modelo,
-          acabamento: product.acabamento,
-          cor: product.cor,
-          hasEpwProps: !!(product.epwTipo || product.epwModelo)
-        });
-      }
-      
-      // Use the actual product properties that exist, not EPW decoded ones
-      // Based on the API response format and useApiAttributes results
-      
-      // Removed tipo filter - skip this section
-      
-      if (filters.modelo !== 'all') {
-        // Match against modelo field or codigo pattern
-        const matchesModelo = product.modelo?.includes(filters.modelo) ||
-                             product.codigo?.includes(filters.modelo) ||
-                             extractModeloFromCodigo(product.codigo) === filters.modelo;
-        if (!matchesModelo) {
-          if (shouldLog) console.log(`❌ [Products] Modelo mismatch for ${filters.modelo}`);
-          return false;
-        }
-        if (shouldLog) console.log(`✅ [Products] Modelo match for ${filters.modelo}`);
-      }
-      
-      if (filters.cor !== 'all') {
-        const matchesCor = product.cor?.includes(filters.cor) ||
-                          product.codigo?.includes(filters.cor) ||
-                          extractCorFromCodigo(product.codigo) === filters.cor;
-        if (!matchesCor) {
-          if (shouldLog) console.log(`❌ [Products] Cor mismatch for ${filters.cor}`);
-          return false;
-        }
-        if (shouldLog) console.log(`✅ [Products] Cor match for ${filters.cor}`);
-      }
-      
-      if (filters.acabamento !== 'all') {
-        const matchesAcabamento = product.acabamento?.includes(filters.acabamento) ||
-                                 product.codigo?.includes(filters.acabamento) ||
-                                 extractAcabamentoFromCodigo(product.codigo) === filters.acabamento;
-        if (!matchesAcabamento) {
-          if (shouldLog) console.log(`❌ [Products] Acabamento mismatch for ${filters.acabamento}`);
-          return false;
-        }
-        if (shouldLog) console.log(`✅ [Products] Acabamento match for ${filters.acabamento}`);
-      }
-      
-      if (filters.comprimento !== 'all') {
-        const matchesComprimento = product.comprimento?.toString().includes(filters.comprimento) ||
-                                  product.codigo?.includes(filters.comprimento) ||
-                                  extractComprimentoFromCodigo(product.codigo) === filters.comprimento;
-        if (!matchesComprimento) {
-          if (shouldLog) console.log(`❌ [Products] Comprimento mismatch for ${filters.comprimento}`);
-          return false;
-        }
-        if (shouldLog) console.log(`✅ [Products] Comprimento match for ${filters.comprimento}`);
-      }
-      
-      if (shouldLog) console.log(`✅ [Products] Product ${index} passed all filters`);
-      return true;
-    });
-  };
-
-  // Helper functions to extract attributes from product codes
-  const extractTipoFromCodigo = (codigo: string): string | null => {
-    // Look for common patterns in EPW codes
-    if (!codigo) return null;
-    
-    // Distinct EPW types based on starting letter
-    if (codigo.startsWith('A')) return 'A'; // Deck + Clip + Travessa Alumínio
-    if (codigo.startsWith('B')) return 'B'; // Deck + Clip + Sarrafo Compósito
-    if (codigo.startsWith('C')) return 'C'; // Deck + Clip
-    
-    // Additional patterns
-    if (codigo.includes('AF') || codigo.includes('CF') || codigo.includes('BF')) return 'C'; // Deck + Clip
-    if (codigo.includes('ML')) return 'ML'; // Metro Linear
-    if (codigo.includes('RF') || codigo.includes('RS')) return 'R'; // Régua
-    if (codigo.startsWith('H')) return 'H'; // Calha (moved from C)
-    
-    return null;
-  };
-
-  const extractModeloFromCodigo = (codigo: string): string | null => {
-    if (!codigo) return null;
-    // Extract modelo patterns - this needs to match API attributes
-    if (codigo.includes('3F') || codigo.includes('F3')) return '3F';
-    if (codigo.includes('XR') || codigo.includes('RX')) return 'XR';
-    if (codigo.includes('TF') || codigo.includes('FT')) return 'TF';
-    return null;
-  };
-
-  const extractCorFromCodigo = (codigo: string): string | null => {
-    if (!codigo) return null;
-    // Common color codes in EPW
-    if (codigo.includes('AL')) return 'A'; // Antracite
-    if (codigo.includes('BL')) return 'B'; // Bronze
-    if (codigo.includes('CL')) return 'C'; // Chocolate
-    if (codigo.includes('LL')) return 'L'; // Camel
-    if (codigo.includes('VL')) return 'V'; // Vulcan
-    return null;
-  };
-
-  const extractAcabamentoFromCodigo = (codigo: string): string | null => {
-    if (!codigo) return null;
-    // Common finish patterns
-    if (codigo.includes('G01') || codigo.includes('GE')) return 'G'; // G/E
-    if (codigo.includes('L01') || codigo.includes('LS')) return 'L'; // L/S
-    if (codigo.includes('T01') || codigo.includes('TL')) return 'T'; // TL/TS
-    return null;
-  };
-
-  const extractComprimentoFromCodigo = (codigo: string): string | null => {
-    if (!codigo) return null;
-    // Extract length from patterns like "23", "32", "28", etc.
-    const lengthMatch = codigo.match(/(\d{2,4})(?:mm)?/);
-    return lengthMatch ? lengthMatch[1] : null;
-  };
 
   // Use hook without filters (load all data) and filter locally
   const {
@@ -228,47 +97,14 @@ const Products: React.FC = () => {
   // Count excluded products for display
   const excludedCount = 0; // This would be calculated differently if we had access to original data
 
-  // Apply filters locally to all loaded products
-  const filteredByEpw = useMemo(() => {
-    console.log(`🔄 [Products] Applying local filters:`, epwFilters);
-    console.log(`📊 [Products] Total products to filter:`, products.length);
-    
-    if (products.length > 0) {
-      const sample = products[0];
-      console.log(`🔍 [Products] Sample product structure:`, {
-        codigo: sample.codigo,
-        hasEpwTipo: !!sample.epwTipo,
-        epwTipo: sample.epwTipo,
-        hasEpwModelo: !!sample.epwModelo,
-        epwModelo: sample.epwModelo,
-        hasEpwCor: !!sample.epwCor,
-        epwCor: sample.epwCor,
-        allKeys: Object.keys(sample)
-      });
-      
-      // Check what filters are actually active
-      const activeFilters = Object.entries(epwFilters).filter(([key, value]) => value !== 'all');
-      console.log(`🎯 [Products] Active filters:`, activeFilters);
-    }
-    
-    const filtered = applyLocalFilters(products, epwFilters);
-    console.log(`✅ [Products] Filtered results count:`, filtered.length);
-    return filtered;
-  }, [products, epwFilters]);
+  // Use EPW Local Filtering (same as ProductSelectorAdvanced)
+  const { 
+    filteredProducts: epwFilteredProducts, 
+    filteredCount, 
+    totalLoadedCount 
+  } = useEPWLocalFiltering(products, epwFilters, searchQuery);
 
-  // Then apply search filter
-  const filteredProducts = useMemo(() => {
-    return filteredByEpw.filter(product => {
-      const matchesSearch = !searchQuery || 
-        product.codigo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.descricao?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.modelo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.acabamento?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (product.epwOriginalCode && product.epwOriginalCode.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      return matchesSearch;
-    });
-  }, [filteredByEpw, searchQuery]);
+  const filteredProducts = epwFilteredProducts;
 
   // Pagination for local filtering
   const paginatedProducts = useMemo(() => {
@@ -316,7 +152,7 @@ const Products: React.FC = () => {
                 </div>
                 <div className="text-white/70 text-xs">
                   Status: {connectionStatus}
-                  {hasActiveFilters && ` | Filtros aplicados localmente`}
+                  {hasActiveFilters && ` | Decodificação EPW Local`}
                   {exclusions.enabled && exclusions.prefixes.length > 0 && (
                     <span className="text-yellow-400"> | Exclusões ativas: {exclusions.prefixes.join(', ')}</span>
                   )}
