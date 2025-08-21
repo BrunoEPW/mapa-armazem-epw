@@ -17,7 +17,6 @@ import Footer from '@/components/ui/Footer';
 import productsBanner from '@/assets/epw-products-banner.jpg';
 
 interface EPWFiltersState {
-  familia: string;
   modelo: string;
   comprimento: string;
   cor: string;
@@ -30,7 +29,6 @@ const Products: React.FC = () => {
   const [showEPWTester, setShowEPWTester] = useState(false);
   
   const [epwFilters, setEpwFilters] = useState<EPWFiltersState>({
-    familia: 'all',
     modelo: 'all',
     comprimento: 'all',
     cor: 'all',
@@ -219,7 +217,6 @@ const Products: React.FC = () => {
 
   const clearEpwFilters = () => {
     setEpwFilters({
-      familia: 'all',
       modelo: 'all',
       comprimento: 'all',
       cor: 'all',

@@ -17,7 +17,6 @@ interface ProductSelectorAdvancedProps {
 }
 
 interface EPWFilters {
-  familia: string;
   modelo: string;
   comprimento: string;
   cor: string;
@@ -30,7 +29,6 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [epwFilters, setEpwFilters] = useState<EPWFilters>({
-    familia: 'all',
     modelo: 'all',
     comprimento: 'all',
     cor: 'all',
@@ -53,7 +51,6 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
     };
 
     return {
-      Familia: extractCode(epwFilters.familia),
       Modelo: extractCode(epwFilters.modelo),
       Comprimento: extractCode(epwFilters.comprimento),
       Cor: extractCode(epwFilters.cor),
@@ -104,7 +101,6 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
 
   const clearEpwFilters = () => {
     setEpwFilters({
-      familia: 'all',
       modelo: 'all',
       comprimento: 'all',
       cor: 'all',
