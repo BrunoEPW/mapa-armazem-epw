@@ -72,6 +72,7 @@ export const useApiProductsWithFiltersServerSide = (
         epwOriginalCode: codigo,
       };
     } else {
+      // Non-EPW product - do NOT set epwOriginalCode
       return {
         id: `api_${apiProduct.Id}`,
         familia: 'Produto API',
@@ -82,7 +83,7 @@ export const useApiProductsWithFiltersServerSide = (
         foto: apiProduct.strFoto || undefined,
         codigo: codigo,
         descricao: description,
-        epwOriginalCode: codigo,
+        // epwOriginalCode is intentionally NOT set for non-EPW products
       };
     }
   };

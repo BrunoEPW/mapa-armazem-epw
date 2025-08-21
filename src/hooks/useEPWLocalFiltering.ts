@@ -34,8 +34,16 @@ export const useEPWLocalFiltering = (
       const hasEPWFilters = Object.values(filters).some(value => value && value !== 'all');
       if (!hasEPWFilters) return true;
 
+      // When EPW filters are active, ONLY accept products with valid EPW codes
+      if (!product.epwOriginalCode) {
+        if (config.isDevelopment) {
+          console.log('Rejecting non-EPW product:', product.codigo);
+        }
+        return false;
+      }
+
       // Apply EPW filters using local decoding
-      const codigo = product.epwOriginalCode || product.codigo;
+      const codigo = product.epwOriginalCode;
       if (!codigo) return false;
 
       const decoded = decodeEPWReference(codigo, config.isDevelopment);
