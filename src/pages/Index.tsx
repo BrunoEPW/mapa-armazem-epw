@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { WAREHOUSE_CONFIG } from '@/types/warehouse';
 import { useWarehouse } from '@/contexts/WarehouseContext';
+import { populateTestDataOffline } from '@/utils/populateTestDataOffline';
 import { cn } from '@/lib/utils';
 import warehouseHeroBanner from '@/assets/warehouse-hero-banner.jpg';
 import EPWLogo from '@/components/ui/epw-logo';
@@ -13,12 +14,19 @@ import InvertedTSeparator from '@/components/ui/inverted-t-separator';
 
 import Header from '@/components/Header';
 import Footer from '@/components/ui/Footer';
+import { DebugPanel } from '@/components/ui/DebugPanel';
 
 
 
 const Index = () => {
   const navigate = useNavigate();
-  const { materials, selectedShelf, populateTestData } = useWarehouse();
+  const { 
+    materials, 
+    products, 
+    movements, 
+    selectedShelf, 
+    populateTestData 
+  } = useWarehouse();
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [isPopulating, setIsPopulating] = useState(false);
   
@@ -65,11 +73,36 @@ const Index = () => {
     
     setIsPopulating(true);
     try {
-      await populateTestData();
+      // Verificar conectividade com Supabase
+      const isSupabaseAvailable = await checkSupabaseConnection();
+      
+      if (isSupabaseAvailable) {
+        console.log('🔗 Supabase disponível - usando modo online');
+        await populateTestData();
+      } else {
+        console.log('📱 Supabase indisponível - usando modo offline');
+        // Em modo offline, usar apenas populateTestData com fallback local
+        await populateTestData();
+      }
     } catch (error) {
       console.error('Erro ao popular dados de teste:', error);
+      // Em caso de erro, informar o utilizador
+      console.error('Erro ao tentar popular dados:', error);
     } finally {
       setIsPopulating(false);
+    }
+  };
+
+  const checkSupabaseConnection = async (): Promise<boolean> => {
+    try {
+      // Tentar uma operação simples no Supabase
+      const response = await fetch('/api/health', { 
+        method: 'HEAD',
+        signal: AbortSignal.timeout(5000) // 5 segundos timeout
+      });
+      return response.ok;
+    } catch {
+      return false;
     }
   };
 
@@ -223,6 +256,23 @@ const Index = () => {
         
         
       </div>
+
+      <DebugPanel 
+        additionalInfo={{
+          warehouseStats: {
+            totalProducts: products.length,
+            totalMaterials: materials.length,
+            totalMovements: movements.length,
+            lastUpdate,
+          },
+          shelfStatus: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(estante => ({
+            shelf: estante,
+            status: getShelfStatus(estante),
+            materialCount: materials.filter(m => m.location.estante === estante).length,
+          })),
+        }}
+      />
+
       <Footer />
     </div>
   );

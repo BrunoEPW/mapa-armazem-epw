@@ -11,6 +11,7 @@ import Header from '@/components/Header';
 import { EPWFilters } from '@/components/warehouse/EPWFilters';
 import { EPWDecoderTester } from '@/components/warehouse/EPWDecoderTester';
 import { mockProducts } from '@/data/mock-data';
+import { DebugPanel } from '@/components/ui/DebugPanel';
 
 import Footer from '@/components/ui/Footer';
 import productsBanner from '@/assets/epw-products-banner.jpg';

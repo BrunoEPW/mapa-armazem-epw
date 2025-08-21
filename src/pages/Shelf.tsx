@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ShelfView from '@/components/warehouse/ShelfView';
+import { DebugPanel } from '@/components/ui/DebugPanel';
 import Footer from '@/components/ui/Footer';
 import shelvesBanner from '@/assets/shelves-banner.jpg';
 
@@ -61,6 +62,9 @@ const Shelf = () => {
 
         <ShelfView />
       </div>
+
+      <DebugPanel additionalInfo={{ page: 'shelf', currentShelf: estante }} />
+
       <Footer />
     </div>
   );
