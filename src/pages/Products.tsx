@@ -220,7 +220,6 @@ const Products: React.FC = () => {
           {/* EPW Filters */}
           <div className="space-y-2">
           <EPWFilters
-            products={products}
             filters={epwFilters}
             onFilterChange={handleEpwFilterChange}
             excludedCount={excludedCount}

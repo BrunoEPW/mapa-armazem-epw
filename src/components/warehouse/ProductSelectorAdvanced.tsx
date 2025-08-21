@@ -131,7 +131,6 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
 
       {/* EPW Filters */}
       <EPWFilters
-        products={products}
         filters={epwFilters}
         onFilterChange={handleEpwFilterChange}
         excludedCount={0}

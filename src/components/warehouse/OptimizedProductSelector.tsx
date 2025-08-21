@@ -182,7 +182,6 @@ export const OptimizedProductSelector: React.FC<OptimizedProductSelectorProps> =
 
       {/* EPW Filters */}
       <EPWFilters
-        products={products}
         filters={epwFilters}
         onFilterChange={handleEpwFilterChange}
         excludedCount={0}
