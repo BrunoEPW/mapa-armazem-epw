@@ -10,6 +10,7 @@ import { FAMILIAS } from '@/data/product-data';
 import { useNavigate } from 'react-router-dom';
 import { MovementHistoryDialog } from './MovementHistoryDialog';
 import { useApiAttributes } from '@/hooks/useApiAttributes';
+import { decodeEPWReference } from '@/utils/epwCodeDecoder';
 
 const SearchPanel: React.FC = () => {
   const navigate = useNavigate();
@@ -72,22 +73,50 @@ const SearchPanel: React.FC = () => {
     setSearchQuery({ familia: '', modelo, acabamento: '', comprimento: '' });
   };
 
+  // Função para obter o nome do modelo decodificado
+  const getModelDisplayName = (modelo: string, product?: any): string => {
+    // Se temos um código de produto, tentar decodificar
+    if (product?.codigo) {
+      const decoded = decodeEPWReference(product.codigo, false);
+      if (decoded.success && decoded.product?.modelo?.d) {
+        return decoded.product.modelo.d;
+      }
+    }
+    
+    // Se não conseguiu decodificar, tentar do nome do modelo existente
+    if (modelo && modelo !== 'N/A' && modelo !== 'Indefinido') {
+      return modelo;
+    }
+    
+    // Fallback para código ou modelo
+    return modelo || 'Modelo Desconhecido';
+  };
+
   // Agrupamentos de materiais por modelo com contagens
   const modelGroups = materials.reduce((acc, material) => {
     const modelo = material.product.modelo;
     if (!acc[modelo]) {
       acc[modelo] = {
         modelo,
+        displayName: getModelDisplayName(modelo, material.product),
         totalPecas: 0,
         locations: new Set<string>(),
-        materials: []
+        materials: [],
+        firstProduct: material.product
       };
     }
     acc[modelo].totalPecas += material.pecas;
     acc[modelo].locations.add(`${material.location.estante}${material.location.prateleira}`);
     acc[modelo].materials.push(material);
     return acc;
-  }, {} as Record<string, { modelo: string; totalPecas: number; locations: Set<string>; materials: any[] }>);
+  }, {} as Record<string, { 
+    modelo: string; 
+    displayName: string;
+    totalPecas: number; 
+    locations: Set<string>; 
+    materials: any[];
+    firstProduct: any;
+  }>);
 
   const sortedModels = Object.values(modelGroups)
     .sort((a, b) => b.totalPecas - a.totalPecas)
@@ -235,7 +264,7 @@ const SearchPanel: React.FC = () => {
                 <div className="flex items-center gap-2 w-full">
                   <div className="w-3 h-3 rounded-full bg-emerald-500 group-hover:bg-primary transition-colors"></div>
                   <span className="font-medium text-sm truncate flex-1 text-left">
-                    {group.modelo}
+                    {group.displayName}
                   </span>
                 </div>
                 <div className="flex justify-between w-full text-xs text-muted-foreground">
