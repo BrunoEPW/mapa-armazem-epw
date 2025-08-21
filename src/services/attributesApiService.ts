@@ -5,10 +5,33 @@ interface ApiAttribute {
   d: string; // Description
 }
 
+interface ProxyStatus {
+  name: string;
+  lastSuccess: number;
+  lastFailure: number;
+  failureCount: number;
+  isBlocked: boolean;
+}
+
 class AttributesApiService {
   private baseApiUrl = 'https://pituxa.epw.pt/api/atributos';
   private cache = new Map<string, { data: ApiAttribute[]; timestamp: number }>();
-  private cacheTimeout = 10 * 60 * 1000; // 10 minutes
+  private cacheTimeout = 30 * 60 * 1000; // 30 minutes (mais agressivo)
+  
+  // Circuit breaker para proxies
+  private proxyStatuses = new Map<string, ProxyStatus>();
+  private circuitBreakerTimeout = 5 * 60 * 1000; // 5 minutes
+  
+  // Request queue
+  private activeRequests = new Set<string>();
+  private maxConcurrentRequests = 2;
+  
+  // Timeouts e retry
+  private defaultTimeout = 30000; // 30 segundos
+  private maxRetries = 3;
+  
+  // Cache persistente
+  private persistentCacheKey = 'epw_attributes_cache';
 
   async fetchModelos(): Promise<ApiAttribute[]> {
     return this.fetchAttribute('modelo');
@@ -36,22 +59,41 @@ class AttributesApiService {
 
   private async fetchAttribute(attributeType: string): Promise<ApiAttribute[]> {
     const cacheKey = attributeType;
-    const cached = this.cache.get(cacheKey);
     
-    // Return cached data if still valid
+    // Verificar cache em memória
+    const cached = this.cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
-      console.log(`📦 [AttributesApiService] Using cached ${attributeType} data:`, cached.data.length, 'items');
+      console.log(`📦 [AttributesApiService] Using memory cache for ${attributeType}:`, cached.data.length, 'items');
       return cached.data;
     }
+    
+    // Verificar cache persistente no localStorage
+    const persistentCached = this.getPersistentCache(cacheKey);
+    if (persistentCached && Date.now() - persistentCached.timestamp < this.cacheTimeout * 2) {
+      console.log(`💾 [AttributesApiService] Using persistent cache for ${attributeType}:`, persistentCached.data.length, 'items');
+      // Também colocar no cache em memória
+      this.cache.set(cacheKey, persistentCached);
+      return persistentCached.data;
+    }
+
+    // Limitar requisições simultâneas
+    while (this.activeRequests.size >= this.maxConcurrentRequests) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    this.activeRequests.add(cacheKey);
 
     try {
-      const result = await this.makeRequest(attributeType);
+      const result = await this.makeRequestWithRetry(attributeType);
       
-      // Cache the successful result
-      this.cache.set(cacheKey, {
+      // Cache the successful result em memória e localStorage
+      const cacheData = {
         data: result || [],
         timestamp: Date.now()
-      });
+      };
+      
+      this.cache.set(cacheKey, cacheData);
+      this.setPersistentCache(cacheKey, cacheData);
 
       return result;
     } catch (error) {
@@ -63,6 +105,12 @@ class AttributesApiService {
         return cached.data;
       }
       
+      // Verificar cache persistente expirado como último recurso
+      if (persistentCached) {
+        console.warn(`⚠️ [AttributesApiService] Using expired persistent cache for ${attributeType}`);
+        return persistentCached.data;
+      }
+      
       // Fallback to basic static data for critical attributes
       const fallbackData = this.getFallbackData(attributeType);
       if (fallbackData.length > 0) {
@@ -71,42 +119,70 @@ class AttributesApiService {
       }
       
       throw error;
+    } finally {
+      this.activeRequests.delete(cacheKey);
     }
   }
 
-  private async makeRequest(attributeType: string): Promise<ApiAttribute[]> {
-    console.log(`🌐 [AttributesApiService] Fetching ${attributeType} via proxy`);
+  private async makeRequestWithRetry(attributeType: string): Promise<ApiAttribute[]> {
+    let lastError: Error;
+    
+    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+      try {
+        const timeout = this.defaultTimeout + (attempt - 1) * 10000; // Timeout progressivo
+        console.log(`🔄 [AttributesApiService] Attempt ${attempt}/${this.maxRetries} for ${attributeType} with ${timeout}ms timeout`);
+        
+        return await this.makeRequest(attributeType, timeout);
+      } catch (error) {
+        lastError = error as Error;
+        console.warn(`⚠️ [AttributesApiService] Attempt ${attempt} failed for ${attributeType}:`, error.message);
+        
+        if (attempt < this.maxRetries) {
+          const backoff = Math.pow(2, attempt - 1) * 1000; // Exponential backoff
+          console.log(`⏳ [AttributesApiService] Waiting ${backoff}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, backoff));
+        }
+      }
+    }
+    
+    throw lastError;
+  }
+
+  private async makeRequest(attributeType: string, timeout: number = this.defaultTimeout): Promise<ApiAttribute[]> {
+    console.log(`🌐 [AttributesApiService] Fetching ${attributeType} with ${timeout}ms timeout`);
     
     const apiUrl = `${this.baseApiUrl}/${attributeType}`;
     
-    // Try multiple proxy options in sequence - prioritize allorigins as it's currently working
-    const proxies = [
-      `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`,
-      `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`,
-      `https://cors-anywhere.herokuapp.com/${apiUrl}`
-    ];
-
-    for (let i = 0; i < proxies.length; i++) {
-      const proxyUrl = proxies[i];
-      const proxyName = ['allorigins', 'corsproxy', 'cors-anywhere'][i];
+    // Tentar primeiro a API direta (firewall desativada)
+    try {
+      console.log(`🔄 [AttributesApiService] Trying direct API call for ${attributeType}...`);
+      const response = await this.fetchWithTimeout(apiUrl, timeout);
+      const data = await response.json();
       
+      console.log(`✅ [AttributesApiService] Success with direct API for ${attributeType}:`, data.length, 'items');
+      return this.processAttributeData(data, attributeType);
+    } catch (error) {
+      console.warn(`⚠️ [AttributesApiService] Direct API failed for ${attributeType}, trying proxies:`, error.message);
+    }
+    
+    // Try proxies with circuit breaker
+    const proxies = [
+      { url: `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`, name: 'allorigins' },
+      { url: `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`, name: 'corsproxy' },
+      { url: `https://cors-anywhere.herokuapp.com/${apiUrl}`, name: 'cors-anywhere' }
+    ];
+    
+    // Filtrar proxies baseado no circuit breaker
+    const availableProxies = this.getAvailableProxies(proxies);
+
+    for (const proxy of availableProxies) {
       try {
-        console.log(`🔄 [AttributesApiService] Trying ${proxyName} proxy for ${attributeType}...`);
+        console.log(`🔄 [AttributesApiService] Trying ${proxy.name} proxy for ${attributeType}...`);
         
-        const response = await fetch(proxyUrl, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
+        const response = await this.fetchWithTimeout(proxy.url, timeout);
         
         let data;
-        if (proxyName === 'allorigins') {
+        if (proxy.name === 'allorigins') {
           // allorigins wraps the response in a contents field
           const wrapper = await response.json();
           data = JSON.parse(wrapper.contents);
@@ -115,7 +191,7 @@ class AttributesApiService {
         }
         
         console.log(`📊 [AttributesApiService] Raw data received for ${attributeType}:`, { 
-          proxy: proxyName, 
+          proxy: proxy.name, 
           dataType: Array.isArray(data) ? 'array' : typeof data,
           length: Array.isArray(data) ? data.length : 'N/A',
           sample: Array.isArray(data) ? data.slice(0, 2) : data
@@ -125,64 +201,170 @@ class AttributesApiService {
           throw new Error(`Invalid response format for ${attributeType}: expected array`);
         }
 
-        // Validate and transform the data - handle multiple API response formats
-        const validItems: ApiAttribute[] = [];
-        
-        data.forEach((item: any, index: number) => {
-          if (item && typeof item === 'object') {
-            // Try first format: codigo/descricao
-            if (item.codigo && item.descricao) {
-              validItems.push({
-                l: item.codigo,
-                d: item.descricao
-              });
-            }
-            // Try second format: strCodigo/strDescricao
-            else if (item.strCodigo && item.strDescricao) {
-              validItems.push({
-                l: item.strCodigo,
-                d: item.strDescricao
-              });
-            }
-            // Try third format: code/description
-            else if (item.code && item.description) {
-              validItems.push({
-                l: item.code,
-                d: item.description
-              });
-            }
-            else {
-              console.warn(`[AttributesApiService] Unknown format at index ${index} for ${attributeType}:`, item);
-            }
-          } else {
-            console.warn(`[AttributesApiService] Invalid item at index ${index} for ${attributeType}:`, item);
-          }
-        });
+        // Marcar proxy como bem sucedido
+        this.markProxySuccess(proxy.name);
 
-        console.log(`✅ [AttributesApiService] Success with ${proxyName} for ${attributeType}: ${validItems.length}/${data.length} items`);
+        const validItems = this.processAttributeData(data, attributeType);
+        console.log(`✅ [AttributesApiService] Success with ${proxy.name} for ${attributeType}: ${validItems.length}/${data.length} items`);
         return validItems;
         
       } catch (error) {
-        console.error(`❌ [AttributesApiService] ${proxyName} proxy failed for ${attributeType}:`, {
+        console.error(`❌ [AttributesApiService] ${proxy.name} proxy failed for ${attributeType}:`, {
           error: error.message,
-          proxyUrl,
+          proxyUrl: proxy.url,
           apiUrl
         });
         
-        // If this is the last proxy, throw the error
-        if (i === proxies.length - 1) {
-          throw new Error(`All proxy services failed for ${attributeType}. Last error: ${error.message}`);
-        }
-        // Otherwise, continue to the next proxy
+        this.markProxyFailure(proxy.name);
       }
     }
 
-    // This should never be reached, but just in case
-    throw new Error(`No proxy services available for ${attributeType}`);
+    // Se todos falharam
+    throw new Error(`All proxy services failed or are circuit-broken for ${attributeType}`);
+
+  }
+  
+  private processAttributeData(data: any[], attributeType: string): ApiAttribute[] {
+    const validItems: ApiAttribute[] = [];
+    
+    data.forEach((item: any, index: number) => {
+      if (item && typeof item === 'object') {
+        // Try first format: codigo/descricao
+        if (item.codigo && item.descricao) {
+          validItems.push({
+            l: item.codigo,
+            d: item.descricao
+          });
+        }
+        // Try second format: strCodigo/strDescricao
+        else if (item.strCodigo && item.strDescricao) {
+          validItems.push({
+            l: item.strCodigo,
+            d: item.strDescricao
+          });
+        }
+        // Try third format: code/description
+        else if (item.code && item.description) {
+          validItems.push({
+            l: item.code,
+            d: item.description
+          });
+        }
+        else {
+          console.warn(`[AttributesApiService] Unknown format at index ${index} for ${attributeType}:`, item);
+        }
+      } else {
+        console.warn(`[AttributesApiService] Invalid item at index ${index} for ${attributeType}:`, item);
+      }
+    });
+
+    return validItems;
+  }
+
+  private async fetchWithTimeout(url: string, timeout: number): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return response;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  private getAvailableProxies(allProxies: { url: string; name: string }[]): { url: string; name: string }[] {
+    const now = Date.now();
+    return allProxies
+      .map(proxy => ({ ...proxy, status: this.getProxyStatus(proxy.name) }))
+      .filter(proxy => !proxy.status.isBlocked || (now - proxy.status.lastFailure) > this.circuitBreakerTimeout)
+      .sort((a, b) => {
+        // Priorizar proxies que funcionaram recentemente
+        if (a.status.lastSuccess > b.status.lastSuccess) return -1;
+        if (a.status.lastSuccess < b.status.lastSuccess) return 1;
+        return a.status.failureCount - b.status.failureCount;
+      });
+  }
+
+  private getProxyStatus(proxyName: string): ProxyStatus {
+    if (!this.proxyStatuses.has(proxyName)) {
+      this.proxyStatuses.set(proxyName, {
+        name: proxyName,
+        lastSuccess: 0,
+        lastFailure: 0,
+        failureCount: 0,
+        isBlocked: false
+      });
+    }
+    return this.proxyStatuses.get(proxyName)!;
+  }
+
+  private markProxySuccess(proxyName: string): void {
+    const status = this.getProxyStatus(proxyName);
+    status.lastSuccess = Date.now();
+    status.failureCount = 0;
+    status.isBlocked = false;
+    console.log(`✅ [AttributesApiService] Proxy ${proxyName} marked as successful`);
+  }
+
+  private markProxyFailure(proxyName: string): void {
+    const status = this.getProxyStatus(proxyName);
+    status.lastFailure = Date.now();
+    status.failureCount++;
+    
+    // Bloquear proxy se falhar mais de 3 vezes consecutivas
+    if (status.failureCount >= 3) {
+      status.isBlocked = true;
+      console.warn(`🚫 [AttributesApiService] Proxy ${proxyName} circuit-broken (${status.failureCount} failures)`);
+    }
+  }
+
+  private getPersistentCache(cacheKey: string): any {
+    try {
+      const stored = localStorage.getItem(`${this.persistentCacheKey}_${cacheKey}`);
+      return stored ? JSON.parse(stored) : null;
+    } catch (error) {
+      console.warn(`⚠️ [AttributesApiService] Failed to read persistent cache for ${cacheKey}:`, error);
+      return null;
+    }
+  }
+
+  private setPersistentCache(cacheKey: string, data: any): void {
+    try {
+      localStorage.setItem(`${this.persistentCacheKey}_${cacheKey}`, JSON.stringify(data));
+    } catch (error) {
+      console.warn(`⚠️ [AttributesApiService] Failed to write persistent cache for ${cacheKey}:`, error);
+    }
   }
 
   clearCache(): void {
     this.cache.clear();
+    this.activeRequests.clear();
+    this.proxyStatuses.clear();
+    
+    // Limpar também o cache persistente
+    try {
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith(this.persistentCacheKey)) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (error) {
+      console.warn('⚠️ [AttributesApiService] Failed to clear persistent cache:', error);
+    }
   }
 
   private getFallbackData(attributeType: string): ApiAttribute[] {
