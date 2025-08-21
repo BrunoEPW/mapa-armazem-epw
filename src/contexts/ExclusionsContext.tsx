@@ -92,16 +92,20 @@ export const ExclusionsProvider: React.FC<ExclusionsProviderProps> = ({ children
     
     const upperCodigo = codigo.toUpperCase();
     
+    // Debug: Log what products we're checking
+    console.log(`🔍 [ExclusionsContext] Checking product code: ${codigo}`);
+    console.log(`🔍 [ExclusionsContext] Active exclusion prefixes:`, currentExclusions.prefixes);
+    
     const shouldExclude = currentExclusions.prefixes.some(prefix => {
       const upperPrefix = prefix.toUpperCase();
-      // Simple prefix matching - if code starts with prefix, exclude it
-      return upperCodigo.startsWith(upperPrefix);
+      const matches = upperCodigo.startsWith(upperPrefix);
+      if (matches) {
+        console.log(`🚫 [ExclusionsContext] MATCH FOUND: "${codigo}" starts with "${prefix}"`);
+      }
+      return matches;
     });
     
-    // Only log exclusions, not inclusions (too verbose)
-    if (shouldExclude) {
-      console.log(`🚫 [ExclusionsContext] Excluding product with code: ${codigo}, matched prefix in: ${currentExclusions.prefixes.join(', ')}`);
-    }
+    console.log(`🔍 [ExclusionsContext] Final decision for ${codigo}: ${shouldExclude ? 'EXCLUDE' : 'INCLUDE'}`);
     
     return shouldExclude;
   };
