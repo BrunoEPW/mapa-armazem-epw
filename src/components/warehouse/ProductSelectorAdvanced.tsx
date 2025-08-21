@@ -18,7 +18,6 @@ interface ProductSelectorAdvancedProps {
 
 interface EPWFilters {
   familia: string;
-  tipo: string;
   modelo: string;
   comprimento: string;
   cor: string;
@@ -32,7 +31,6 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
   const [searchQuery, setSearchQuery] = useState('');
   const [epwFilters, setEpwFilters] = useState<EPWFilters>({
     familia: 'all',
-    tipo: 'all',
     modelo: 'all',
     comprimento: 'all',
     cor: 'all',
@@ -56,7 +54,6 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
 
     return {
       Familia: extractCode(epwFilters.familia),
-      Tipo: extractCode(epwFilters.tipo),
       Modelo: extractCode(epwFilters.modelo),
       Comprimento: extractCode(epwFilters.comprimento),
       Cor: extractCode(epwFilters.cor),
@@ -80,17 +77,14 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
 
   const {
     modelos: apiModelos,
-    tipos: apiTipos,
     acabamentos: apiAcabamentos,
     comprimentos: apiComprimentos,
     cores: apiCores,
     modelosLoading,
-    tiposLoading,
     acabamentosLoading,
     comprimentosLoading,
     coresLoading,
     modelosError,
-    tiposError,
     acabamentosError,
     comprimentosError,
     coresError,
@@ -111,7 +105,6 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
   const clearEpwFilters = () => {
     setEpwFilters({
       familia: 'all',
-      tipo: 'all',
       modelo: 'all',
       comprimento: 'all',
       cor: 'all',
@@ -158,17 +151,14 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
         filters={epwFilters}
         onFilterChange={handleEpwFilterChange}
         apiModelos={apiModelos}
-        apiTipos={apiTipos}
         apiAcabamentos={apiAcabamentos}
         apiComprimentos={apiComprimentos}
         apiCores={apiCores}
         modelosLoading={modelosLoading}
-        tiposLoading={tiposLoading}
         acabamentosLoading={acabamentosLoading}
         comprimentosLoading={comprimentosLoading}
         coresLoading={coresLoading}
         modelosError={modelosError}
-        tiposError={tiposError}
         acabamentosError={acabamentosError}
         comprimentosError={comprimentosError}
         coresError={coresError}

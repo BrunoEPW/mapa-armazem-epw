@@ -18,7 +18,6 @@ interface OptimizedProductSelectorProps {
 
 interface EPWFiltersState {
   familia: string;
-  tipo: string;
   modelo: string;
   comprimento: string;
   cor: string;
@@ -32,7 +31,6 @@ export const OptimizedProductSelector: React.FC<OptimizedProductSelectorProps> =
   const [searchQuery, setSearchQuery] = useState('');
   const [epwFilters, setEpwFilters] = useState<EPWFiltersState>({
     familia: 'all',
-    tipo: 'all',
     modelo: 'all',
     comprimento: 'all',
     cor: 'all',
@@ -60,7 +58,6 @@ export const OptimizedProductSelector: React.FC<OptimizedProductSelectorProps> =
 
   const {
     modelos: apiModelos,
-    tipos: apiTipos,
     acabamentos: apiAcabamentos,
     comprimentos: apiComprimentos,
     cores: apiCores,
@@ -96,7 +93,7 @@ export const OptimizedProductSelector: React.FC<OptimizedProductSelectorProps> =
     }
 
     // EPW filters
-    if (epwFilters.tipo !== 'all' && product.epwTipo && product.epwTipo.l !== epwFilters.tipo) return false;
+    // EPW filters - removed tipo filter
     if (epwFilters.modelo !== 'all' && product.epwModelo && product.epwModelo.l !== epwFilters.modelo) return false;
     if (epwFilters.comprimento !== 'all' && product.epwComprimento && product.epwComprimento.l !== epwFilters.comprimento) return false;
     if (epwFilters.cor !== 'all' && product.epwCor && product.epwCor.l !== epwFilters.cor) return false;
@@ -124,7 +121,6 @@ export const OptimizedProductSelector: React.FC<OptimizedProductSelectorProps> =
   const clearFilters = useCallback(() => {
     setEpwFilters({
       familia: 'all',
-      tipo: 'all',
       modelo: 'all',
       comprimento: 'all',
       cor: 'all',
@@ -193,17 +189,14 @@ export const OptimizedProductSelector: React.FC<OptimizedProductSelectorProps> =
         filters={epwFilters}
         onFilterChange={handleEpwFilterChange}
         apiModelos={apiModelos}
-        apiTipos={apiTipos}
         apiAcabamentos={apiAcabamentos}
         apiComprimentos={apiComprimentos}
         apiCores={apiCores}
         modelosLoading={attributesLoading}
-        tiposLoading={attributesLoading}
         acabamentosLoading={attributesLoading}
         comprimentosLoading={attributesLoading}
         coresLoading={attributesLoading}
         modelosError={attributesError}
-        tiposError={attributesError}
         acabamentosError={attributesError}
         comprimentosError={attributesError}
         coresError={attributesError}

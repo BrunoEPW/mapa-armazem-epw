@@ -10,7 +10,6 @@ interface EPWFiltersProps {
   products: Product[];
   filters: {
     familia: string;
-    tipo: string;
     modelo: string;
     comprimento: string;
     cor: string;
@@ -19,17 +18,14 @@ interface EPWFiltersProps {
   onFilterChange: (field: string, value: string) => void;
   // API attributes for filters
   apiModelos?: ApiAttribute[];
-  apiTipos?: ApiAttribute[];
   apiAcabamentos?: ApiAttribute[];
   apiComprimentos?: ApiAttribute[];
   apiCores?: ApiAttribute[];
   modelosLoading?: boolean;
-  tiposLoading?: boolean;
   acabamentosLoading?: boolean;
   comprimentosLoading?: boolean;
   coresLoading?: boolean;
   modelosError?: string | null;
-  tiposError?: string | null;
   acabamentosError?: string | null;
   comprimentosError?: string | null;
   coresError?: string | null;
@@ -42,17 +38,14 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
   filters,
   onFilterChange,
   apiModelos = [],
-  apiTipos = [],
   apiAcabamentos = [],
   apiComprimentos = [],
   apiCores = [],
   modelosLoading = false,
-  tiposLoading = false,
   acabamentosLoading = false,
   comprimentosLoading = false,
   coresLoading = false,
   modelosError = null,
-  tiposError = null,
   acabamentosError = null,
   comprimentosError = null,
   coresError = null,
@@ -61,21 +54,18 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
   // Extract unique values for each EPW field from available products
   const filterOptions = useMemo(() => {
     const options = {
-      tipo: new Set<string>(),
       comprimento: new Set<string>(),
       cor: new Set<string>(),
       acabamento: new Set<string>(),
     };
 
     products.forEach(product => {
-      if (product.epwTipo?.l) options.tipo.add(`${product.epwTipo.l} - ${product.epwTipo.d}`);
       if (product.epwComprimento?.l) options.comprimento.add(`${product.epwComprimento.l} - ${product.epwComprimento.d}`);
       if (product.epwCor?.l) options.cor.add(`${product.epwCor.l} - ${product.epwCor.d}`);
       if (product.epwAcabamento?.l) options.acabamento.add(`${product.epwAcabamento.l} - ${product.epwAcabamento.d}`);
     });
 
     return {
-      tipo: Array.from(options.tipo).sort(),
       comprimento: Array.from(options.comprimento).sort(),
       cor: Array.from(options.cor).sort(),
       acabamento: Array.from(options.acabamento).sort(),
@@ -104,29 +94,6 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
     console.log('📦 [EPWFilters] Fallback Modelos count:', fallbackModelos.length, 'Sample:', fallbackModelos.slice(0, 2));
     return fallbackModelos;
   }, [apiModelos, products]);
-
-  // Tipo options from API (with fallback to products)
-  const tipoOptions = useMemo(() => {
-    console.log('🔍 [EPWFilters] API Tipos count:', apiTipos?.length, 'Sample:', apiTipos?.slice(0, 2));
-    if (apiTipos && apiTipos.length > 0) {
-      // Use API data - return objects for easy mapping
-      return apiTipos;
-    }
-    
-    // Fallback to products data - convert to same format
-    const productTipos = new Map<string, string>();
-    products.forEach(product => {
-      if (product.epwTipo?.l) {
-        productTipos.set(product.epwTipo.l, product.epwTipo.d);
-      }
-    });
-    
-    const fallbackTipos = Array.from(productTipos.entries())
-      .map(([l, d]) => ({ l, d }))
-      .sort((a, b) => a.d.localeCompare(b.d));
-    console.log('📦 [EPWFilters] Fallback Tipos count:', fallbackTipos.length, 'Sample:', fallbackTipos.slice(0, 2));
-    return fallbackTipos;
-  }, [apiTipos, products]);
 
   // Acabamento options from API (with fallback to products)
   const acabamentoOptions = useMemo(() => {
@@ -188,8 +155,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
       .sort((a, b) => a.d.localeCompare(b.d));
   }, [apiCores, products]);
 
-
-  const hasActiveFilters = Object.values(filters).some(filter => filter !== '');
+  const hasActiveFilters = Object.values(filters).some(filter => filter !== 'all');
 
   return (
     <div className="bg-card/20 rounded-lg p-4 mb-6">
@@ -201,7 +167,6 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
               <Button
                 onClick={() => {
                   onFilterChange('familia', 'all');
-                  onFilterChange('tipo', 'all');
                   onFilterChange('modelo', 'all');
                   onFilterChange('comprimento', 'all');
                   onFilterChange('cor', 'all');
@@ -218,7 +183,7 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {/* Familia Filter */}
         <div>
           <label className="text-white text-sm font-medium mb-2 block flex items-center gap-2">
@@ -233,26 +198,6 @@ export const EPWFilters: React.FC<EPWFiltersProps> = ({
             className="bg-card border-border text-white"
           />
         </div>
-
-        {/* Tipo Filter */}
-        <div>
-          <label className="text-white text-sm font-medium mb-2 block flex items-center gap-2">
-            Tipo
-            {tiposLoading && <Loader2 className="w-3 h-3 animate-spin" />}
-            {tiposError && <span className="text-red-400 text-xs">(API erro)</span>}
-          </label>
-          <SelectWithSearch
-            options={tipoOptions}
-            value={filters.tipo}
-            onValueChange={(value) => onFilterChange('tipo', value)}
-            placeholder="Todos os tipos"
-            searchPlaceholder="Pesquisar tipos..."
-            loading={tiposLoading}
-            error={tiposError}
-            className="bg-card border-border text-white"
-          />
-        </div>
-
 
         {/* Modelo Filter */}
         <div>

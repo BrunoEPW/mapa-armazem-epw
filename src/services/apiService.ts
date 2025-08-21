@@ -17,7 +17,6 @@ interface ApiResponse {
 interface ApiFilters {
   Familia?: string;
   Modelo?: string;
-  Tipo?: string;
   Cor?: string;
   Acabamento?: string;
   Comprimento?: string;

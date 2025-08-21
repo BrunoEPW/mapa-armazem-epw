@@ -18,7 +18,6 @@ import productsBanner from '@/assets/epw-products-banner.jpg';
 
 interface EPWFiltersState {
   familia: string;
-  tipo: string;
   modelo: string;
   comprimento: string;
   cor: string;
@@ -32,7 +31,6 @@ const Products: React.FC = () => {
   
   const [epwFilters, setEpwFilters] = useState<EPWFiltersState>({
     familia: 'all',
-    tipo: 'all',
     modelo: 'all',
     comprimento: 'all',
     cor: 'all',
@@ -66,29 +64,7 @@ const Products: React.FC = () => {
       // Use the actual product properties that exist, not EPW decoded ones
       // Based on the API response format and useApiAttributes results
       
-      if (filters.tipo !== 'all') {
-        const extractedTipo = extractTipoFromCodigo(product.codigo);
-        
-        if (shouldLog) {
-          console.log(`🔍 [Products] Tipo check for ${product.codigo}:`, {
-            filterTipo: filters.tipo,
-            extractedTipo,
-            startsWith: {
-              A: product.codigo?.startsWith('A'),
-              B: product.codigo?.startsWith('B'),
-              C: product.codigo?.startsWith('C'),
-              X: product.codigo?.startsWith('X')
-            }
-          });
-        }
-        
-        // Strict filtering: only match exact type from first letter of code
-        if (extractedTipo !== filters.tipo) {
-          if (shouldLog) console.log(`❌ [Products] Tipo mismatch: extracted '${extractedTipo}' != filter '${filters.tipo}'`);
-          return false;
-        }
-        if (shouldLog) console.log(`✅ [Products] Tipo match for ${filters.tipo}`);
-      }
+      // Removed tipo filter - skip this section
       
       if (filters.modelo !== 'all') {
         // Match against modelo field or codigo pattern
@@ -215,17 +191,14 @@ const Products: React.FC = () => {
 
   const {
     modelos: apiModelos,
-    tipos: apiTipos,
     acabamentos: apiAcabamentos,
     comprimentos: apiComprimentos,
     cores: apiCores,
     modelosLoading,
-    tiposLoading,
     acabamentosLoading,
     comprimentosLoading,
     coresLoading,
     modelosError,
-    tiposError,
     acabamentosError,
     comprimentosError,
     coresError,
@@ -247,7 +220,6 @@ const Products: React.FC = () => {
   const clearEpwFilters = () => {
     setEpwFilters({
       familia: 'all',
-      tipo: 'all',
       modelo: 'all',
       comprimento: 'all',
       cor: 'all',
@@ -396,17 +368,14 @@ const Products: React.FC = () => {
               filters={epwFilters}
               onFilterChange={handleEpwFilterChange}
               apiModelos={apiModelos}
-              apiTipos={apiTipos}
               apiAcabamentos={apiAcabamentos}
               apiComprimentos={apiComprimentos}
               apiCores={apiCores}
               modelosLoading={modelosLoading}
-              tiposLoading={tiposLoading}
               acabamentosLoading={acabamentosLoading}
               comprimentosLoading={comprimentosLoading}
               coresLoading={coresLoading}
               modelosError={modelosError}
-              tiposError={tiposError}
               acabamentosError={acabamentosError}
               comprimentosError={comprimentosError}
               coresError={coresError}
