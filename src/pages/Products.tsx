@@ -164,20 +164,32 @@ const Products: React.FC = () => {
                 )}
               </div>
               
-              <Button
-                onClick={async () => {
-                  // Clear API cache and refresh
-                  const { apiService } = await import('@/services/apiService');
-                  apiService.clearCache();
-                  refresh();
-                }}
-                variant="outline"
-                size="sm"
-                disabled={loading}
-                className="text-white border-white hover:bg-white hover:text-black"
-              >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Refresh API'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={async () => {
+                    // Clear API cache and refresh
+                    const { apiService } = await import('@/services/apiService');
+                    apiService.clearCache();
+                    refresh();
+                  }}
+                  variant="outline"
+                  size="sm"
+                  disabled={loading}
+                  className="text-white border-white hover:bg-white hover:text-black"
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Refresh API'}
+                </Button>
+                <Button
+                  onClick={refreshAttributes}
+                  variant="outline"
+                  size="sm"
+                  disabled={modelosLoading || acabamentosLoading || comprimentosLoading || coresLoading}
+                  className="text-white border-white hover:bg-white hover:text-black"
+                >
+                  {(modelosLoading || acabamentosLoading || comprimentosLoading || coresLoading) ? 
+                    <Loader2 className="w-4 h-4 animate-spin" /> : 'Refresh Filtros'}
+                </Button>
+              </div>
             </div>
             
             {/* Search */}
