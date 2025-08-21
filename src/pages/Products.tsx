@@ -26,6 +26,7 @@ const Products: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [showEPWTester, setShowEPWTester] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
   
   const [epwFilters, setEpwFilters] = useState<EPWFiltersState>({
     modelo: 'all',
@@ -35,6 +36,19 @@ const Products: React.FC = () => {
   });
   
   const { shouldExcludeProduct, exclusions } = useExclusions();
+
+  // Create exclusion filter that can be disabled for debugging
+  const exclusionFilter = (codigo: string): boolean => {
+    if (debugMode) {
+      console.log(`🐛 [DEBUG] Exclusions disabled - NOT excluding product: ${codigo}`);
+      return false; // Don't exclude anything in debug mode
+    }
+    const shouldExclude = shouldExcludeProduct(codigo);
+    if (shouldExclude) {
+      console.log(`🚫 [Products] Excluding product: ${codigo} (matches exclusion prefixes)`);
+    }
+    return shouldExclude;
+  };
 
   // Use server-side filtering and pagination
   const {
@@ -52,7 +66,7 @@ const Products: React.FC = () => {
     activeFilters,
     setFilters,
     clearFilters,
-  } = useApiProductsWithFiltersServerSide(20, shouldExcludeProduct);
+  } = useApiProductsWithFiltersServerSide(20, exclusionFilter);
 
   const handleEpwFilterChange = (field: string, value: string) => {
     console.log(`🔍 [Products] Filter change: ${field} = ${value}`);
@@ -154,6 +168,7 @@ const Products: React.FC = () => {
                   {exclusions.enabled && exclusions.prefixes.length > 0 && (
                     <span className="text-yellow-400"> | Exclusões ativas: {exclusions.prefixes.join(', ')}</span>
                   )}
+                  {debugMode && <span className="text-green-400"> | 🐛 DEBUG: Exclusões desabilitadas</span>}
                 </div>
                 {error && (
                   <div className="text-destructive text-sm">
@@ -163,6 +178,14 @@ const Products: React.FC = () => {
               </div>
               
               <div className="flex gap-2">
+                <Button
+                  onClick={() => setDebugMode(!debugMode)}
+                  variant={debugMode ? "default" : "outline"}
+                  size="sm"
+                  className={debugMode ? "bg-green-600 hover:bg-green-700" : "text-white border-white hover:bg-white hover:text-black"}
+                >
+                  🐛 Debug {debugMode ? 'ON' : 'OFF'}
+                </Button>
                 <Button
                   onClick={async () => {
                     // Clear API cache and refresh
@@ -225,10 +248,30 @@ const Products: React.FC = () => {
           ) : products.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <p className="text-muted-foreground text-lg">
-                  {Object.keys(activeFilters).length > 0 ? 'Nenhum produto encontrado com os filtros aplicados' : 
-                   'Nenhum produto encontrado'}
-                </p>
+                <div className="space-y-4">
+                  <p className="text-muted-foreground text-lg">
+                    {Object.keys(activeFilters).length > 0 ? 'Nenhum produto encontrado com os filtros aplicados' : 
+                     'Nenhum produto encontrado'}
+                  </p>
+                  {exclusions.enabled && exclusions.prefixes.length > 0 && !debugMode && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <p className="text-yellow-800 text-sm font-medium">
+                        🚫 Possível causa: {exclusions.prefixes.length} exclusões ativas podem estar filtrando todos os produtos
+                      </p>
+                      <p className="text-yellow-700 text-xs mt-1">
+                        Prefixos excluídos: {exclusions.prefixes.join(', ')}
+                      </p>
+                      <Button
+                        onClick={() => setDebugMode(true)}
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 text-yellow-800 border-yellow-300 hover:bg-yellow-100"
+                      >
+                        🐛 Ativar modo debug (desabilitar exclusões temporariamente)
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ) : (
