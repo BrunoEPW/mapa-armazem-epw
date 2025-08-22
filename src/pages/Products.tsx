@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApiProductsSimple } from '@/hooks/useApiProductsSimple';
 import { Button } from '@/components/ui/button';
@@ -7,10 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Loader2, AlertCircle, Search, RefreshCw, FileText } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/ui/Footer';
+import { ModeloSelect } from '@/components/warehouse/ModeloSelect';
 import productsBanner from '@/assets/epw-products-banner.jpg';
 
 const Products = () => {
   const navigate = useNavigate();
+  const [selectedModel, setSelectedModel] = useState<string>('all');
 
   const {
     products,
@@ -85,8 +87,15 @@ const Products = () => {
           </Card>
         </div>
 
-        {/* Search */}
-        <div className="mb-6">
+        {/* Filters */}
+        <div className="mb-6 space-y-4">
+          <div className="max-w-md mx-auto">
+            <ModeloSelect
+              value={selectedModel}
+              onValueChange={setSelectedModel}
+            />
+          </div>
+          
           <div className="relative max-w-md mx-auto">
             <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
             <Input
