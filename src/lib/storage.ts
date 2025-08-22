@@ -13,6 +13,8 @@ export const STORAGE_KEYS = {
   MOVEMENTS_BACKUP: 'warehouse-movements-backup',
   MATERIALS_PRESERVE: 'warehouse-materials-preserve',
   BACKUP_METADATA: 'warehouse-backup-metadata',
+  // Manual data clearing flags
+  MANUAL_DATA_CLEARED: 'warehouse-manual-data-cleared',
   
 } as const;
 

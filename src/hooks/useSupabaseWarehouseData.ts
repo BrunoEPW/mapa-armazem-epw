@@ -118,6 +118,20 @@ export const useSupabaseWarehouseData = () => {
       setLoading(true);
       setDataSource('mock');
       
+      // Check if data was manually cleared
+      const manuallyCleared = localStorage.getItem('warehouse-manual-data-cleared');
+      if (manuallyCleared === 'true') {
+        console.log('🚫 Data was manually cleared - not loading mock data');
+        setProducts([]);
+        setMaterials([]);
+        setMovements([]);
+        toast.info('Dados foram limpos manualmente - modo vazio ativado', {
+          description: 'Use "Restaurar Dados Mock" se necessário'
+        });
+        setLoading(false);
+        return;
+      }
+      
       console.log('📝 Loading mock data (development mode)');
       
       // Simulate a brief loading period
@@ -296,6 +310,13 @@ export const useSupabaseWarehouseData = () => {
     initializeData();
   }, []);
 
+  // Function to restore mock data
+  const restoreMockData = async () => {
+    localStorage.removeItem('warehouse-manual-data-cleared');
+    await loadMockData();
+    toast.success('Dados mock restaurados');
+  };
+
   return {
     materials,
     products,
@@ -306,5 +327,6 @@ export const useSupabaseWarehouseData = () => {
     setProducts,
     setMovements,
     refreshData: loadData,
+    restoreMockData,
   };
 };

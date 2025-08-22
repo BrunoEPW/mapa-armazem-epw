@@ -233,6 +233,9 @@ export const useSupabaseAdminOperations = () => {
         // Offline mode - get counts from localStorage before clearing
         console.log('💾 [clearAllMaterials] Working in offline mode - clearing localStorage only');
         
+        // Set flag to prevent mock data reload
+        localStorage.setItem(STORAGE_KEYS.MANUAL_DATA_CLEARED, 'true');
+        
         try {
           const localMaterials = JSON.parse(localStorage.getItem(STORAGE_KEYS.MATERIALS) || '[]');
           const localMovements = JSON.parse(localStorage.getItem(STORAGE_KEYS.MOVEMENTS) || '[]');
