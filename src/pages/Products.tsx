@@ -14,7 +14,7 @@ import { EmergencyResetDialog } from '@/components/warehouse/EmergencyResetDialo
 import { ShowAllProductsButton } from '@/components/warehouse/ShowAllProductsButton';
 import { ExclusionsRecoveryDialog } from '@/components/warehouse/ExclusionsRecoveryDialog';
 import { mockProducts } from '@/data/mock-data';
-import { DebugPanel } from '@/components/ui/DebugPanel';
+import { ProductsDebugPanel } from '@/components/warehouse/ProductsDebugPanel';
 
 import Footer from '@/components/ui/Footer';
 import productsBanner from '@/assets/epw-products-banner.jpg';
@@ -47,11 +47,17 @@ const Products: React.FC = () => {
       console.log(`🐛 [DEBUG] Exclusions disabled - NOT excluding product: ${codigo}`);
       return false; // Don't exclude anything in debug mode
     }
-    const shouldExclude = shouldExcludeProduct(codigo);
-    if (shouldExclude) {
-      console.log(`🚫 [Products] Excluding product: ${codigo} (matches exclusion prefixes)`);
+    
+    try {
+      const shouldExclude = shouldExcludeProduct(codigo);
+      if (shouldExclude) {
+        console.log(`🚫 [Products] Excluding product: ${codigo} (matches exclusion prefixes)`);
+      }
+      return shouldExclude;
+    } catch (error) {
+      console.error('❌ [Products] Error in exclusionFilter:', error);
+      return false; // Don't exclude on error
     }
-    return shouldExclude;
   };
 
   // Use server-side filtering and pagination
@@ -240,6 +246,33 @@ const Products: React.FC = () => {
             excludedCount={excludedCount}
           />
           </div>
+
+          {/* Debug Panel */}
+          {debugMode && (
+            <ProductsDebugPanel
+              products={products}
+              loading={loading}
+              error={error}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalCount={totalCount}
+              itemsPerPage={itemsPerPage}
+              isConnected={isConnected}
+              connectionStatus={connectionStatus}
+              activeFilters={activeFilters}
+              epwFilters={epwFilters}
+              searchQuery={searchQuery}
+              exclusions={exclusions}
+              debugMode={debugMode}
+              onRefresh={refresh}
+              onClearCache={async () => {
+                const { apiService } = await import('@/services/apiService');
+                apiService.clearCache();
+                refresh();
+              }}
+              onToggleDebugMode={() => setDebugMode(!debugMode)}
+            />
+          )}
 
           {/* EPW Tools */}
           <div className="mb-4 flex gap-2">

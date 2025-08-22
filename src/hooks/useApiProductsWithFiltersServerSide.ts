@@ -154,6 +154,12 @@ export const useApiProductsWithFiltersServerSide = (
         return;
       }
       
+      // 🚨 EMERGENCY FALLBACK: If API returns empty on page 1 but claims products exist, show warning but continue
+      if (response.data.length === 0 && (response.recordsFiltered > 0 || response.recordsTotal > 0) && page === 1) {
+        console.error('🚨 [useApiProductsWithFiltersServerSide] CRITICAL: API pagination broken - showing empty despite claiming products exist');
+        setConnectionStatus('⚠️ API paginating incorrectly - contact support');
+      }
+      
       // 🚨 CRITICAL DEBUG: Log the empty data issue
       if (response.data.length === 0 && (response.recordsFiltered > 0 || response.recordsTotal > 0)) {
         console.error('🚨 [useApiProductsWithFiltersServerSide] CRITICAL ISSUE: API claims products exist but returns empty data array!', {
