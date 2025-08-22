@@ -11,6 +11,7 @@ import { EPWFilters } from '@/components/warehouse/EPWFilters';
 import { EPWDecoderTester } from '@/components/warehouse/EPWDecoderTester';
 import { ExclusionsAnalysisPanel } from '@/components/warehouse/ExclusionsAnalysisPanel';
 import { EmergencyResetDialog } from '@/components/warehouse/EmergencyResetDialog';
+import { ShowAllProductsButton } from '@/components/warehouse/ShowAllProductsButton';
 import { mockProducts } from '@/data/mock-data';
 import { DebugPanel } from '@/components/ui/DebugPanel';
 
@@ -180,8 +181,9 @@ const Products: React.FC = () => {
               </div>
               
               <div className="flex gap-2">
+                <ShowAllProductsButton onRefresh={refresh} />
                 <EmergencyResetDialog 
-                  excludedCount={Object.keys(exclusions.prefixes).length}
+                  excludedCount={exclusions.prefixes.length}
                   onResetToPage1={() => setCurrentPage(1)}
                   onClearCache={async () => {
                     const { apiService } = await import('@/services/apiService');

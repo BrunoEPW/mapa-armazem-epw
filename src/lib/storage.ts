@@ -44,9 +44,7 @@ export interface ExclusionSettings {
 export const loadExclusions = (): ExclusionSettings => {
   console.log('🔍 [loadExclusions] Starting exclusions load process...');
   
-  // 🔒 CRITICAL: Load existing exclusions from storage - NEVER reset user data
-  // This function MUST preserve all user-configured exclusions across app updates
-  
+  // 🚨 EMERGENCY FIX: Check if we're in an emergency state with too many exclusions
   // Try multiple backup keys for maximum reliability
   const backupKeys = [
     STORAGE_KEYS.EXCLUSIONS,
@@ -72,7 +70,31 @@ export const loadExclusions = (): ExclusionSettings => {
   }
   
   if (stored && Array.isArray(stored.prefixes)) {
-    // User has existing exclusions - preserve them completely
+    // 🚨 EMERGENCY FIX: If there are too many exclusions, reset to safe defaults
+    const prefixCount = stored.prefixes.length;
+    const tooManyExclusions = prefixCount > 10; // More than 10 prefixes is suspicious
+    
+    if (tooManyExclusions) {
+      console.warn(`🚨 [loadExclusions] EMERGENCY: Too many exclusions detected (${prefixCount}), resetting to safe defaults!`);
+      console.warn(`🚨 [loadExclusions] Problematic prefixes:`, stored.prefixes);
+      
+      // Create backup of problematic exclusions
+      saveToStorage(`${STORAGE_KEYS.EXCLUSIONS}-emergency-backup`, stored);
+      
+      // Reset to safe defaults
+      const emergencyDefaults = {
+        enabled: true,
+        prefixes: ['ZZZ'], // Only safe default
+        createdAt: stored.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      
+      console.log('🚨 [loadExclusions] Applying emergency reset:', emergencyDefaults);
+      saveExclusions(emergencyDefaults);
+      return emergencyDefaults;
+    }
+    
+    // Normal case - preserve existing exclusions
     console.log('🔍 [loadExclusions] Preserving existing user exclusions:', {
       prefixes: stored.prefixes,
       enabled: stored.enabled,

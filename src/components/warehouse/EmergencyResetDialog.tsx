@@ -41,7 +41,7 @@ export const EmergencyResetDialog: React.FC<EmergencyResetDialogProps> = ({
     setOpen(false);
   };
 
-  const shouldShowEmergencyButton = excludedCount > 500;
+  const shouldShowEmergencyButton = excludedCount > 100; // Lower threshold for emergency
 
   if (!shouldShowEmergencyButton) {
     return null;
