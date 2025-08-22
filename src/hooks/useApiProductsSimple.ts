@@ -1,0 +1,222 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { apiService } from '@/services/apiService';
+
+interface SimpleProduct {
+  id: string;
+  codigo: string;
+  descricao: string;
+}
+
+interface UseApiProductsSimpleReturn {
+  products: SimpleProduct[];
+  loading: boolean;
+  error: string | null;
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  itemsPerPage: number;
+  setCurrentPage: (page: number) => void;
+  refresh: () => Promise<void>;
+  isConnected: boolean;
+  connectionStatus: string;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+}
+
+export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
+  const itemsPerPage = 20;
+  const [products, setProducts] = useState<SimpleProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [connectionStatus, setConnectionStatus] = useState('Desconectado');
+  const [searchQuery, setSearchQuery] = useState('');
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cache para evitar requisições desnecessárias
+  const cacheRef = useRef<Map<string, { products: SimpleProduct[]; totalCount: number; timestamp: number }>>(new Map());
+  const cacheTimeout = 5 * 60 * 1000; // 5 minutos
+
+  const mapApiProductToSimple = (apiProduct: any): SimpleProduct => {
+    return {
+      id: `api_${apiProduct.Id}`,
+      codigo: apiProduct.strCodigo || 'Sem código',
+      descricao: apiProduct.strDescricao || 'Sem descrição',
+    };
+  };
+
+  const generateCacheKey = (page: number, search: string): string => {
+    return `${page}-${search}`;
+  };
+
+  const loadProducts = useCallback(async (page: number = 1, search: string = '') => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    
+    setLoading(true);
+    setError(null);
+
+    // Verificar cache
+    const cacheKey = generateCacheKey(page, search);
+    const cached = cacheRef.current.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < cacheTimeout) {
+      console.log('📦 [useApiProductsSimple] Using cache for:', cacheKey);
+      setProducts(cached.products);
+      setTotalCount(cached.totalCount);
+      setTotalPages(Math.ceil(cached.totalCount / itemsPerPage));
+      setLoading(false);
+      return;
+    }
+    
+    setConnectionStatus(search ? 'Pesquisando produtos...' : 'Carregando produtos...');
+
+    try {
+      const start = (page - 1) * itemsPerPage;
+      console.log(`🔍 [useApiProductsSimple] Fetching page ${page} (start: ${start}) with search:`, search);
+      
+      // Para pesquisa simples, vamos buscar todos os produtos e filtrar localmente
+      // devido às limitações da API para filtros por texto
+      let response;
+      if (search.trim()) {
+        // Buscar mais produtos para pesquisa
+        response = await apiService.fetchArtigosWithTotal(1, 0, 1000);
+        
+        // Filtrar localmente por código ou descrição
+        const filtered = response.data.filter(item => 
+          item.strCodigo?.toLowerCase().includes(search.toLowerCase()) ||
+          item.strDescricao?.toLowerCase().includes(search.toLowerCase())
+        );
+        
+        // Paginar os resultados filtrados
+        const paginatedData = filtered.slice(start, start + itemsPerPage);
+        
+        response = {
+          ...response,
+          data: paginatedData,
+          recordsFiltered: filtered.length,
+          recordsTotal: filtered.length
+        };
+      } else {
+        // Busca normal com paginação da API
+        response = await apiService.fetchArtigosWithTotal(1, start, itemsPerPage);
+      }
+      
+      console.log(`🔍 [useApiProductsSimple] API response:`, {
+        dataLength: response.data?.length || 0,
+        recordsTotal: response.recordsTotal,
+        recordsFiltered: response.recordsFiltered,
+        searchApplied: !!search.trim()
+      });
+      
+      if (!response.data || !Array.isArray(response.data)) {
+        throw new Error('API não está a responder correctamente');
+      }
+
+      const mappedProducts = response.data.map(mapApiProductToSimple);
+      const totalRecords = search.trim() ? response.recordsFiltered : response.recordsTotal;
+      
+      setProducts(mappedProducts);
+      setTotalCount(totalRecords || 0);
+      setTotalPages(Math.ceil((totalRecords || 0) / itemsPerPage));
+
+      // Cache do resultado
+      cacheRef.current.set(cacheKey, {
+        products: mappedProducts,
+        totalCount: totalRecords || 0,
+        timestamp: Date.now()
+      });
+
+      const statusMessage = search.trim()
+        ? `${mappedProducts.length} produtos encontrados`
+        : `${mappedProducts.length} produtos carregados`;
+      
+      setConnectionStatus(statusMessage);
+      
+    } catch (err) {
+      console.error('❌ [useApiProductsSimple] Error loading products:', err);
+      
+      if (err instanceof Error && err.name !== 'AbortError') {
+        let errorMessage = 'Erro ao carregar produtos da API';
+        
+        if (err.message.includes('proxy') || err.message.includes('403') || err.message.includes('Forbidden')) {
+          errorMessage = 'Proxies CORS indisponíveis. Tente novamente mais tarde.';
+        } else if (err.message.includes('fetch') || err.name === 'TypeError') {
+          errorMessage = 'Não foi possível conectar à API';
+        } else if (err.message.includes('timeout')) {
+          errorMessage = 'Timeout: A API demorou muito para responder';
+        }
+        
+        setError(errorMessage);
+        setConnectionStatus('Erro de conexão');
+      }
+    } finally {
+      setLoading(false);
+      abortControllerRef.current = null;
+    }
+  }, [itemsPerPage]);
+
+  const debouncedLoadProducts = useCallback((page: number, search: string) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    debounceTimeoutRef.current = setTimeout(() => {
+      loadProducts(page, search);
+    }, 500); // 500ms debounce for search
+  }, [loadProducts]);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      setCurrentPage(page);
+      loadProducts(page, searchQuery);
+    }
+  };
+
+  const handleSearchQuery = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+    debouncedLoadProducts(1, query);
+  };
+
+  const refresh = async () => {
+    cacheRef.current.clear();
+    await loadProducts(currentPage, searchQuery);
+  };
+
+  // Load initial products on mount
+  useEffect(() => {
+    loadProducts(1, '');
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [loadProducts]);
+
+  return {
+    products,
+    loading,
+    error,
+    currentPage,
+    totalPages,
+    totalCount,
+    itemsPerPage,
+    setCurrentPage: handlePageChange,
+    refresh,
+    isConnected: !error && products.length >= 0,
+    connectionStatus,
+    searchQuery,
+    setSearchQuery: handleSearchQuery,
+  };
+};
