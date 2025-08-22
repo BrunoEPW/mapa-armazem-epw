@@ -11,8 +11,8 @@ const Search = () => {
   const [showVerifier, setShowVerifier] = useState(false);
 
   return (
-    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8 flex flex-col">
-      <div className="max-w-6xl mx-auto flex-1">
+    <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8 flex flex-col w-full">
+      <div className="w-full flex-1">
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           <button
             onClick={() => navigate('/')}

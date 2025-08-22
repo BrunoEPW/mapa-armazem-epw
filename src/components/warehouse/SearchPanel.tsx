@@ -249,7 +249,8 @@ const SearchPanel: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+          {/* Filtros de pesquisa ocupando largura total */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
             <ModeloSelect 
               value={selectedModel} 
               onValueChange={setSelectedModel}
@@ -260,13 +261,13 @@ const SearchPanel: React.FC = () => {
             />
           </div>
           
-          <div className="relative max-w-md mx-auto">
+          <div className="relative w-full">
             <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Pesquisar por descrição..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60"
+              className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60 w-full"
             />
           </div>
         </CardContent>
@@ -280,8 +281,8 @@ const SearchPanel: React.FC = () => {
             Acesso Rápido por Modelo
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full">
             {sortedModels.map((group) => {
               // Agregar localizações por estante/prateleira e somar peças
               const locationSummary = group.locations.reduce((acc, loc) => {
@@ -346,7 +347,7 @@ const SearchPanel: React.FC = () => {
         <CardHeader>
           <CardTitle>Produtos da API</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="w-full overflow-x-auto">
           {error ? (
             <div className="p-6 text-center">
               <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
@@ -366,8 +367,8 @@ const SearchPanel: React.FC = () => {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="w-full">
+                <table className="w-full min-w-full">
                   <thead>
                     <tr className="border-b border-white/20">
                       <th className="text-left p-4 text-white font-medium">Código</th>
