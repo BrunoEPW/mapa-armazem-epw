@@ -203,62 +203,61 @@ const Index = () => {
 
         
 
-        {/* Layout específico das estantes conforme imagem */}
-        <div className="flex justify-center items-end gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12 overflow-x-auto pb-4">
-          {/* Estante A - Isolada à esquerda */}
-          {renderSingleShelf('A')}
-          
-          {/* Grupo B-C */}
-          {renderShelfGroup(['B', 'C'])}
-          
-          {/* Grupo D-E */}
-          {renderShelfGroup(['D', 'E'])}
-          
-          {/* Grupo F-G */}
-          {renderShelfGroup(['F', 'G'])}
-          
-          {/* Estante H - Isolada à direita */}
-          {renderSingleShelf('H')}
-        </div>
+        <div className="max-w-7xl mx-auto">
+          {/* Layout específico das estantes conforme imagem */}
+          <div className="flex justify-center items-end gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12 overflow-x-auto pb-4">
+            {/* Estante A - Isolada à esquerda */}
+            {renderSingleShelf('A')}
+            
+            {/* Grupo B-C */}
+            {renderShelfGroup(['B', 'C'])}
+            
+            {/* Grupo D-E */}
+            {renderShelfGroup(['D', 'E'])}
+            
+            {/* Grupo F-G */}
+            {renderShelfGroup(['F', 'G'])}
+            
+            {/* Estante H - Isolada à direita */}
+            {renderSingleShelf('H')}
+          </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-          {menuItems.map((item) => (
-            <Card
-              key={item.path}
-              className="cursor-pointer hover:scale-105 transition-all duration-300 border-2 hover:border-primary bg-card/50 backdrop-blur-sm"
-              onClick={() => navigate(item.path)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+            {menuItems.map((item) => (
+              <Card
+                key={item.path}
+                className="cursor-pointer hover:scale-105 transition-all duration-300 border-2 hover:border-primary bg-card/50 backdrop-blur-sm"
+                onClick={() => navigate(item.path)}
+              >
+                <CardContent className="p-6 sm:p-8 flex flex-col items-center justify-center">
+                  <div className={`p-6 sm:p-8 rounded-full ${item.color} transition-all duration-300 shadow-lg hover:shadow-xl`}>
+                    <item.icon className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-center mt-4 text-white">
+                    {item.title}
+                  </h3>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Botão para limpar todos os produtos das prateleiras */}
+          <div className="flex justify-center mb-4">
+            <Button 
+              onClick={async () => {
+                const success = await clearAllMaterials();
+                if (success) {
+                  console.log('✅ Todos os produtos foram removidos das prateleiras');
+                }
+              }}
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
-              <CardContent className="p-6 sm:p-8 flex flex-col items-center justify-center">
-                <div className={`p-6 sm:p-8 rounded-full ${item.color} transition-all duration-300 shadow-lg hover:shadow-xl`}>
-                  <item.icon className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-center mt-4 text-white">
-                  {item.title}
-                </h3>
-              </CardContent>
-            </Card>
-          ))}
+              Remover Todos os Produtos das Prateleiras
+            </Button>
+          </div>
         </div>
-
         </div>
-
-        {/* Botão para limpar todos os produtos das prateleiras */}
-        <div className="flex justify-center mb-4">
-          <Button 
-            onClick={async () => {
-              const success = await clearAllMaterials();
-              if (success) {
-                console.log('✅ Todos os produtos foram removidos das prateleiras');
-              }
-            }}
-            variant="destructive"
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
-            Remover Todos os Produtos das Prateleiras
-          </Button>
-        </div>
-        
-        
       </div>
 
       <DebugPanel 
