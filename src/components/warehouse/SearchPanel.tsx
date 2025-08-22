@@ -4,61 +4,119 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { useWarehouse } from '@/contexts/WarehouseContext';
-import { FAMILIAS } from '@/data/product-data';
 import { useNavigate } from 'react-router-dom';
 import { MovementHistoryDialog } from './MovementHistoryDialog';
-import { useApiAttributes } from '@/hooks/useApiAttributes';
 import { decodeEPWReference } from '@/utils/epwCodeDecoder';
+import { ModeloSelect } from './ModeloSelect';
+import { useApiProductsSimple } from '@/hooks/useApiProductsSimple';
 
 const SearchPanel: React.FC = () => {
   const navigate = useNavigate();
-  const { searchMaterials, setSelectedShelf, products, materials } = useWarehouse();
-  const { 
-    modelos: apiModelos, 
-    acabamentos: apiAcabamentos, 
-    comprimentos: apiComprimentos,
-    modelosLoading,
-    acabamentosLoading,
-    comprimentosLoading,
-    modelosError,
-    acabamentosError,
-    comprimentosError
-  } = useApiAttributes();
+  const { setSelectedShelf, materials } = useWarehouse();
   
-  const [searchQuery, setSearchQuery] = useState({
-    familia: '',
-    modelo: '',
-    acabamento: '',
-    comprimento: '',
-  });
+  // Estado para pesquisa avançada (integrada com API)
+  const [selectedModel, setSelectedModel] = useState('');
+  const [searchDescription, setSearchDescription] = useState('');
   
+  // Estado para resultados e UI
   const [searchResults, setSearchResults] = useState<Array<any>>([]);
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
-
-  // Get unique values from products (only for família, others use API)
-  const uniqueFamilias = [...new Set(products.map(p => p.familia))].filter(Boolean).sort();
   
-  // Use API data with fallback to local data if API fails
-  const modelos = modelosError ? [...new Set(products.map(p => p.modelo))].sort() : apiModelos;
-  const acabamentos = acabamentosError ? [...new Set(products.map(p => p.acabamento))].sort() : apiAcabamentos;
-  const comprimentos = comprimentosError ? [...new Set(products.map(p => p.comprimento.toString()))].sort((a, b) => parseInt(a) - parseInt(b)) : apiComprimentos;
+  // Hook para buscar produtos da API
+  const {
+    products: apiProducts,
+    loading,
+    error,
+    refresh
+  } = useApiProductsSimple();
 
-  const handleSearch = () => {
-    const query: any = {};
+  // Função para pesquisar materiais baseado nos produtos da API
+  const handleApiSearch = () => {
+    if (!selectedModel && !searchDescription.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    // Filtrar produtos da API baseado nos critérios
+    let filteredApiProducts = apiProducts;
     
-    if (searchQuery.familia && searchQuery.familia !== 'all') query.familia = searchQuery.familia;
-    if (searchQuery.modelo && searchQuery.modelo !== 'all') query.modelo = searchQuery.modelo;
-    if (searchQuery.acabamento && searchQuery.acabamento !== 'all') query.acabamento = searchQuery.acabamento;
-    if (searchQuery.comprimento && searchQuery.comprimento !== 'all') query.comprimento = parseInt(searchQuery.comprimento);
+    if (selectedModel) {
+      filteredApiProducts = filteredApiProducts.filter(p => 
+        p.codigo && p.codigo.includes(selectedModel)
+      );
+    }
     
-    const results = searchMaterials(query);
-    setSearchResults(results);
+    if (searchDescription.trim()) {
+      const query = searchDescription.toLowerCase();
+      filteredApiProducts = filteredApiProducts.filter(p => 
+        p.descricao && p.descricao.toLowerCase().includes(query)
+      );
+    }
+
+    // Para cada produto da API, encontrar materiais correspondentes no armazém
+    const matchingMaterials: any[] = [];
+    
+    filteredApiProducts.forEach(apiProduct => {
+      if (apiProduct.codigo) {
+        // Tentar decodificar o código EPW
+        const decoded = decodeEPWReference(apiProduct.codigo, false);
+        
+        if (decoded.success && decoded.product) {
+          // Buscar materiais que correspondem aos atributos decodificados
+          const relatedMaterials = materials.filter(material => {
+            const product = material.product;
+            
+            // Comparar atributos decodificados com o material
+            let matches = true;
+            
+            if (decoded.product.modelo?.l && product.modelo) {
+              matches = matches && product.modelo.toLowerCase().includes(decoded.product.modelo.l.toLowerCase());
+            }
+            
+            if (decoded.product.acabamento?.l && product.acabamento) {
+              matches = matches && product.acabamento.toLowerCase().includes(decoded.product.acabamento.l.toLowerCase());
+            }
+            
+            if (decoded.product.cor?.l && product.cor) {
+              matches = matches && product.cor.toLowerCase().includes(decoded.product.cor.l.toLowerCase());
+            }
+            
+            // Note: comprimento não está disponível no tipo EPWDecodedProduct
+            // Podemos adicionar esta verificação se necessário no futuro
+            
+            return matches;
+          });
+          
+          matchingMaterials.push(...relatedMaterials);
+        } else {
+          // Se não conseguiu decodificar, tentar correspondência direta por descrição
+          const relatedMaterials = materials.filter(material => {
+            if (searchDescription.trim()) {
+              const desc = searchDescription.toLowerCase();
+              const productDesc = `${material.product.familia} ${material.product.modelo} ${material.product.acabamento}`.toLowerCase();
+              return productDesc.includes(desc);
+            }
+            return false;
+          });
+          
+          matchingMaterials.push(...relatedMaterials);
+        }
+      }
+    });
+
+    // Remover duplicatas
+    const uniqueMaterials = matchingMaterials.filter((material, index, self) => 
+      index === self.findIndex(m => m.id === material.id)
+    );
+    
+    setSearchResults(uniqueMaterials);
   };
 
-  const handleClearSearch = () => {
-    setSearchQuery({ familia: '', modelo: '', acabamento: '', comprimento: '' });
+  const handleClearApiSearch = () => {
+    setSelectedModel('');
+    setSearchDescription('');
     setSearchResults([]);
   };
 
@@ -70,7 +128,9 @@ const SearchPanel: React.FC = () => {
   const handleModelClick = (modelo: string) => {
     const modelMaterials = materials.filter(m => m.product.modelo === modelo);
     setSearchResults(modelMaterials);
-    setSearchQuery({ familia: '', modelo, acabamento: '', comprimento: '' });
+    // Limpar pesquisa avançada quando usar acesso rápido
+    setSelectedModel('');
+    setSearchDescription('');
   };
 
   // Função para obter o nome do modelo decodificado
@@ -132,112 +192,36 @@ const SearchPanel: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="familia">Família</Label>
-              <Select value={searchQuery.familia} onValueChange={(value) => setSearchQuery(prev => ({ ...prev, familia: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a família" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as famílias</SelectItem>
-                  {uniqueFamilias.map((familia) => (
-                    <SelectItem key={familia} value={familia}>
-                      {familia}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ModeloSelect 
+                value={selectedModel} 
+                onValueChange={setSelectedModel}
+              />
             </div>
             
-            <div>
-              <Label htmlFor="modelo">Modelo</Label>
-              <Select value={searchQuery.modelo} onValueChange={(value) => setSearchQuery(prev => ({ ...prev, modelo: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder={modelosLoading ? "Carregando..." : "Selecione o modelo"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os modelos</SelectItem>
-                  {modelosLoading ? (
-                    <SelectItem value="loading" disabled>Carregando modelos...</SelectItem>
-                  ) : modelosError ? (
-                    modelos.map((modelo) => (
-                      <SelectItem key={modelo} value={modelo}>
-                        {modelo}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    modelos.map((modelo) => (
-                      <SelectItem key={modelo.l} value={modelo.l}>
-                        {modelo.d}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="acabamento">Acabamento</Label>
-              <Select value={searchQuery.acabamento} onValueChange={(value) => setSearchQuery(prev => ({ ...prev, acabamento: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder={acabamentosLoading ? "Carregando..." : "Selecione o acabamento"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os acabamentos</SelectItem>
-                  {acabamentosLoading ? (
-                    <SelectItem value="loading" disabled>Carregando acabamentos...</SelectItem>
-                  ) : acabamentosError ? (
-                    acabamentos.map((acabamento) => (
-                      <SelectItem key={acabamento} value={acabamento}>
-                        {acabamento}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    acabamentos.map((acabamento) => (
-                      <SelectItem key={acabamento.l} value={acabamento.l}>
-                        {acabamento.d}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="comprimento">Comprimento (mm)</Label>
-              <Select value={searchQuery.comprimento} onValueChange={(value) => setSearchQuery(prev => ({ ...prev, comprimento: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder={comprimentosLoading ? "Carregando..." : "Selecione o comprimento"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os comprimentos</SelectItem>
-                  {comprimentosLoading ? (
-                    <SelectItem value="loading" disabled>Carregando comprimentos...</SelectItem>
-                  ) : comprimentosError ? (
-                    comprimentos.map((comprimento) => (
-                      <SelectItem key={comprimento} value={comprimento}>
-                        {comprimento}mm
-                      </SelectItem>
-                    ))
-                  ) : (
-                    comprimentos.map((comprimento) => (
-                      <SelectItem key={comprimento.l} value={comprimento.l}>
-                        {comprimento.d}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+            <div className="space-y-2">
+              <Label htmlFor="description">Pesquisa por Descrição</Label>
+              <Input
+                id="description"
+                placeholder="Digite parte da descrição do produto..."
+                value={searchDescription}
+                onChange={(e) => setSearchDescription(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleApiSearch();
+                  }
+                }}
+              />
             </div>
           </div>
           
           <div className="flex gap-2">
-            <Button onClick={handleSearch} className="flex-1">
+            <Button onClick={handleApiSearch} className="flex-1" disabled={loading}>
               <Search className="w-4 h-4 mr-2" />
-              Pesquisar
+              {loading ? 'Pesquisando...' : 'Pesquisar'}
             </Button>
-            <Button variant="outline" onClick={handleClearSearch}>
+            <Button variant="outline" onClick={handleClearApiSearch}>
               Limpar
             </Button>
           </div>
@@ -336,7 +320,7 @@ const SearchPanel: React.FC = () => {
           </CardContent>
         </Card>
       ) : (
-        searchQuery.familia || searchQuery.modelo || searchQuery.acabamento || searchQuery.comprimento ? (
+        selectedModel || searchDescription.trim() ? (
           <Card>
             <CardContent className="py-8">
               <div className="text-center text-muted-foreground">
