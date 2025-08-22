@@ -109,25 +109,26 @@ const Products = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
+      {/* Hero Section - Full Width */}
+      <div className="w-full">
+        <button
+          onClick={() => navigate('/')}
+          className="relative group cursor-pointer w-full"
+        >
+          <img 
+            src={productsBanner} 
+            alt="Produtos Banner" 
+            className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-white tracking-wider">
+              PRODUTOS
+            </h1>
+          </div>
+        </button>
+      </div>
+      
       <main className="container mx-auto px-4 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-8">
-          <button
-            onClick={() => navigate('/')}
-            className="relative group cursor-pointer"
-          >
-            <img 
-              src={productsBanner} 
-              alt="Produtos Banner" 
-              className="w-full max-w-4xl mx-auto h-48 object-cover rounded-xl shadow-2xl transition-transform duration-300 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
-              <h1 className="text-4xl md:text-6xl font-bold text-white tracking-wider">
-                PRODUTOS
-              </h1>
-            </div>
-          </button>
-        </div>
 
         {/* API Status */}
         <div className="mb-6">
