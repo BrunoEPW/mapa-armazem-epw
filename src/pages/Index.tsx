@@ -206,17 +206,6 @@ const Index = () => {
         </div>
 
         
-        {/* Botão para popular dados de teste */}
-        <div className="flex justify-center mb-4">
-          <Button 
-            onClick={handlePopulateTestData}
-            disabled={isPopulating}
-            variant="outline"
-            className="bg-blue-600 hover:bg-blue-700 text-white border-blue-500"
-          >
-            {isPopulating ? 'A substituir dados...' : 'Substituir Dados de Teste'}
-          </Button>
-        </div>
 
         {/* Layout específico das estantes conforme imagem */}
         <div className="flex justify-center items-end gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12 overflow-x-auto pb-4">
