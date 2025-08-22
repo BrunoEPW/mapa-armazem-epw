@@ -17,143 +17,126 @@ export const populateTestData = async ({
   console.log('🚀 Iniciando população de dados de teste...');
   
   try {
-    // Definir os produtos de teste
-    const testProducts = [
-      { code: 'RSZ32AG01', quantidade: 120 },
-      { code: 'RSEZ23VL01', quantidade: 58 },
-      { code: 'RFL23AL01', quantidade: 280 },
-    ];
+    // Definir os novos produtos de teste
+    const testProductCodes = ['RFF23VG01', 'RFZ32BG01', 'RSA15LL01', 'RSD23IW01', 'RSD23UR01'];
+    
+    // Todas as estantes e prateleiras disponíveis
+    const availableEstantes = ['A', 'B', 'C', 'D', 'E', 'F'];
+    const availablePrateleiras = [1, 2, 3, 4, 5, 6, 7, 8];
+
+    // Função para gerar localização aleatória
+    const generateRandomLocation = (): ShelfLocation => ({
+      estante: availableEstantes[Math.floor(Math.random() * availableEstantes.length)],
+      prateleira: availablePrateleiras[Math.floor(Math.random() * availablePrateleiras.length)]
+    });
+
+    // Função para gerar localizações únicas para um produto
+    const generateUniqueLocations = (min: number, max: number): ShelfLocation[] => {
+      const count = Math.floor(Math.random() * (max - min + 1)) + min;
+      const locations: ShelfLocation[] = [];
+      const usedKeys = new Set<string>();
+
+      while (locations.length < count) {
+        const location = generateRandomLocation();
+        const key = `${location.estante}${location.prateleira}`;
+        
+        if (!usedKeys.has(key)) {
+          locations.push(location);
+          usedKeys.add(key);
+        }
+      }
+
+      return locations;
+    };
+
+    // Função para gerar quantidade aleatória entre 50-120
+    const generateRandomQuantity = (): number => 
+      Math.floor(Math.random() * (120 - 50 + 1)) + 50;
 
     // Verificar/criar produtos
     const createdProducts: { [key: string]: Product } = {};
     
-    for (const testProduct of testProducts) {
-      let product = products.find(p => p.codigo === testProduct.code);
+    for (const productCode of testProductCodes) {
+      let product = products.find(p => p.codigo === productCode);
       
       if (!product) {
-        console.log(`📦 Criando produto ${testProduct.code}...`);
+        console.log(`📦 Tentando buscar produto ${productCode} na API...`);
         
-        // Criar produto básico diretamente (não usar API para dados de teste)
-        const basicProduct: Product = {
-          id: `local-product-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          codigo: testProduct.code,
-          familia: 'TESTE',
-          modelo: testProduct.code.substring(0, 6),
-          acabamento: 'PADRÃO',
-          cor: 'NATURAL',
-          comprimento: 32,
-          descricao: `Produto de teste ${testProduct.code}`,
-        };
+        // Tentar criar produto da API
+        product = await createProductFromApi(productCode);
         
-        product = basicProduct;
-        createdProducts[testProduct.code] = basicProduct;
-        console.log(`✅ Produto criado: ${testProduct.code}`);
+        if (!product) {
+          console.log(`📦 Criando produto básico ${productCode}...`);
+          
+          // Criar produto básico se não encontrar na API
+          const basicProduct: Product = {
+            id: `local-product-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            codigo: productCode,
+            familia: 'EPW',
+            modelo: productCode.substring(0, 6),
+            acabamento: productCode.substring(6, 8),
+            cor: productCode.substring(8, 10),
+            comprimento: 32,
+            descricao: `Produto EPW ${productCode}`,
+          };
+          
+          product = basicProduct;
+        }
+        
+        createdProducts[productCode] = product;
+        console.log(`✅ Produto preparado: ${productCode}`);
       } else {
-        createdProducts[testProduct.code] = product;
+        createdProducts[productCode] = product;
+        console.log(`🔍 Produto existente encontrado: ${productCode}`);
       }
     }
 
-    // Definir localizações para RSZ32AG01 (prateleiras ímpares de B e F)
-    const rszLocations: ShelfLocation[] = [
-      { estante: 'B', prateleira: 1 },
-      { estante: 'B', prateleira: 3 },
-      { estante: 'B', prateleira: 5 },
-      { estante: 'B', prateleira: 7 },
-      { estante: 'F', prateleira: 1 },
-      { estante: 'F', prateleira: 3 },
-      { estante: 'F', prateleira: 5 },
-      { estante: 'F', prateleira: 7 },
-    ];
-
-    // Definir localizações para RSEZ23VL01 (prateleiras pares de C e D)
-    const rsezLocations: ShelfLocation[] = [
-      { estante: 'C', prateleira: 2 },
-      { estante: 'C', prateleira: 4 },
-      { estante: 'C', prateleira: 6 },
-      { estante: 'D', prateleira: 2 },
-      { estante: 'D', prateleira: 4 },
-      { estante: 'D', prateleira: 6 },
-    ];
-
-    // Definir localizações para RFL23AL01 (estante A)
-    const rflLocations: ShelfLocation[] = [
-      { estante: 'A', prateleira: 1 },
-    ];
-
     let totalMaterials = 0;
+    let totalPieces = 0;
 
-    // Adicionar RSZ32AG01 às prateleiras ímpares de B e F
-    console.log('📍 Adicionando RSZ32AG01 às prateleiras...');
-    for (const location of rszLocations) {
-      const material = await addMaterial({
-        productId: createdProducts['RSZ32AG01'].id,
-        product: createdProducts['RSZ32AG01'],
-        pecas: 120,
-        location,
-      });
+    // Para cada produto, gerar localizações aleatórias
+    for (const productCode of testProductCodes) {
+      const locations = generateUniqueLocations(2, 5); // Entre 2 a 5 localizações por produto
+      let productTotalPieces = 0;
+      
+      console.log(`📍 Distribuindo ${productCode} por ${locations.length} localizações:`);
+      
+      for (const location of locations) {
+        const quantity = generateRandomQuantity();
+        
+        const material = await addMaterial({
+          productId: createdProducts[productCode].id,
+          product: createdProducts[productCode],
+          pecas: quantity,
+          location,
+        });
 
-      await addMovement({
-        materialId: material.id,
-        type: 'entrada',
-        pecas: 120,
-        norc: 'TESTE-INICIAL',
-        date: new Date().toISOString(),
-      });
+        await addMovement({
+          materialId: material.id,
+          type: 'entrada',
+          pecas: quantity,
+          norc: 'TESTE-INICIAL',
+          date: new Date().toISOString(),
+        });
 
-      console.log(`✅ Adicionado: ${location.estante}${location.prateleira} - 120 peças RSZ32AG01`);
-      totalMaterials++;
+        console.log(`  ✅ ${location.estante}${location.prateleira} - ${quantity} peças`);
+        totalMaterials++;
+        totalPieces += quantity;
+        productTotalPieces += quantity;
+      }
+      
+      console.log(`🎯 Total ${productCode}: ${productTotalPieces} peças em ${locations.length} localizações`);
     }
 
-    // Adicionar RSEZ23VL01 às prateleiras pares de C e D
-    console.log('📍 Adicionando RSEZ23VL01 às prateleiras...');
-    for (const location of rsezLocations) {
-      const material = await addMaterial({
-        productId: createdProducts['RSEZ23VL01'].id,
-        product: createdProducts['RSEZ23VL01'],
-        pecas: 58,
-        location,
-      });
-
-      await addMovement({
-        materialId: material.id,
-        type: 'entrada',
-        pecas: 58,
-        norc: 'TESTE-INICIAL',
-        date: new Date().toISOString(),
-      });
-
-      console.log(`✅ Adicionado: ${location.estante}${location.prateleira} - 58 peças RSEZ23VL01`);
-      totalMaterials++;
-    }
-
-    // Adicionar RFL23AL01 à estante A
-    console.log('📍 Adicionando RFL23AL01 à estante A...');
-    for (const location of rflLocations) {
-      const material = await addMaterial({
-        productId: createdProducts['RFL23AL01'].id,
-        product: createdProducts['RFL23AL01'],
-        pecas: 280,
-        location,
-      });
-
-      await addMovement({
-        materialId: material.id,
-        type: 'entrada',
-        pecas: 280,
-        norc: 'TESTE-INICIAL',
-        date: new Date().toISOString(),
-      });
-
-      console.log(`✅ Adicionado: ${location.estante}${location.prateleira} - 280 peças RFL23AL01`);
-      totalMaterials++;
-    }
-
-    console.log(`🎉 População de dados concluída! ${totalMaterials} materiais adicionados.`);
-    toast.success(`Dados de teste populados com sucesso! ${totalMaterials} materiais adicionados.`);
+    console.log(`🎉 População de dados concluída!`);
+    console.log(`📊 Resumo: ${totalMaterials} materiais, ${totalPieces} peças totais, ${testProductCodes.length} produtos diferentes`);
+    
+    toast.success(`Dados de teste populados! ${totalMaterials} materiais (${totalPieces} peças) distribuídos aleatoriamente.`);
     
     return {
       success: true,
       materialsAdded: totalMaterials,
+      totalPieces: totalPieces,
       productsCreated: Object.keys(createdProducts).length,
     };
 
