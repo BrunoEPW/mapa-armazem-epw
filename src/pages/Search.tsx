@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import ApiProductSearchPanel from '@/components/warehouse/ApiProductSearchPanel';
+import SearchPanel from '@/components/warehouse/SearchPanel';
 import { DebugPanel } from '@/components/ui/DebugPanel';
 import Footer from '@/components/ui/Footer';
 import searchBanner from '@/assets/search-banner.jpg';
@@ -29,7 +29,7 @@ const Search = () => {
           </button>
         </div>
 
-        <ApiProductSearchPanel />
+        <SearchPanel />
       </div>
 
       <DebugPanel additionalInfo={{ page: 'search' }} />
