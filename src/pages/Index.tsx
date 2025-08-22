@@ -261,6 +261,15 @@ const Index = () => {
       </div>
 
       <DebugPanel 
+        materials={materials}
+        onMaterialsRestore={(restoredMaterials) => {
+          // Atualizar os materiais quando restaurados do backup
+          if (restoredMaterials && restoredMaterials.length > 0) {
+            console.log('🔄 [Index] Restaurando materiais do backup no estado principal');
+            // Aqui poderíamos chamar uma função do contexto para atualizar os materiais
+            // Por agora, apenas logamos a operação
+          }
+        }}
         additionalInfo={{
           warehouseStats: {
             totalProducts: products.length,
@@ -273,6 +282,11 @@ const Index = () => {
             status: getShelfStatus(estante),
             materialCount: materials.filter(m => m.location.estante === estante).length,
           })),
+          preservationInfo: {
+            systemEnabled: true,
+            materialsBackedUp: materials.length > 0,
+            lastBackupCheck: new Date().toISOString(),
+          }
         }}
       />
 

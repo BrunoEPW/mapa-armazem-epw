@@ -1,6 +1,9 @@
 /**
  * Cache utilities for clearing browser storage
+ * Protegido contra limpeza de dados de preservação de materiais
  */
+
+import { PRESERVATION_KEYS } from './materialPreservation';
 
 export const clearAllCache = (): void => {
   console.log('🧹 [CacheUtils] Clearing all localStorage cache...');
@@ -9,8 +12,18 @@ export const clearAllCache = (): void => {
     const keys = Object.keys(localStorage);
     let clearedCount = 0;
     
+    // Lista de chaves protegidas que nunca devem ser removidas
+    const protectedKeys = [
+      ...Object.values(PRESERVATION_KEYS),
+      'user-exclusions',
+      'user-exclusions-backup1',
+      'user-exclusions-backup2',
+      'user-exclusions-backup3'
+    ];
+    
     keys.forEach(key => {
-      if (
+      // Verificar se é uma chave de cache e não é protegida
+      const isCacheKey = (
         key.startsWith('epw_api_cache') ||
         key.startsWith('epw_attributes_cache') ||
         key.includes('cache') && (
@@ -18,14 +31,21 @@ export const clearAllCache = (): void => {
           key.includes('attribute') ||
           key.includes('product')
         )
-      ) {
+      );
+      
+      const isProtected = protectedKeys.includes(key);
+      
+      if (isCacheKey && !isProtected) {
         localStorage.removeItem(key);
         clearedCount++;
         console.log(`🗑️ [CacheUtils] Removed cache key: ${key}`);
+      } else if (isCacheKey && isProtected) {
+        console.log(`🔒 [CacheUtils] Protected key preserved: ${key}`);
       }
     });
     
     console.log(`✅ [CacheUtils] Cleared ${clearedCount} cache entries from localStorage`);
+    console.log('🔒 [CacheUtils] Material preservation data protected');
   } catch (error) {
     console.warn('⚠️ [CacheUtils] Failed to clear localStorage cache:', error);
   }

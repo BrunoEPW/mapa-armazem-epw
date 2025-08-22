@@ -5,6 +5,14 @@ import { loadFromStorage, saveToStorage, STORAGE_KEYS } from '@/lib/storage';
 import { mockProducts, mockMaterials, mockMovements } from '@/data/mock-data';
 import { toast } from 'sonner';
 import { config } from '@/lib/config';
+import { 
+  createMaterialBackup, 
+  restoreMaterialsFromBackup, 
+  detectMaterialLoss, 
+  updateMaterialHeartbeat,
+  initializeMaterialPreservation,
+  isMaterialPreservationEnabled 
+} from '@/utils/materialPreservation';
 
 export const useSupabaseWarehouseData = () => {
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -12,6 +20,19 @@ export const useSupabaseWarehouseData = () => {
   const [movements, setMovements] = useState<Movement[]>([]);
   const [loading, setLoading] = useState(true);
   const [dataSource, setDataSource] = useState<'mock' | 'supabase' | 'error'>('mock');
+
+  // Inicializar sistema de preservação
+  useEffect(() => {
+    initializeMaterialPreservation();
+  }, []);
+
+  // Criar backup automático quando os materiais mudam
+  useEffect(() => {
+    if (materials.length > 0) {
+      createMaterialBackup(materials);
+      updateMaterialHeartbeat(materials);
+    }
+  }, [materials]);
 
   // Migrate localStorage data to Supabase (one-time operation)
   const migrateLocalStorageData = async () => {
@@ -121,9 +142,19 @@ export const useSupabaseWarehouseData = () => {
       // Check if data was manually cleared
       const manuallyCleared = localStorage.getItem('warehouse-manual-data-cleared');
       if (manuallyCleared === 'true') {
-        console.log('🚫 Data was manually cleared - not loading mock data');
+        console.log('🚫 Data was manually cleared - verificando preservação de materiais');
+        
+        // Tentar restaurar materiais se a preservação estiver ativada
+        const restoredMaterials = restoreMaterialsFromBackup();
+        if (restoredMaterials && restoredMaterials.length > 0) {
+          console.log(`🔄 Restaurando ${restoredMaterials.length} materiais preservados`);
+          setMaterials(restoredMaterials);
+          toast.success(`${restoredMaterials.length} materiais restaurados do backup!`);
+        } else {
+          setMaterials([]);
+        }
+        
         setProducts([]);
-        setMaterials([]);
         setMovements([]);
         toast.info('Dados foram limpos manualmente - modo vazio ativado', {
           description: 'Use "Restaurar Dados Mock" se necessário'
@@ -134,11 +165,25 @@ export const useSupabaseWarehouseData = () => {
       
       console.log('📝 Loading mock data (development mode)');
       
+      // Detectar perda de materiais e tentar restaurar
+      const materialLossDetected = detectMaterialLoss([]);
+      if (materialLossDetected) {
+        const restoredMaterials = restoreMaterialsFromBackup();
+        if (restoredMaterials && restoredMaterials.length > 0) {
+          console.log(`🚨 Perda de materiais detectada - restaurando ${restoredMaterials.length} materiais`);
+          setMaterials(restoredMaterials);
+          toast.warning(`Perda de materiais detectada! ${restoredMaterials.length} materiais restaurados.`);
+        } else {
+          setMaterials(mockMaterials);
+        }
+      } else {
+        setMaterials(mockMaterials);
+      }
+      
       // Simulate a brief loading period
       await new Promise(resolve => setTimeout(resolve, 500));
       
       setProducts(mockProducts);
-      setMaterials(mockMaterials);
       setMovements(mockMovements);
       
       console.log('✅ Mock data loaded:', {
@@ -252,8 +297,21 @@ export const useSupabaseWarehouseData = () => {
         date: mov.date,
       })) || [];
 
+      // Verificar se houve perda de materiais e tentar restaurar se necessário
+      if (transformedMaterials.length === 0) {
+        const restoredMaterials = restoreMaterialsFromBackup();
+        if (restoredMaterials && restoredMaterials.length > 0) {
+          console.log(`🔄 Materiais vazios no Supabase - restaurando ${restoredMaterials.length} materiais do backup`);
+          setMaterials(restoredMaterials);
+          toast.success(`${restoredMaterials.length} materiais restaurados do backup local!`);
+        } else {
+          setMaterials(transformedMaterials);
+        }
+      } else {
+        setMaterials(transformedMaterials);
+      }
+
       setProducts(transformedProducts);
-      setMaterials(transformedMaterials);
       setMovements(transformedMovements);
 
       console.log('✅ Supabase data loaded:', {
@@ -263,15 +321,24 @@ export const useSupabaseWarehouseData = () => {
       });
 
     } catch (error) {
-      console.error('💥 Supabase error, falling back to mock data:', error);
+      console.error('💥 Supabase error, falling back to preserved materials or mock data:', error);
       setDataSource('error');
       
-      // Fallback to mock data
+      // Tentar restaurar materiais preservados primeiro
+      const restoredMaterials = restoreMaterialsFromBackup();
+      if (restoredMaterials && restoredMaterials.length > 0) {
+        console.log(`🔄 Erro no Supabase - restaurando ${restoredMaterials.length} materiais preservados`);
+        setMaterials(restoredMaterials);
+        toast.warning(`Erro no Supabase - ${restoredMaterials.length} materiais restaurados do backup!`);
+      } else {
+        setMaterials(mockMaterials);
+      }
+      
+      // Fallback to mock data para produtos e movimentos
       setProducts(mockProducts);
-      setMaterials(mockMaterials);
       setMovements(mockMovements);
       
-      toast.error('Erro no Supabase - usando dados mock');
+      toast.error('Erro no Supabase - usando dados locais/mock');
     } finally {
       setLoading(false);
     }

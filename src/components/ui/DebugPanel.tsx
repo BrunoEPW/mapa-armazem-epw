@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Copy, Bug, Wifi, WifiOff, Trash2, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { MaterialPreservationPanel } from '@/components/warehouse/MaterialPreservationPanel';
 
 interface LogEntry {
   id: string;
@@ -27,9 +28,15 @@ interface SystemInfo {
 
 interface DebugPanelProps {
   additionalInfo?: Record<string, any>;
+  materials?: any[];
+  onMaterialsRestore?: (materials: any[]) => void;
 }
 
-export const DebugPanel: React.FC<DebugPanelProps> = ({ additionalInfo }) => {
+export const DebugPanel: React.FC<DebugPanelProps> = ({ 
+  additionalInfo, 
+  materials = [], 
+  onMaterialsRestore 
+}) => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [systemInfo, setSystemInfo] = useState<SystemInfo>();
@@ -225,6 +232,9 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ additionalInfo }) => {
             <TabsTrigger value="logs">
               Logs ({logs.length})
             </TabsTrigger>
+            <TabsTrigger value="preservation">
+              Preservação
+            </TabsTrigger>
             <TabsTrigger value="system">Sistema</TabsTrigger>
             {additionalInfo && (
               <TabsTrigger value="app">App Info</TabsTrigger>
@@ -256,6 +266,15 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ additionalInfo }) => {
                   ))}
                 </div>
               )}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="preservation" className="h-[400px]">
+            <ScrollArea className="h-full">
+              <MaterialPreservationPanel 
+                materials={materials}
+                onMaterialsRestore={onMaterialsRestore}
+              />
             </ScrollArea>
           </TabsContent>
 
