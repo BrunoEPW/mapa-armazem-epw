@@ -13,35 +13,7 @@ interface UseOptimizedAttributesReturn {
   refresh: () => Promise<void>;
 }
 
-// Singleton cache for attributes to share across components
-class AttributesCache {
-  private static instance: AttributesCache;
-  private cache = new Map<string, { data: ApiAttribute[]; timestamp: number }>();
-  private cacheTimeout = 10 * 60 * 1000; // 10 minutes
-
-  static getInstance(): AttributesCache {
-    if (!AttributesCache.instance) {
-      AttributesCache.instance = new AttributesCache();
-    }
-    return AttributesCache.instance;
-  }
-
-  get(key: string): ApiAttribute[] | null {
-    const cached = this.cache.get(key);
-    if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
-      return cached.data;
-    }
-    return null;
-  }
-
-  set(key: string, data: ApiAttribute[]): void {
-    this.cache.set(key, { data, timestamp: Date.now() });
-  }
-
-  clear(): void {
-    this.cache.clear();
-  }
-}
+// Cache removed - no caching enabled
 
 export const useOptimizedAttributes = (): UseOptimizedAttributesReturn => {
   const [modelos, setModelos] = useState<ApiAttribute[]>([]);
@@ -53,7 +25,7 @@ export const useOptimizedAttributes = (): UseOptimizedAttributesReturn => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const cache = AttributesCache.getInstance();
+  // Cache removed - no caching enabled
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchAttribute = useCallback(async (
@@ -61,22 +33,17 @@ export const useOptimizedAttributes = (): UseOptimizedAttributesReturn => {
     fetchFunction: () => Promise<ApiAttribute[]>,
     setter: (data: ApiAttribute[]) => void
   ) => {
-    // Check cache first
-    const cached = cache.get(type);
-    if (cached) {
-      setter(cached);
-      return;
-    }
-
+    console.log(`🚀 [useOptimizedAttributes] Making fresh API call for ${type} - no cache enabled`);
+    
     try {
       const data = await fetchFunction();
       setter(data);
-      cache.set(type, data);
+      console.log(`✅ [useOptimizedAttributes] Fresh API call for ${type} completed successfully`);
     } catch (err) {
       console.warn(`⚠️ [useOptimizedAttributes] Failed to fetch ${type}:`, err);
       setter([]);
     }
-  }, [cache]);
+  }, []);
 
   const loadAllAttributes = useCallback(async () => {
     if (abortControllerRef.current) {
@@ -113,9 +80,9 @@ export const useOptimizedAttributes = (): UseOptimizedAttributesReturn => {
   }, [fetchAttribute]);
 
   const refresh = useCallback(async () => {
-    cache.clear();
+    console.log('🔄 [useOptimizedAttributes] Manual refresh initiated - no cache to clear');
     await loadAllAttributes();
-  }, [cache, loadAllAttributes]);
+  }, [loadAllAttributes]);
 
   // Initial load with debouncing
   useEffect(() => {

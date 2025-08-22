@@ -15,8 +15,7 @@ interface ProxyStatus {
 
 class AttributesApiService {
   private baseApiUrl = 'https://pituxa.epw.pt/api/atributos';
-  private cache = new Map<string, { data: ApiAttribute[]; timestamp: number }>();
-  private cacheTimeout = 30 * 60 * 1000; // 30 minutes (mais agressivo)
+  // Cache removed - no caching enabled
   
   // Circuit breaker para proxies
   private proxyStatuses = new Map<string, ProxyStatus>();
@@ -30,8 +29,7 @@ class AttributesApiService {
   private defaultTimeout = 30000; // 30 segundos
   private maxRetries = 3;
   
-  // Cache persistente
-  private persistentCacheKey = 'epw_attributes_cache';
+  // Cache disabled - no persistent cache
 
   async fetchModelos(): Promise<ApiAttribute[]> {
     return this.fetchAttribute('modelo');
@@ -58,58 +56,21 @@ class AttributesApiService {
   }
 
   private async fetchAttribute(attributeType: string): Promise<ApiAttribute[]> {
-    const cacheKey = attributeType;
+    console.log(`🚀 [AttributesApiService] Making fresh API call for ${attributeType} - no cache enabled`);
     
-    // Verificar cache em memória
-    const cached = this.cache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
-      console.log(`📦 [AttributesApiService] Using memory cache for ${attributeType}:`, cached.data.length, 'items');
-      return cached.data;
-    }
-    
-    // Verificar cache persistente no localStorage
-    const persistentCached = this.getPersistentCache(cacheKey);
-    if (persistentCached && Date.now() - persistentCached.timestamp < this.cacheTimeout * 2) {
-      console.log(`💾 [AttributesApiService] Using persistent cache for ${attributeType}:`, persistentCached.data.length, 'items');
-      // Também colocar no cache em memória
-      this.cache.set(cacheKey, persistentCached);
-      return persistentCached.data;
-    }
-
     // Limitar requisições simultâneas
     while (this.activeRequests.size >= this.maxConcurrentRequests) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    this.activeRequests.add(cacheKey);
+    this.activeRequests.add(attributeType);
 
     try {
       const result = await this.makeRequestWithRetry(attributeType);
-      
-      // Cache the successful result em memória e localStorage
-      const cacheData = {
-        data: result || [],
-        timestamp: Date.now()
-      };
-      
-      this.cache.set(cacheKey, cacheData);
-      this.setPersistentCache(cacheKey, cacheData);
-
+      console.log(`✅ [AttributesApiService] Fresh API call for ${attributeType} completed successfully`);
       return result;
     } catch (error) {
       console.error(`❌ [AttributesApiService] Fetch ${attributeType} error:`, error);
-      
-      // Return cached data if available, even if expired
-      if (cached) {
-        console.warn(`⚠️ [AttributesApiService] Using expired cache data for ${attributeType} due to API failure`);
-        return cached.data;
-      }
-      
-      // Verificar cache persistente expirado como último recurso
-      if (persistentCached) {
-        console.warn(`⚠️ [AttributesApiService] Using expired persistent cache for ${attributeType}`);
-        return persistentCached.data;
-      }
       
       // Fallback to basic static data for critical attributes
       const fallbackData = this.getFallbackData(attributeType);
@@ -120,7 +81,7 @@ class AttributesApiService {
       
       throw error;
     } finally {
-      this.activeRequests.delete(cacheKey);
+      this.activeRequests.delete(attributeType);
     }
   }
 
@@ -331,40 +292,10 @@ class AttributesApiService {
     }
   }
 
-  private getPersistentCache(cacheKey: string): any {
-    try {
-      const stored = localStorage.getItem(`${this.persistentCacheKey}_${cacheKey}`);
-      return stored ? JSON.parse(stored) : null;
-    } catch (error) {
-      console.warn(`⚠️ [AttributesApiService] Failed to read persistent cache for ${cacheKey}:`, error);
-      return null;
-    }
-  }
-
-  private setPersistentCache(cacheKey: string, data: any): void {
-    try {
-      localStorage.setItem(`${this.persistentCacheKey}_${cacheKey}`, JSON.stringify(data));
-    } catch (error) {
-      console.warn(`⚠️ [AttributesApiService] Failed to write persistent cache for ${cacheKey}:`, error);
-    }
-  }
-
   clearCache(): void {
-    this.cache.clear();
+    console.log('🧹 [AttributesApiService] No cache to clear - caching disabled');
     this.activeRequests.clear();
     this.proxyStatuses.clear();
-    
-    // Limpar também o cache persistente
-    try {
-      const keys = Object.keys(localStorage);
-      keys.forEach(key => {
-        if (key.startsWith(this.persistentCacheKey)) {
-          localStorage.removeItem(key);
-        }
-      });
-    } catch (error) {
-      console.warn('⚠️ [AttributesApiService] Failed to clear persistent cache:', error);
-    }
   }
 
   private getFallbackData(attributeType: string): ApiAttribute[] {

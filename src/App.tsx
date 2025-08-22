@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WarehouseProvider } from "@/contexts/WarehouseContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { clearAllAppCache } from "@/utils/cacheUtils";
 
 import Index from "./pages/Index";
 import Shelf from "./pages/Shelf";
@@ -17,6 +18,9 @@ import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+// Clear all cache on app startup
+clearAllAppCache();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

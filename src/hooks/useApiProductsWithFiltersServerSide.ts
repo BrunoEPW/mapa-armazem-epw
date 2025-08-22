@@ -41,9 +41,7 @@ export const useApiProductsWithFiltersServerSide = (
   const abortControllerRef = useRef<AbortController | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cache para evitar requisições desnecessárias
-  const cacheRef = useRef<Map<string, { products: Product[]; totalCount: number; timestamp: number }>>(new Map());
-  const cacheTimeout = 5 * 60 * 1000; // 5 minutos
+  // Cache removed - no caching enabled
 
   const mapApiProductToProduct = (apiProduct: any): Product => {
     const description = apiProduct.strDescricao || 'Sem descrição';
@@ -109,17 +107,7 @@ export const useApiProductsWithFiltersServerSide = (
     // Check if there are active filters
     const hasFilters = Object.values(filters).some(value => value && value !== 'all' && value.trim() !== '');
     
-    // Verificar cache
-    const cacheKey = generateCacheKey(page, filters);
-    const cached = cacheRef.current.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < cacheTimeout) {
-      console.log('📦 [useApiProductsWithFiltersServerSide] Using cache for:', cacheKey);
-      setProducts(cached.products);
-      setTotalCount(cached.totalCount);
-      setTotalPages(Math.ceil(cached.totalCount / itemsPerPage));
-      setLoading(false);
-      return;
-    }
+    console.log('🚀 [useApiProductsWithFiltersServerSide] Making fresh API call - no cache enabled');
     
     setConnectionStatus(
       hasFilters 
@@ -188,12 +176,7 @@ export const useApiProductsWithFiltersServerSide = (
       setTotalCount(totalRecords);
       setTotalPages(Math.ceil(totalRecords / itemsPerPage));
 
-      // Cache do resultado
-      cacheRef.current.set(cacheKey, {
-        products: mappedProducts,
-        totalCount: totalRecords,
-        timestamp: Date.now()
-      });
+      // No caching - just continue
 
       const statusMessage = hasFilters 
         ? `${mappedProducts.length} produtos encontrados (filtrados no servidor)`
@@ -256,7 +239,7 @@ export const useApiProductsWithFiltersServerSide = (
   };
 
   const refresh = async () => {
-    cacheRef.current.clear();
+    console.log('🔄 [useApiProductsWithFiltersServerSide] Manual refresh initiated - no cache to clear');
     await loadProducts(currentPage, activeFilters);
   };
 

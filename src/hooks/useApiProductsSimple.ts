@@ -36,9 +36,7 @@ export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cache para evitar requisições desnecessárias
-  const cacheRef = useRef<Map<string, { products: SimpleProduct[]; totalCount: number; timestamp: number }>>(new Map());
-  const cacheTimeout = 5 * 60 * 1000; // 5 minutos
+  // Cache removed - no caching enabled
 
   const mapApiProductToSimple = (apiProduct: any): SimpleProduct => {
     return {
@@ -63,21 +61,7 @@ export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
     setLoading(true);
     setError(null);
 
-    // Verificar cache (só se não for refresh forçado)
-    if (!forceRefresh) {
-      const cacheKey = generateCacheKey(page, search);
-      const cached = cacheRef.current.get(cacheKey);
-      if (cached && Date.now() - cached.timestamp < cacheTimeout) {
-        console.log('📦 [useApiProductsSimple] Using cache for:', cacheKey);
-        setProducts(cached.products);
-        setTotalCount(cached.totalCount);
-        setTotalPages(Math.ceil(cached.totalCount / itemsPerPage));
-        setLoading(false);
-        return;
-      }
-    } else {
-      console.log('🔄 [useApiProductsSimple] Force refresh requested, ignoring cache');
-    }
+    console.log('🚀 [useApiProductsSimple] Making fresh API call - no cache enabled');
     
     setConnectionStatus(search ? 'Pesquisando produtos...' : 'Carregando produtos...');
 
@@ -130,13 +114,7 @@ export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
       setTotalCount(totalRecords || 0);
       setTotalPages(Math.ceil((totalRecords || 0) / itemsPerPage));
 
-      // Cache do resultado
-      const cacheKey = generateCacheKey(page, search);
-      cacheRef.current.set(cacheKey, {
-        products: mappedProducts,
-        totalCount: totalRecords || 0,
-        timestamp: Date.now()
-      });
+      // No caching - just continue
 
       const statusMessage = search.trim()
         ? `${mappedProducts.length} produtos encontrados`
@@ -191,8 +169,7 @@ export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
   };
 
   const refresh = async () => {
-    console.log('🔄 [useApiProductsSimple] Manual refresh initiated');
-    cacheRef.current.clear();
+    console.log('🔄 [useApiProductsSimple] Manual refresh initiated - no cache to clear');
     await loadProducts(currentPage, searchQuery, true);
   };
 

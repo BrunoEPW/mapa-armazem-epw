@@ -31,9 +31,7 @@ interface ProxyStatus {
 
 class ApiService {
   private originalApiUrl = 'https://pituxa.epw.pt/api/artigos';
-  private cache = new Map<string, { data: ApiArtigo[]; timestamp: number; recordsTotal: number; filters?: ApiFilters }>();
-  private cacheTimeout = 15 * 60 * 1000; // 15 minutes (mais agressivo)
-  private prefetchCache = new Map<string, Promise<ApiResponse>>();
+  // Cache removed - no caching enabled
   
   // Circuit breaker para proxies
   private proxyStatuses = new Map<string, ProxyStatus>();
@@ -48,8 +46,7 @@ class ApiService {
   private defaultTimeout = 30000; // 30 segundos
   private maxRetries = 3;
   
-  // Cache persistente no localStorage
-  private persistentCacheKey = 'epw_api_cache';
+  // Cache disabled - no persistent cache
 
   async fetchArtigos(draw: number = 1, start: number = 0, length: number = 10): Promise<ApiArtigo[]> {
     const result = await this.fetchArtigosWithTotal(draw, start, length);
@@ -57,47 +54,11 @@ class ApiService {
   }
 
   async fetchArtigosWithTotal(draw: number = 1, start: number = 0, length: number = 10, filters?: ApiFilters): Promise<ApiResponse> {
-    const cacheKey = this.generateCacheKey(start, length, filters);
+    console.log('🚀 [ApiService] Making fresh API call - no cache enabled');
     
-    // Verificar cache em memória
-    const cached = this.cache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
-      console.log('📦 [ApiService] Using memory cache:', cached.data.length, 'items');
-      return {
-        draw,
-        recordsTotal: cached.recordsTotal,
-        recordsFiltered: cached.recordsTotal,
-        data: cached.data
-      };
-    }
-    
-    // Verificar cache persistente no localStorage
-    const persistentCached = this.getPersistentCache(cacheKey);
-    if (persistentCached && Date.now() - persistentCached.timestamp < this.cacheTimeout * 2) {
-      console.log('💾 [ApiService] Using persistent cache:', persistentCached.data.length, 'items');
-      // Também colocar no cache em memória
-      this.cache.set(cacheKey, persistentCached);
-      return {
-        draw,
-        recordsTotal: persistentCached.recordsTotal,
-        recordsFiltered: persistentCached.recordsTotal,
-        data: persistentCached.data
-      };
-    }
-
-    // Implementar request queue para evitar sobrecarga
-    return this.queueRequest(cacheKey, async () => {
-      // Check if request is already in progress
-      const pendingRequest = this.prefetchCache.get(cacheKey);
-      if (pendingRequest) {
-        console.log('⏳ [ApiService] Using pending request for', cacheKey);
-        return pendingRequest;
-      }
-
-      // Create and cache the request promise
-      const requestPromise = this.makeRequestWithRetry(draw, start, length, filters);
-      this.prefetchCache.set(cacheKey, requestPromise);
-      return requestPromise;
+    // Direct call without cache
+    return this.queueRequest(`${start}-${length}`, async () => {
+      return this.makeRequestWithRetry(draw, start, length, filters);
     });
 
   }
@@ -131,20 +92,8 @@ class ApiService {
     try {
       const result = await requestFn();
       
-      // Cache the successful result em memória e localStorage
-      const cacheData = {
-        data: result.data || [],
-        timestamp: Date.now(),
-        recordsTotal: result.recordsFiltered || result.recordsTotal || 0
-      };
-      
-      this.cache.set(cacheKey, cacheData);
-      this.setPersistentCache(cacheKey, cacheData);
-
-      // Prefetch next page in background (conservative)
-      if (this.activeRequests.size < this.maxConcurrentRequests) {
-        this.prefetchNextPage(this.extractStartFromCacheKey(cacheKey), this.extractLengthFromCacheKey(cacheKey));
-      }
+      // No caching - just return result
+      console.log('✅ [ApiService] Fresh API call completed successfully');
 
       // Resolver requisições na fila
       const queued = this.requestQueue.get(cacheKey);
@@ -164,22 +113,10 @@ class ApiService {
         this.requestQueue.delete(cacheKey);
       }
       
-      // Return cached data if available, even if expired
-      const cached = this.cache.get(cacheKey) || this.getPersistentCache(cacheKey);
-      if (cached) {
-        console.warn('⚠️ [ApiService] Using expired cache data due to API failure');
-        return {
-          draw: 1,
-          recordsTotal: cached.recordsTotal,
-          recordsFiltered: cached.recordsTotal,
-          data: cached.data
-        };
-      }
-      
+      // No fallback cache - throw error directly
       throw error;
     } finally {
       this.activeRequests.delete(cacheKey);
-      this.prefetchCache.delete(cacheKey);
     }
   }
 
@@ -412,51 +349,7 @@ class ApiService {
     }
   }
 
-  private getPersistentCache(cacheKey: string): any {
-    try {
-      const stored = localStorage.getItem(`${this.persistentCacheKey}_${cacheKey}`);
-      return stored ? JSON.parse(stored) : null;
-    } catch (error) {
-      console.warn('⚠️ [ApiService] Failed to read persistent cache:', error);
-      return null;
-    }
-  }
-
-  private setPersistentCache(cacheKey: string, data: any): void {
-    try {
-      localStorage.setItem(`${this.persistentCacheKey}_${cacheKey}`, JSON.stringify(data));
-    } catch (error) {
-      console.warn('⚠️ [ApiService] Failed to write persistent cache:', error);
-    }
-  }
-
-  private extractStartFromCacheKey(cacheKey: string): number {
-    const parts = cacheKey.split('-');
-    return parseInt(parts[0]) || 0;
-  }
-
-  private extractLengthFromCacheKey(cacheKey: string): number {
-    const parts = cacheKey.split('-');
-    return parseInt(parts[1]) || 10;
-
-    // This should never be reached, but just in case
-    throw new Error('No proxy services available');
-  }
-
-  private prefetchNextPage(currentStart: number, length: number): void {
-    const nextStart = currentStart + length;
-    const nextCacheKey = `${nextStart}-${length}`;
-    
-    // Only prefetch if not already cached or pending
-    if (!this.cache.has(nextCacheKey) && !this.prefetchCache.has(nextCacheKey)) {
-      console.log('🔮 [ApiService] Prefetching next page:', nextStart);
-      
-      // Start prefetch in background (don't await)
-      this.fetchArtigosWithTotal(1, nextStart, length).catch(error => {
-        console.log('⚠️ [ApiService] Prefetch failed (silent):', error.message);
-      });
-    }
-  }
+  // Cache methods removed - no caching enabled
 
   async fetchAllArtigos(): Promise<ApiArtigo[]> {
     try {
@@ -472,23 +365,10 @@ class ApiService {
   }
 
   clearCache(): void {
-    this.cache.clear();
-    this.prefetchCache.clear();
+    console.log('🧹 [ApiService] No cache to clear - caching disabled');
     this.activeRequests.clear();
     this.requestQueue.clear();
     this.proxyStatuses.clear();
-    
-    // Limpar também o cache persistente
-    try {
-      const keys = Object.keys(localStorage);
-      keys.forEach(key => {
-        if (key.startsWith(this.persistentCacheKey)) {
-          localStorage.removeItem(key);
-        }
-      });
-    } catch (error) {
-      console.warn('⚠️ [ApiService] Failed to clear persistent cache:', error);
-    }
   }
 
   private generateCacheKey(start: number, length: number, filters?: ApiFilters): string {
