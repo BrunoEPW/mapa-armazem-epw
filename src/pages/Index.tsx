@@ -41,11 +41,7 @@ const Index = () => {
     const shelfMaterials = materials.filter(m => m.location.estante === estante);
     
     if (shelfMaterials.length === 0) return 'empty';
-    
-    const totalPecas = shelfMaterials.reduce((sum, m) => sum + m.pecas, 0);
-    
-    if (totalPecas < 10) return 'low';
-    return 'stock';
+    return 'with-products';
   };
 
   const getShelfClassName = (estante: string) => {
@@ -58,9 +54,8 @@ const Index = () => {
       'border-2 hover:border-blue-400',
       'bg-gradient-to-br from-gray-600 to-gray-800',
       {
-        'text-red-300 border-red-400': status === 'empty',
-        'text-yellow-300 border-yellow-400': status === 'low', 
-        'text-green-300 border-green-400': status === 'stock',
+        'text-green-300 border-green-400': status === 'empty',
+        'text-orange-300 border-orange-400': status === 'with-products',
         'text-blue-300 border-blue-400 bg-gradient-to-br from-blue-600 to-blue-800': isSelected,
       }
     );

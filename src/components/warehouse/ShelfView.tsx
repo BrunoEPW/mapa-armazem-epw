@@ -37,11 +37,7 @@ const ShelfView: React.FC = () => {
     );
     
     if (shelfMaterials.length === 0) return 'empty';
-    
-    const totalPecas = shelfMaterials.reduce((sum, m) => sum + m.pecas, 0);
-    
-    if (totalPecas < 10) return 'low';
-    return 'stock';
+    return 'with-products';
   };
 
   const getShelfClassName = (prateleira: number) => {
@@ -50,9 +46,8 @@ const ShelfView: React.FC = () => {
     const baseClasses = 'h-16 flex items-center justify-center transition-all duration-300 cursor-pointer text-lg font-bold text-white hover:scale-105 hover:shadow-lg transform border-2 rounded-lg';
     
     return cn(baseClasses, {
-      'bg-red-600 border-red-600': status === 'empty',
-      'bg-yellow-600 border-yellow-600': status === 'low',
-      'bg-green-600 border-green-600': status === 'stock',
+      'bg-green-600 border-green-600': status === 'empty',
+      'bg-orange-600 border-orange-600': status === 'with-products',
     });
   };
 
