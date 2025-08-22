@@ -10,6 +10,7 @@ import { MovementHistoryDialog } from './MovementHistoryDialog';
 import { ModelLocationsDialog } from './ModelLocationsDialog';
 import { decodeEPWReference } from '@/utils/epwCodeDecoder';
 import { ModeloSelect } from './ModeloSelect';
+import { ComprimentoSelect } from './ComprimentoSelect';
 import { useApiProductsSimple } from '@/hooks/useApiProductsSimple';
 import { SearchDebugConsole } from './SearchDebugConsole';
 
@@ -19,6 +20,7 @@ const SearchPanel: React.FC = () => {
   
   // Estado para pesquisa avançada (integrada com API)
   const [selectedModel, setSelectedModel] = useState('all');
+  const [selectedComprimento, setSelectedComprimento] = useState('all');
   
   // Estado para resultados e UI
   const [searchResults, setSearchResults] = useState<Array<any>>([]);
@@ -26,7 +28,7 @@ const SearchPanel: React.FC = () => {
   const [selectedModelData, setSelectedModelData] = useState<any | null>(null);
   const [showModelDialog, setShowModelDialog] = useState(false);
   
-  // Hook para buscar produtos da API (com filtro de modelo)
+  // Hook para buscar produtos da API (com filtro de modelo e comprimento)
   const {
     products: apiProducts,
     loading,
@@ -39,11 +41,14 @@ const SearchPanel: React.FC = () => {
     searchQuery,
     setSearchQuery,
     connectionStatus
-  } = useApiProductsSimple(selectedModel === 'all' ? undefined : selectedModel);
+  } = useApiProductsSimple(
+    selectedModel === 'all' ? undefined : selectedModel,
+    selectedComprimento === 'all' ? undefined : selectedComprimento
+  );
 
   // Função para pesquisar materiais baseado nos produtos da API
   const handleApiSearch = () => {
-    if (selectedModel === 'all' && !searchQuery.trim()) {
+    if (selectedModel === 'all' && selectedComprimento === 'all' && !searchQuery.trim()) {
       setSearchResults([]);
       return;
     }
@@ -125,6 +130,7 @@ const SearchPanel: React.FC = () => {
 
   const handleClearApiSearch = () => {
     setSelectedModel('all');
+    setSelectedComprimento('all');
     setSearchQuery('');
     setSearchResults([]);
   };
@@ -243,10 +249,14 @@ const SearchPanel: React.FC = () => {
             </div>
           </div>
 
-          <div className="max-w-md mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
             <ModeloSelect 
               value={selectedModel} 
               onValueChange={setSelectedModel}
+            />
+            <ComprimentoSelect 
+              value={selectedComprimento} 
+              onValueChange={setSelectedComprimento}
             />
           </div>
           
@@ -486,6 +496,7 @@ const SearchPanel: React.FC = () => {
           searchQuery
         }}
         selectedModel={selectedModel}
+        selectedComprimento={selectedComprimento}
         additionalInfo={{ page: 'search', materialsCount: materials.length }}
       />
     </div>

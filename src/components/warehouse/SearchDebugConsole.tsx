@@ -17,12 +17,14 @@ interface SearchDebugConsoleProps {
     searchQuery: string;
   };
   selectedModel: string;
+  selectedComprimento?: string;
   additionalInfo?: Record<string, any>;
 }
 
 export const SearchDebugConsole: React.FC<SearchDebugConsoleProps> = ({ 
   hookData, 
   selectedModel,
+  selectedComprimento = 'all',
   additionalInfo = {} 
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,6 +32,7 @@ export const SearchDebugConsole: React.FC<SearchDebugConsoleProps> = ({
   const debugInfo = {
     timestamp: new Date().toISOString(),
     selectedModel,
+    selectedComprimento,
     searchQuery: hookData.searchQuery,
     products: {
       count: hookData.products.length,
@@ -107,8 +110,9 @@ export const SearchDebugConsole: React.FC<SearchDebugConsoleProps> = ({
                 <div className="space-y-1 text-xs">
                   <div>Estado: {hookData.loading ? '🔄 Carregando' : '✅ Pronto'}</div>
                   <div>Conexão: {hookData.isConnected ? '🟢 Online' : '🔴 Offline'}</div>
-                  <div>Modelo: {selectedModel === 'all' ? 'Todos' : selectedModel}</div>
-                  <div>Pesquisa: {hookData.searchQuery || 'Vazia'}</div>
+                   <div>Modelo: {selectedModel === 'all' ? 'Todos' : selectedModel}</div>
+                   <div>Comprimento: {selectedComprimento === 'all' ? 'Todos' : selectedComprimento}</div>
+                   <div>Pesquisa: {hookData.searchQuery || 'Vazia'}</div>
                 </div>
               </div>
 
