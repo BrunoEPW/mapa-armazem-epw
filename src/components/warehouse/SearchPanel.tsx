@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Package } from 'lucide-react';
+import { Search, MapPin, Package, AlertCircle, Loader2, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,10 @@ const SearchPanel: React.FC = () => {
     products: apiProducts,
     loading,
     error,
+    currentPage,
+    totalPages,
+    totalCount,
+    setCurrentPage,
     refresh,
     searchQuery,
     setSearchQuery
@@ -192,6 +196,37 @@ const SearchPanel: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* API Status */}
+          <div className="mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border border-white/20 rounded-lg bg-white/5">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {loading ? 'Carregando...' : `${apiProducts.length} produtos disponíveis`}
+                </span>
+                <div className="flex items-center gap-1">
+                  <div className={`w-2 h-2 rounded-full ${
+                    !error ? 'bg-green-500' : 'bg-red-500'
+                  }`} />
+                  <span className="text-xs text-muted-foreground">
+                    {!error ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={refresh} 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-2"
+                >
+                  <Search className="w-4 h-4" />
+                  Atualizar
+                </Button>
+              </div>
+            </div>
+          </div>
+
           <div className="max-w-md mx-auto">
             <ModeloSelect 
               value={selectedModel} 
@@ -207,16 +242,6 @@ const SearchPanel: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60"
             />
-          </div>
-          
-          <div className="flex gap-2 max-w-md mx-auto">
-            <Button onClick={handleApiSearch} className="flex-1" disabled={loading}>
-              <Search className="w-4 h-4 mr-2" />
-              {loading ? 'Pesquisando...' : 'Pesquisar'}
-            </Button>
-            <Button variant="outline" onClick={handleClearApiSearch}>
-              Limpar
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -264,67 +289,84 @@ const SearchPanel: React.FC = () => {
         </CardContent>
       </Card>
 
-      {searchResults.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Resultados da Pesquisa ({searchResults.length} encontrados)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {searchResults.map((material) => (
-                  <div
-                    key={material.id}
-                    className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div 
-                        className="flex-1 cursor-pointer" 
-                        onClick={() => setSelectedMaterialId(material.id)}
-                      >
-                        <h4 className="font-medium hover:text-primary transition-colors">
-                          {material.product.familia} - {material.product.modelo} - {material.product.acabamento}
-                        </h4>
-                        <div className="flex gap-4 text-sm text-muted-foreground mt-1">
-                          <span>Cor: {material.product.cor}</span>
-                          <span>Comprimento: {material.product.comprimento}mm</span>
-                          <Badge variant="outline">{material.pecas} peças</Badge>
-                        </div>
-                      </div>
-                      
-                      <Button
-                        variant="outline"
-                        onClick={() => handleLocationClick(material.location)}
-                        className="flex items-center gap-2"
-                      >
-                        <MapPin className="w-4 h-4" />
-                        {material.location.estante}{material.location.prateleira}
-                        {material.location.posicao && (
-                          <span className="text-xs text-muted-foreground">
-                            ({material.location.posicao === 'esquerda' ? 'E' : material.location.posicao === 'central' ? 'C' : 'D'})
-                          </span>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-              ))}
+      {/* Products List - Direct from API (like Products page) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Produtos da API</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {error ? (
+            <div className="p-6 text-center">
+              <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+              <p className="text-red-500 font-medium">Erro ao carregar produtos</p>
+              <p className="text-red-400 text-sm mt-1">{error}</p>
             </div>
-          </CardContent>
-        </Card>
-      ) : (
-        (selectedModel !== 'all' || searchQuery.trim()) ? (
-          <Card>
-            <CardContent className="py-8">
-              <div className="text-center text-muted-foreground">
-                <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium mb-2">Nenhum resultado encontrado</p>
-                <p>Não foi encontrado nenhum produto com essas características no armazém.</p>
+          ) : loading ? (
+            <div className="p-8 text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+              <p className="text-white">Carregando produtos...</p>
+            </div>
+          ) : apiProducts.length === 0 ? (
+            <div className="p-8 text-center">
+              <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-4" />
+              <p className="text-white text-lg mb-2">Nenhum produto encontrado</p>
+              <p className="text-white/60">Tente ajustar os termos de pesquisa</p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-white/20">
+                      <th className="text-left p-4 text-white font-medium">Código</th>
+                      <th className="text-left p-4 text-white font-medium">Descrição</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {apiProducts.map((product, index) => (
+                      <tr key={product.id || index} className="border-b border-white/10 hover:bg-white/5">
+                        <td className="p-4 text-white font-mono text-sm">
+                          {product.codigo}
+                        </td>
+                        <td className="p-4 text-white">
+                          {product.descricao}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </CardContent>
-          </Card>
-        ) : null
-      )}
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-6">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Anterior
+                  </Button>
+                  
+                  <span className="text-white text-sm">
+                    Página {currentPage} de {totalPages}
+                  </span>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Próxima
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {selectedMaterialId && (
         <MovementHistoryDialog 
