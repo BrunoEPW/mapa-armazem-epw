@@ -156,7 +156,7 @@ const SearchPanel: React.FC = () => {
     return modelo || 'Modelo Desconhecido';
   };
 
-  // Agrupamentos de materiais por modelo com contagens
+  // Agrupamentos de materiais por modelo com contagens e localizações detalhadas
   const modelGroups = materials.reduce((acc, material) => {
     const modelo = material.product.modelo;
     if (!acc[modelo]) {
@@ -164,20 +164,34 @@ const SearchPanel: React.FC = () => {
         modelo,
         displayName: getModelDisplayName(modelo, material.product),
         totalPecas: 0,
-        locations: new Set<string>(),
+        locations: [],
         materials: [],
-        firstProduct: material.product
+        firstProduct: material.product,
+        description: material.product.descricao || `${material.product.familia} ${material.product.modelo} ${material.product.acabamento}`.trim()
       };
     }
     acc[modelo].totalPecas += material.pecas;
-    acc[modelo].locations.add(`${material.location.estante}${material.location.prateleira}`);
+    acc[modelo].locations.push({
+      estante: material.location.estante,
+      prateleira: material.location.prateleira,
+      posicao: material.location.posicao,
+      pecas: material.pecas,
+      locationKey: `${material.location.estante}${material.location.prateleira}`
+    });
     acc[modelo].materials.push(material);
     return acc;
   }, {} as Record<string, { 
     modelo: string; 
     displayName: string;
+    description: string;
     totalPecas: number; 
-    locations: Set<string>; 
+    locations: Array<{
+      estante: string;
+      prateleira: number;
+      posicao?: string;
+      pecas: number;
+      locationKey: string;
+    }>; 
     materials: any[];
     firstProduct: any;
   }>);
@@ -255,30 +269,56 @@ const SearchPanel: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {sortedModels.map((group) => (
-              <Button
-                key={group.modelo}
-                variant="outline"
-                onClick={() => handleModelClick(group.modelo)}
-                className="h-auto p-4 flex flex-col gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all duration-200 group"
-              >
-                <div className="flex items-center gap-2 w-full">
-                  <div className="w-3 h-3 rounded-full bg-emerald-500 group-hover:bg-primary transition-colors"></div>
-                  <span className="font-medium text-sm truncate flex-1 text-left">
-                    {group.displayName}
-                  </span>
-                </div>
-                <div className="flex justify-between w-full text-xs text-muted-foreground">
-                  <span className="font-semibold text-emerald-600 group-hover:text-primary">
-                    {group.totalPecas} pcs
-                  </span>
-                  <span className="text-orange-600 group-hover:text-primary">
-                    {group.locations.size} loc.
-                  </span>
-                </div>
-              </Button>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {sortedModels.map((group) => {
+              // Agregar localizações por estante/prateleira e somar peças
+              const locationSummary = group.locations.reduce((acc, loc) => {
+                const key = loc.locationKey;
+                if (!acc[key]) {
+                  acc[key] = {
+                    estante: loc.estante,
+                    prateleira: loc.prateleira,
+                    totalPecas: 0
+                  };
+                }
+                acc[key].totalPecas += loc.pecas;
+                return acc;
+              }, {} as Record<string, { estante: string; prateleira: number; totalPecas: number }>);
+
+              const uniqueLocations = Object.values(locationSummary);
+              const locationText = uniqueLocations.length <= 3 
+                ? uniqueLocations.map(loc => `${loc.estante}${loc.prateleira} (${loc.totalPecas})`).join(', ')
+                : `${uniqueLocations.slice(0, 2).map(loc => `${loc.estante}${loc.prateleira}`).join(', ')} +${uniqueLocations.length - 2}`;
+
+              return (
+                <Button
+                  key={group.modelo}
+                  variant="outline"
+                  onClick={() => handleModelClick(group.modelo)}
+                  className="h-auto p-4 flex flex-col gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all duration-200 group text-left"
+                >
+                  <div className="flex items-start gap-2 w-full">
+                    <div className="w-3 h-3 rounded-full bg-emerald-500 group-hover:bg-primary transition-colors mt-1 flex-shrink-0"></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm text-white leading-tight mb-1 truncate">
+                        {group.description}
+                      </div>
+                      <div className="flex justify-between items-center text-xs mb-1">
+                        <span className="font-semibold text-emerald-600 group-hover:text-primary">
+                          {group.totalPecas} peças
+                        </span>
+                        <span className="text-orange-600 group-hover:text-primary">
+                          {uniqueLocations.length} loc.
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground leading-tight">
+                        {locationText}
+                      </div>
+                    </div>
+                  </div>
+                </Button>
+              );
+            })}
           </div>
           {sortedModels.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
