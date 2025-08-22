@@ -11,6 +11,7 @@ import { ModelLocationsDialog } from './ModelLocationsDialog';
 import { decodeEPWReference } from '@/utils/epwCodeDecoder';
 import { ModeloSelect } from './ModeloSelect';
 import { useApiProductsSimple } from '@/hooks/useApiProductsSimple';
+import { SearchDebugConsole } from './SearchDebugConsole';
 
 const SearchPanel: React.FC = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const SearchPanel: React.FC = () => {
   const [selectedModelData, setSelectedModelData] = useState<any | null>(null);
   const [showModelDialog, setShowModelDialog] = useState(false);
   
-  // Hook para buscar produtos da API
+  // Hook para buscar produtos da API (com filtro de modelo)
   const {
     products: apiProducts,
     loading,
@@ -36,8 +37,9 @@ const SearchPanel: React.FC = () => {
     setCurrentPage,
     refresh,
     searchQuery,
-    setSearchQuery
-  } = useApiProductsSimple();
+    setSearchQuery,
+    connectionStatus
+  } = useApiProductsSimple(selectedModel === 'all' ? undefined : selectedModel);
 
   // Função para pesquisar materiais baseado nos produtos da API
   const handleApiSearch = () => {
@@ -215,7 +217,7 @@ const SearchPanel: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border border-white/20 rounded-lg bg-white/5">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
-                  {loading ? 'Carregando...' : `${apiProducts.length} produtos disponíveis`}
+                  {loading ? 'Carregando...' : connectionStatus}
                 </span>
                 <div className="flex items-center gap-1">
                   <div className={`w-2 h-2 rounded-full ${
@@ -377,30 +379,78 @@ const SearchPanel: React.FC = () => {
                 </table>
               </div>
               
-              {/* Pagination */}
+              {/* Numbered Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-6">
+                <div className="flex items-center justify-center gap-2 mt-6 flex-wrap">
+                  {/* Previous Button */}
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
+                    className="min-w-[80px]"
                   >
                     Anterior
                   </Button>
                   
-                  <span className="text-white text-sm">
-                    Página {currentPage} de {totalPages}
-                  </span>
+                  {/* Page Numbers */}
+                  <div className="flex gap-1 flex-wrap">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                      // Show first page, last page, current page and nearby pages
+                      const isVisible = 
+                        pageNum === 1 || 
+                        pageNum === totalPages || 
+                        (pageNum >= currentPage - 2 && pageNum <= currentPage + 2);
+                      
+                      // Show ellipsis
+                      const showEllipsisBefore = pageNum === currentPage - 3 && currentPage > 4;
+                      const showEllipsisAfter = pageNum === currentPage + 3 && currentPage < totalPages - 3;
+                      
+                      if (!isVisible && !showEllipsisBefore && !showEllipsisAfter) {
+                        return null;
+                      }
+                      
+                      if (showEllipsisBefore || showEllipsisAfter) {
+                        return (
+                          <span key={`ellipsis-${pageNum}`} className="px-2 py-1 text-white/60">
+                            ...
+                          </span>
+                        );
+                      }
+                      
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`min-w-[40px] ${
+                            currentPage === pageNum 
+                              ? 'bg-primary text-primary-foreground' 
+                              : 'hover:bg-white/10'
+                          }`}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
                   
+                  {/* Next Button */}
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
+                    className="min-w-[80px]"
                   >
                     Próxima
                   </Button>
+                  
+                  {/* Page Info */}
+                  <div className="text-white text-sm ml-4">
+                    Página {currentPage} de {totalPages}
+                  </div>
                 </div>
               )}
             </>
@@ -420,6 +470,23 @@ const SearchPanel: React.FC = () => {
         isOpen={showModelDialog}
         onClose={() => setShowModelDialog(false)}
         onLocationClick={handleLocationClick}
+      />
+
+      {/* Debug Console */}
+      <SearchDebugConsole
+        hookData={{
+          products: apiProducts,
+          loading,
+          error,
+          currentPage,
+          totalPages,
+          totalCount,
+          isConnected: !error && apiProducts.length >= 0,
+          connectionStatus,
+          searchQuery
+        }}
+        selectedModel={selectedModel}
+        additionalInfo={{ page: 'search', materialsCount: materials.length }}
       />
     </div>
   );
