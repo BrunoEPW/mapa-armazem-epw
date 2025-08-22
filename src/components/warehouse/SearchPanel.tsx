@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { useNavigate } from 'react-router-dom';
 import { MovementHistoryDialog } from './MovementHistoryDialog';
+import { ModelLocationsDialog } from './ModelLocationsDialog';
 import { decodeEPWReference } from '@/utils/epwCodeDecoder';
 import { ModeloSelect } from './ModeloSelect';
 import { useApiProductsSimple } from '@/hooks/useApiProductsSimple';
@@ -21,6 +22,8 @@ const SearchPanel: React.FC = () => {
   // Estado para resultados e UI
   const [searchResults, setSearchResults] = useState<Array<any>>([]);
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
+  const [selectedModelData, setSelectedModelData] = useState<any | null>(null);
+  const [showModelDialog, setShowModelDialog] = useState(false);
   
   // Hook para buscar produtos da API
   const {
@@ -129,12 +132,9 @@ const SearchPanel: React.FC = () => {
     navigate(`/prateleira/${location.estante}/${location.prateleira}`);
   };
 
-  const handleModelClick = (modelo: string) => {
-    const modelMaterials = materials.filter(m => m.product.modelo === modelo);
-    setSearchResults(modelMaterials);
-    // Limpar pesquisa avançada quando usar acesso rápido
-    setSelectedModel('all');
-    setSearchQuery('');
+  const handleModelClick = (modelData: any) => {
+    setSelectedModelData(modelData);
+    setShowModelDialog(true);
   };
 
   // Função para obter o nome do modelo decodificado
@@ -294,7 +294,7 @@ const SearchPanel: React.FC = () => {
                 <Button
                   key={group.modelo}
                   variant="outline"
-                  onClick={() => handleModelClick(group.modelo)}
+                  onClick={() => handleModelClick(group)}
                   className="h-auto p-4 flex flex-col gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all duration-200 group text-left"
                 >
                   <div className="flex items-start gap-2 w-full">
@@ -414,6 +414,13 @@ const SearchPanel: React.FC = () => {
           onClose={() => setSelectedMaterialId(null)} 
         />
       )}
+
+      <ModelLocationsDialog
+        modelData={selectedModelData}
+        isOpen={showModelDialog}
+        onClose={() => setShowModelDialog(false)}
+        onLocationClick={handleLocationClick}
+      />
     </div>
   );
 };
