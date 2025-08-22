@@ -47,15 +47,16 @@ export const loadExclusions = (): ExclusionSettings => {
   // 🔒 CRITICAL: Load existing exclusions from storage - NEVER reset user data
   // This function MUST preserve all user-configured exclusions across app updates
   
-  // First, check if we need to restore from emergency backup
-  const emergencyBackup = loadFromStorage(`${STORAGE_KEYS.EXCLUSIONS}-emergency-backup`, null);
-  if (emergencyBackup && emergencyBackup.prefixes && emergencyBackup.prefixes.length > 1) {
-    console.log('🔄 [loadExclusions] Restoring from emergency backup:', emergencyBackup);
-    saveExclusions(emergencyBackup);
-    return emergencyBackup;
-  }
-  
-  // Try multiple backup keys for maximum reliability
+  try {
+    // First, check if we need to restore from emergency backup
+    const emergencyBackup = loadFromStorage(`${STORAGE_KEYS.EXCLUSIONS}-emergency-backup`, null);
+    if (emergencyBackup && emergencyBackup.prefixes && emergencyBackup.prefixes.length > 1) {
+      console.log('🔄 [loadExclusions] Restoring from emergency backup:', emergencyBackup);
+      saveExclusions(emergencyBackup);
+      return emergencyBackup;
+    }
+    
+    // Try multiple backup keys for maximum reliability
   const backupKeys = [
     STORAGE_KEYS.EXCLUSIONS,
     `${STORAGE_KEYS.EXCLUSIONS}-backup-1`,
@@ -105,15 +106,25 @@ export const loadExclusions = (): ExclusionSettings => {
   }
   
   // First time setup only - default exclusions
+  console.log('🔍 [loadExclusions] Creating default exclusions for new user');
   const defaultExclusions = {
     enabled: true,
-    prefixes: ['ZZZ'], // Default exclusion only for new users
+    prefixes: [], // Start with no exclusions for new users
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
   
-  console.log('🔍 [loadExclusions] Creating default exclusions for new user:', defaultExclusions);
   return defaultExclusions;
+  } catch (error) {
+    console.error('❌ [loadExclusions] Critical error loading exclusions:', error);
+    // Return safe defaults on any error
+    return {
+      enabled: true,
+      prefixes: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  }
 };
 
 export const saveExclusions = (exclusions: ExclusionSettings): void => {

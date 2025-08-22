@@ -28,10 +28,21 @@ export const ExclusionsProvider: React.FC<ExclusionsProviderProps> = ({ children
   // 🔒 CRITICAL: Load exclusions from localStorage - these settings must NEVER be reset
   // User-configured exclusions should persist across all app updates and data resets
   const [exclusions, setExclusions] = useState<ExclusionSettings>(() => {
-    console.log('🔄 [ExclusionsProvider] Initializing exclusions...');
-    const loaded = loadExclusions();
-    console.log('🔄 [ExclusionsProvider] Loaded exclusions:', loaded);
-    return loaded;
+    try {
+      console.log('🔄 [ExclusionsProvider] Initializing exclusions...');
+      const loaded = loadExclusions();
+      console.log('🔄 [ExclusionsProvider] Loaded exclusions:', loaded);
+      return loaded;
+    } catch (error) {
+      console.error('❌ [ExclusionsProvider] Failed to load exclusions:', error);
+      // Return safe defaults if loading fails
+      return {
+        enabled: true,
+        prefixes: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
   });
 
   // Force save exclusions immediately and on every change
@@ -83,8 +94,9 @@ export const ExclusionsProvider: React.FC<ExclusionsProviderProps> = ({ children
   };
 
   const shouldExcludeProduct = (codigo: string): boolean => {
-    // Ensure exclusions are always fresh from storage for critical decisions
-    const currentExclusions = loadExclusions();
+    try {
+      // Ensure exclusions are always fresh from storage for critical decisions
+      const currentExclusions = loadExclusions();
     
     if (!currentExclusions.enabled || !codigo) {
       return false;
@@ -107,6 +119,10 @@ export const ExclusionsProvider: React.FC<ExclusionsProviderProps> = ({ children
     }
     
     return shouldExclude;
+    } catch (error) {
+      console.error('❌ [ExclusionsContext] Error in shouldExcludeProduct:', error);
+      return false; // Don't exclude on error
+    }
   };
 
   return (
