@@ -109,7 +109,7 @@ const Products = () => {
           <div className="relative max-w-md mx-auto">
             <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Pesquisar por código ou descrição..."
+              placeholder="Pesquisar por descrição..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60"

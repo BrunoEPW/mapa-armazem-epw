@@ -76,9 +76,8 @@ export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
         // Buscar mais produtos para pesquisa
         response = await apiService.fetchArtigosWithTotal(1, 0, 1000);
         
-        // Filtrar localmente por código ou descrição
+        // Filtrar localmente apenas por descrição
         const filtered = response.data.filter(item => 
-          item.strCodigo?.toLowerCase().includes(search.toLowerCase()) ||
           item.strDescricao?.toLowerCase().includes(search.toLowerCase())
         );
         
