@@ -18,12 +18,14 @@ interface ProductsDebugConsoleProps {
     searchQuery: string;
   };
   selectedModel: string;
+  selectedComprimento?: string;
   additionalInfo?: any;
 }
 
 export const ProductsDebugConsole: React.FC<ProductsDebugConsoleProps> = ({
   hookData,
   selectedModel,
+  selectedComprimento,
   additionalInfo
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -44,7 +46,9 @@ export const ProductsDebugConsole: React.FC<ProductsDebugConsoleProps> = ({
     },
     filters: {
       selectedModel,
+      selectedComprimento: selectedComprimento || 'all',
       modelFilter: selectedModel !== 'all' ? selectedModel : 'undefined',
+      comprimentoFilter: selectedComprimento && selectedComprimento !== 'all' ? selectedComprimento : 'undefined',
       searchActive: !!hookData.searchQuery,
     },
     pagination: {
@@ -101,6 +105,7 @@ export const ProductsDebugConsole: React.FC<ProductsDebugConsoleProps> = ({
                   <div>Total Count: <span className="text-blue-400">{hookData.totalCount}</span></div>
                   <div>Page: <span className="text-blue-400">{hookData.currentPage}/{hookData.totalPages}</span></div>
                   <div>Model Filter: <span className="text-purple-400">{selectedModel}</span></div>
+                  <div>Comprimento Filter: <span className="text-purple-400">{selectedComprimento || 'all'}</span></div>
                   <div>Search: <span className="text-purple-400">"{hookData.searchQuery}"</span></div>
                 </div>
               </div>

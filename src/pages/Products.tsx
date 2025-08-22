@@ -8,13 +8,16 @@ import { Loader2, AlertCircle, Search, RefreshCw, FileText } from 'lucide-react'
 import Header from '@/components/Header';
 import Footer from '@/components/ui/Footer';
 import { ModeloSelect, ModeloSelectRef } from '@/components/warehouse/ModeloSelect';
+import { ComprimentoSelect, ComprimentoSelectRef } from '@/components/warehouse/ComprimentoSelect';
 import { ProductsDebugConsole } from '@/components/warehouse/ProductsDebugConsole';
 import productsBanner from '@/assets/epw-products-banner.jpg';
 
 const Products = () => {
   const navigate = useNavigate();
   const [selectedModel, setSelectedModel] = useState<string>('all');
+  const [selectedComprimento, setSelectedComprimento] = useState<string>('all');
   const modeloSelectRef = useRef<ModeloSelectRef>(null);
+  const comprimentoSelectRef = useRef<ComprimentoSelectRef>(null);
 
   const {
     products,
@@ -29,7 +32,10 @@ const Products = () => {
     connectionStatus,
     searchQuery,
     setSearchQuery
-  } = useApiProductsSimple(selectedModel !== 'all' ? selectedModel : undefined);
+  } = useApiProductsSimple(
+    selectedModel !== 'all' ? selectedModel : undefined,
+    selectedComprimento !== 'all' ? selectedComprimento : undefined
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,10 +82,11 @@ const Products = () => {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Button 
+                   <Button 
                     onClick={() => {
                       refresh();
                       modeloSelectRef.current?.refresh();
+                      comprimentoSelectRef.current?.refresh();
                     }} 
                     variant="outline" 
                     size="sm" 
@@ -99,11 +106,16 @@ const Products = () => {
 
         {/* Filters */}
         <div className="mb-6 space-y-4">
-          <div className="max-w-md mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
             <ModeloSelect
               ref={modeloSelectRef}
               value={selectedModel}
               onValueChange={setSelectedModel}
+            />
+            <ComprimentoSelect
+              ref={comprimentoSelectRef}
+              value={selectedComprimento}
+              onValueChange={setSelectedComprimento}
             />
           </div>
           
@@ -262,6 +274,7 @@ const Products = () => {
           searchQuery
         }}
         selectedModel={selectedModel}
+        selectedComprimento={selectedComprimento}
       />
       
       <Footer />

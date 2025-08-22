@@ -23,7 +23,7 @@ interface UseApiProductsSimpleReturn {
   setSearchQuery: (query: string) => void;
 }
 
-export const useApiProductsSimple = (modelo?: string): UseApiProductsSimpleReturn => {
+export const useApiProductsSimple = (modelo?: string, comprimento?: string): UseApiProductsSimpleReturn => {
   const itemsPerPage = 20;
   const [products, setProducts] = useState<SimpleProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,12 +67,15 @@ export const useApiProductsSimple = (modelo?: string): UseApiProductsSimpleRetur
 
     try {
       const start = (page - 1) * itemsPerPage;
-      console.log(`🔍 [useApiProductsSimple] Fetching page ${page} (start: ${start}) with search:`, search, 'modelo:', modelo);
+      console.log(`🔍 [useApiProductsSimple] Fetching page ${page} (start: ${start}) with search:`, search, 'modelo:', modelo, 'comprimento:', comprimento);
       
       // Criar filtros para a API
       const filters: any = {};
       if (modelo && modelo !== 'all') {
         filters.Modelo = modelo;
+      }
+      if (comprimento && comprimento !== 'all') {
+        filters.Comprimento = comprimento;
       }
       
       // Para pesquisa simples, vamos buscar todos os produtos e filtrar localmente
@@ -114,8 +117,8 @@ export const useApiProductsSimple = (modelo?: string): UseApiProductsSimpleRetur
 
       const mappedProducts = response.data.map(mapApiProductToSimple);
       
-      // Use filtered count when filters are applied (search OR model filter)
-      const hasFilters = search.trim() || (modelo && modelo !== 'all');
+      // Use filtered count when filters are applied (search OR model filter OR comprimento filter)
+      const hasFilters = search.trim() || (modelo && modelo !== 'all') || (comprimento && comprimento !== 'all');
       const totalRecords = hasFilters ? response.recordsFiltered : response.recordsTotal;
       
       setProducts(mappedProducts);
@@ -151,7 +154,7 @@ export const useApiProductsSimple = (modelo?: string): UseApiProductsSimpleRetur
       setLoading(false);
       abortControllerRef.current = null;
     }
-  }, [itemsPerPage, modelo]);
+  }, [itemsPerPage, modelo, comprimento]);
 
   const debouncedLoadProducts = useCallback((page: number, search: string) => {
     if (debounceTimeoutRef.current) {
@@ -195,7 +198,7 @@ export const useApiProductsSimple = (modelo?: string): UseApiProductsSimpleRetur
     };
   }, [loadProducts]);
 
-  // Reset to page 1 when model filter changes
+  // Reset to page 1 when model or comprimento filter changes
   useEffect(() => {
     if (currentPage !== 1) {
       setCurrentPage(1);
@@ -203,7 +206,7 @@ export const useApiProductsSimple = (modelo?: string): UseApiProductsSimpleRetur
     } else {
       loadProducts(1, searchQuery, false);
     }
-  }, [modelo]);
+  }, [modelo, comprimento]);
 
   return {
     products,
