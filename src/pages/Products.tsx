@@ -4,6 +4,7 @@ import { useApiProductsSimple } from '@/hooks/useApiProductsSimple';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Loader2, AlertCircle, Search, RefreshCw, FileText } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/ui/Footer';
@@ -47,16 +48,18 @@ const Products = () => {
           onClick={() => navigate('/')}
           className="relative group cursor-pointer w-full"
         >
-          <img 
-            src={productsBanner} 
-            alt="Produtos Banner" 
-            className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-white tracking-wider">
-              PRODUTOS
-            </h1>
-          </div>
+          <AspectRatio ratio={16/9}>
+            <img 
+              src={productsBanner} 
+              alt="Produtos Banner" 
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <h1 className="text-4xl md:text-6xl font-bold text-white tracking-wider">
+                PRODUTOS
+              </h1>
+            </div>
+          </AspectRatio>
         </button>
       </div>
       

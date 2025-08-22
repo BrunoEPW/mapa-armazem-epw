@@ -3,6 +3,7 @@ import { TrendingUp, Package, ArrowUpDown, Calendar as CalendarIcon, Search, Dow
 import reportsBanner from '@/assets/reports-banner.jpg';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -161,16 +162,18 @@ const Reports = () => {
             onClick={() => navigate('/')}
             className="relative w-full transition-all duration-500 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg animate-fade-in"
           >
-            <img 
-              src={reportsBanner} 
-              alt="Reports Banner" 
-              className="w-full h-32 sm:h-40 object-cover rounded-lg shadow-lg transition-all duration-300"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-wider drop-shadow-lg">
-                RELATÓRIOS
-              </h1>
-            </div>
+            <AspectRatio ratio={16/9}>
+              <img 
+                src={reportsBanner} 
+                alt="Reports Banner" 
+                className="w-full h-full object-cover rounded-lg shadow-lg transition-all duration-300"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-wider drop-shadow-lg">
+                  RELATÓRIOS
+                </h1>
+              </div>
+            </AspectRatio>
           </button>
         </div>
 

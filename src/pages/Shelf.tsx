@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 import ShelfView from '@/components/warehouse/ShelfView';
 import { DebugPanel } from '@/components/ui/DebugPanel';
 import Footer from '@/components/ui/Footer';
@@ -24,16 +25,18 @@ const Shelf = () => {
             onClick={() => navigate('/')}
             className="relative w-full transition-all duration-500 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg mb-4 animate-fade-in"
           >
-            <img 
-              src={shelvesBanner} 
-              alt="Shelves Banner" 
-              className="w-full h-32 sm:h-40 object-cover rounded-lg shadow-lg transition-all duration-300"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-wider drop-shadow-lg">
-                ESTANTE {estante}
-              </h1>
-            </div>
+            <AspectRatio ratio={16/9}>
+              <img 
+                src={shelvesBanner} 
+                alt="Shelves Banner" 
+                className="w-full h-full object-cover rounded-lg shadow-lg transition-all duration-300"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-wider drop-shadow-lg">
+                  ESTANTE {estante}
+                </h1>
+              </div>
+            </AspectRatio>
           </button>
           
           <div className="flex gap-2 mt-4">
