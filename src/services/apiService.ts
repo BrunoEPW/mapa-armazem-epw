@@ -364,6 +364,48 @@ class ApiService {
     }
   }
 
+  // Find product by code
+  async findProductByCode(productCode: string): Promise<ApiArtigo | null> {
+    console.log(`🔍 [ApiService] Searching for product with code: ${productCode}`);
+    
+    try {
+      // First try to fetch with filters (if API supports it)
+      const response = await this.fetchArtigosWithTotal(1, 0, 1000, {
+        strCodigo: productCode
+      } as any);
+      
+      // Look for exact match in the response
+      const exactMatch = response.data?.find(item => 
+        item.strCodigo === productCode
+      );
+      
+      if (exactMatch) {
+        console.log(`✅ [ApiService] Found exact match for ${productCode}:`, exactMatch);
+        return exactMatch;
+      }
+      
+      // If no exact match found with filters, try a broader search
+      console.log(`🔍 [ApiService] No exact match found with filters, trying broader search...`);
+      const broadResponse = await this.fetchArtigosWithTotal(1, 0, 5000);
+      
+      const broadMatch = broadResponse.data?.find(item => 
+        item.strCodigo === productCode
+      );
+      
+      if (broadMatch) {
+        console.log(`✅ [ApiService] Found match in broader search for ${productCode}:`, broadMatch);
+        return broadMatch;
+      }
+      
+      console.log(`❌ [ApiService] No product found with code: ${productCode}`);
+      return null;
+      
+    } catch (error) {
+      console.error(`❌ [ApiService] Error searching for product ${productCode}:`, error);
+      return null;
+    }
+  }
+
   clearCache(): void {
     console.log('🧹 [ApiService] No cache to clear - caching disabled');
     this.activeRequests.clear();

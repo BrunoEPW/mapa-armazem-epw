@@ -7,7 +7,7 @@ import { useRealTimeSync } from '@/hooks/useRealTimeSync';
 import { useDataReset } from '@/hooks/useDataReset';
 import { useSupabaseAdminOperations } from '@/hooks/useSupabaseAdminOperations';
 import { useProductWebService } from '@/hooks/useProductWebService';
-import { decodeEPWReference } from '@/utils/epwCodeDecoder';
+import * as epwCodeDecoder from '@/utils/epwCodeDecoder';
 import { ensureValidProductId } from '@/utils/uuidUtils';
 import { toast } from 'sonner';
 
@@ -32,7 +32,7 @@ interface WarehouseContextType {
   clearAllData: () => Promise<boolean>;
   clearDataPreservingMaterials: () => Promise<boolean>;
   clearAllMaterials: () => Promise<boolean>;
-  createProductFromApi: (apiProduct: any) => Promise<Product>;
+  createProductFromApi: (apiProduct: any) => Promise<Product | null>;
   syncProducts: () => Promise<boolean>;
   populateTestData: () => Promise<any>;
   syncStatus: {
@@ -72,33 +72,65 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Enable real-time synchronization
   useRealTimeSync(refreshData, refreshData, refreshData);
 
-  const createProductFromApi = async (apiProduct: any): Promise<Product> => {
+  const createProductFromApi = async (apiProductOrCode: any): Promise<Product | null> => {
     
     try {
-      // Step 1: Validate input data
+      // Step 1: Handle both string codes and API product objects
+      const isStringCode = typeof apiProductOrCode === 'string';
+      console.log('🚀 createProductFromApi called with:', isStringCode ? `code: ${apiProductOrCode}` : 'API object');
+      
+      let apiProduct = apiProductOrCode;
+      
+      // If it's a string code, fetch the product from API
+      if (isStringCode) {
+        const productCode = apiProductOrCode;
+        console.log(`🔍 Searching for product with code: ${productCode}`);
+        
+        try {
+          // Use the new ApiService method to find the product
+          const { apiService } = await import('@/services/apiService');
+          const foundProduct = await apiService.findProductByCode(productCode);
+          
+          if (foundProduct) {
+            console.log('✅ Found product in API:', foundProduct);
+            apiProduct = foundProduct;
+          } else {
+            console.log(`❌ Product ${productCode} not found in API`);
+            // Return null to let the caller handle fallback
+            return null;
+          }
+        } catch (searchError) {
+          console.error(`❌ Error searching for product ${productCode}:`, searchError);
+          return null;
+        }
+      }
+
+      // Step 2: Validate we have product data
       if (!apiProduct) {
         throw new Error('Dados do produto não fornecidos');
       }
 
-      
-
-      // Step 2: Generate valid UUID from API product ID
-      if (!apiProduct.id && !apiProduct.codigo) {
+      // Step 3: Extract the product code for ID generation and checks
+      const codigo = apiProduct.strCodigo || apiProduct.codigo;
+      if (!codigo) {
         throw new Error('ID ou código do produto em falta');
       }
       
-      const apiId = apiProduct.id || apiProduct.codigo || `temp-${Date.now()}`;
-      const cleanId = ensureValidProductId(apiId);
-      console.log('🆔 Generated valid UUID:', cleanId, 'from API ID:', apiId);
+      console.log('📋 Processing product with code:', codigo);
       
-      // Check if product already exists
-      const existingProduct = products.find(p => p.id === cleanId);
+      // Check if product already exists by codigo (more reliable than ID)
+      const existingProduct = products.find(p => p.codigo === codigo);
       if (existingProduct) {
-        console.log('ℹ️ Product already exists locally, returning existing:', existingProduct);
+        console.log('🔍 Product already exists locally:', existingProduct);
         return existingProduct;
       }
 
-      // Step 3: Create safe field values with robust fallbacks
+      // Step 4: Generate valid UUID from API product
+      const apiId = apiProduct.Id || apiProduct.id || codigo || `temp-${Date.now()}`;
+      const cleanId = ensureValidProductId(apiId);
+      console.log('🆔 Generated valid UUID:', cleanId, 'from API ID:', apiId);
+
+      // Step 5: Create safe field values with robust fallbacks
       const safeString = (value: any, defaultValue: string = 'Indefinido'): string => {
         if (value === null || value === undefined || value === '') {
           return defaultValue;
@@ -126,30 +158,46 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return '0';
       };
 
-      
+      // Step 6: Process EPW code if available for better field extraction
+      let decodedEpw = null;
+      try {
+        console.log('🔍 Attempting to decode EPW code:', codigo);
+        const epwResult = epwCodeDecoder.decodeEPWReference(codigo, true);
+        if (epwResult.success && epwResult.product) {
+          decodedEpw = epwResult.product;
+          console.log('🎯 EPW decoded result:', decodedEpw);
+        } else {
+          console.log('⚠️ EPW code not recognized or failed to decode:', epwResult.message);
+        }
+      } catch (epwError) {
+        console.warn('⚠️ EPW decoding failed (non-critical):', epwError);
+      }
 
-      // Step 4: Build product data with comprehensive fallbacks
+      // Step 7: Build product data with comprehensive fallbacks
       const productData: Omit<Product, 'id'> = {
-        familia: safeString(apiProduct.familia),
-        modelo: safeString(apiProduct.modelo),
-        acabamento: safeString(apiProduct.acabamento),
-        cor: safeString(apiProduct.cor),
-        comprimento: safeComprimento(apiProduct.comprimento),
-        foto: apiProduct.foto || undefined,
+        // Use API data or EPW decoded data as fallback
+        familia: safeString(apiProduct.familia || decodedEpw?.tipo?.d, 'EPW'),
+        modelo: safeString(apiProduct.modelo || decodedEpw?.modelo?.l, codigo.substring(0, 6)),
+        acabamento: safeString(apiProduct.acabamento || decodedEpw?.acabamento?.l, codigo.substring(6, 8)),
+        cor: safeString(apiProduct.cor || decodedEpw?.cor?.l, codigo.substring(8, 10)),
+        comprimento: safeComprimento(apiProduct.comprimento || decodedEpw?.comprim?.l || 32),
+        foto: apiProduct.foto || apiProduct.strFoto || undefined,
         // API fields
-        codigo: apiProduct.codigo || apiProduct.strCodigo || undefined,
-        descricao: apiProduct.descricao || apiProduct.strDescricao || undefined,
+        codigo: codigo,
+        descricao: apiProduct.descricao || apiProduct.strDescricao || `${apiProduct.familia || 'EPW'} ${codigo}`,
         // EPW decoded fields for reference
-        epwTipo: apiProduct.epwTipo || undefined,
-        epwCertificacao: apiProduct.epwCertificacao || undefined,
-        epwModelo: apiProduct.epwModelo || undefined,
-        epwComprimento: apiProduct.epwComprimento || undefined,
-        epwCor: apiProduct.epwCor || undefined,
-        epwAcabamento: apiProduct.epwAcabamento || undefined,
-        epwOriginalCode: apiProduct.epwOriginalCode || apiProduct.strCodigo || undefined,
+        ...(decodedEpw && {
+          epwTipo: decodedEpw.tipo?.d,
+          epwCertificacao: decodedEpw.certif?.d,
+          epwModelo: decodedEpw.modelo?.d,
+          epwComprimento: decodedEpw.comprim?.d,
+          epwCor: decodedEpw.cor?.d,
+          epwAcabamento: decodedEpw.acabamento?.d,
+          epwOriginalCode: codigo,
+        }),
       };
 
-      console.log('📋 Step 4: Final product data to be saved:', productData);
+      console.log('📋 Step 7: Final product data to be saved:', productData);
 
       // Step 5: Comprehensive validation
       const validateField = (fieldName: string, value: any): boolean => {
