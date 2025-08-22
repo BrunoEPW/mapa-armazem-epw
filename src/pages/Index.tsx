@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Package, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { WAREHOUSE_CONFIG } from '@/types/warehouse';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { populateTestDataOffline } from '@/utils/populateTestDataOffline';
@@ -163,26 +162,24 @@ const Index = () => {
         {/* Hero Banner */}
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           <div className="relative w-full">
-            <AspectRatio ratio={21/9}>
-              <img 
-                src={warehouseHeroBanner} 
-                alt="Warehouse Management System" 
-                className="w-full h-full object-cover rounded-xl shadow-2xl"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/80 rounded-xl flex items-center justify-center px-6 sm:px-8 lg:px-12">
-                <div className="text-center">
-                  <h1 className="text-3xl sm:text-4xl lg:text-6xl font-black text-white tracking-wider drop-shadow-2xl mb-2">
-                    SISTEMA DE
-                  </h1>
-                  <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-orange-400 tracking-wide drop-shadow-2xl">
-                    GESTÃO DE ARMAZÉM
-                  </h2>
-                  <p className="text-2xl sm:text-3xl lg:text-5xl font-bold text-orange-400 tracking-wide drop-shadow-2xl">
-                    EPW
-                  </p>
-                </div>
+            <img 
+              src={warehouseHeroBanner} 
+              alt="Warehouse Management System" 
+              className="w-full h-48 sm:h-64 lg:h-80 object-cover rounded-xl shadow-2xl"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/80 rounded-xl flex items-center justify-center px-6 sm:px-8 lg:px-12">
+              <div className="text-center">
+                <h1 className="text-3xl sm:text-4xl lg:text-6xl font-black text-white tracking-wider drop-shadow-2xl mb-2">
+                  SISTEMA DE
+                </h1>
+                <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-orange-400 tracking-wide drop-shadow-2xl">
+                  GESTÃO DE ARMAZÉM
+                </h2>
+                <p className="text-2xl sm:text-3xl lg:text-5xl font-bold text-orange-400 tracking-wide drop-shadow-2xl">
+                  EPW
+                </p>
               </div>
-            </AspectRatio>
+            </div>
           </div>
         </div>
         
