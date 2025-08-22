@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WarehouseProvider } from "@/contexts/WarehouseContext";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ExclusionsProvider } from "@/contexts/ExclusionsContext";
 
 import Index from "./pages/Index";
 import Shelf from "./pages/Shelf";
@@ -23,8 +22,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <ExclusionsProvider>
-          <WarehouseProvider>
+        <WarehouseProvider>
             <Toaster />
             <Sonner />
             <BrowserRouter>
@@ -39,8 +37,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
-          </WarehouseProvider>
-        </ExclusionsProvider>
+        </WarehouseProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

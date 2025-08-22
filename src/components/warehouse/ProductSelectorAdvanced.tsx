@@ -3,7 +3,7 @@ import { Product } from '@/types/warehouse';
 import { useApiProductsWithFiltersServerSide } from '@/hooks/useApiProductsWithFiltersServerSide';
 import { useEPWLocalFiltering } from '@/hooks/useEPWLocalFiltering';
 
-import { useExclusions } from '@/contexts/ExclusionsContext';
+
 import { ApiFilters } from '@/services/apiService';
 import { EPWFilters } from './EPWFilters';
 import { Input } from '@/components/ui/input';
@@ -36,8 +36,6 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
     acabamento: 'all',
   });
 
-  const { shouldExcludeProduct } = useExclusions();
-  const exclusionFilter = (codigo: string) => shouldExcludeProduct(codigo);
 
   // Check if we have any EPW filters active
   const hasEPWFilters = Object.values(epwFilters).some(value => value && value !== 'all');
@@ -74,7 +72,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
     activeFilters,
     setFilters,
     clearFilters: clearApiFilters,
-  } = useApiProductsWithFiltersServerSide(20, exclusionFilter);
+  } = useApiProductsWithFiltersServerSide();
 
 
   const handleEpwFilterChange = (filterType: keyof EPWFilters, value: string) => {
@@ -133,7 +131,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
       <EPWFilters
         filters={epwFilters}
         onFilterChange={handleEpwFilterChange}
-        excludedCount={0}
+        
       />
 
       {/* Clear Filters */}

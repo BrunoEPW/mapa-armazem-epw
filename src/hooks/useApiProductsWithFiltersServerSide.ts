@@ -4,6 +4,10 @@ import { apiService, ApiFilters } from '@/services/apiService';
 import { config } from '@/lib/config';
 import { decodeEPWReference, getEPWFamilia, getEPWModelo, getEPWAcabamento, getEPWCor, getEPWComprimento } from '@/utils/epwCodeDecoder';
 
+interface UseApiProductsWithFiltersServerSideOptions {
+  enabled?: boolean;
+}
+
 interface UseApiProductsWithFiltersServerSideReturn {
   products: Product[];
   loading: boolean;
@@ -22,10 +26,10 @@ interface UseApiProductsWithFiltersServerSideReturn {
 }
 
 export const useApiProductsWithFiltersServerSide = (
-  itemsPerPage: number = 20,
-  exclusionFilter?: (codigo: string) => boolean,
-  initialFilters: ApiFilters = {}
+  options: UseApiProductsWithFiltersServerSideOptions = {}
 ): UseApiProductsWithFiltersServerSideReturn => {
+  const { enabled = true } = options;
+  const itemsPerPage = 20;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +37,7 @@ export const useApiProductsWithFiltersServerSide = (
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [connectionStatus, setConnectionStatus] = useState('Desconectado');
-  const [activeFilters, setActiveFilters] = useState<ApiFilters>(initialFilters);
+  const [activeFilters, setActiveFilters] = useState<ApiFilters>({});
   const abortControllerRef = useRef<AbortController | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -172,24 +176,10 @@ export const useApiProductsWithFiltersServerSide = (
         });
       }
 
-      // Apply exclusions filter if provided
-      let excludedCount = 0;
-      const filteredData = exclusionFilter 
-        ? response.data.filter(item => {
-            const shouldExclude = exclusionFilter(item.strCodigo || '');
-            if (shouldExclude) excludedCount++;
-            return !shouldExclude;
-          })
-        : response.data;
+      // Process received products
+      let processedProducts = response.data;
 
-      console.log(`🚫 [useApiProductsWithFiltersServerSide] Exclusion filtering:`, {
-        apiDataLength: response.data.length,
-        excludedCount,
-        finalDataLength: filteredData.length,
-        exclusionFilterActive: !!exclusionFilter
-      });
-
-      const mappedProducts = filteredData.map(mapApiProductToProduct);
+      const mappedProducts = processedProducts.map(mapApiProductToProduct);
       
       // Use appropriate total count: recordsFiltered when filters applied, recordsTotal when no filters
       const totalRecords = hasFilters ? (response.recordsFiltered || 0) : (response.recordsTotal || 0);
@@ -232,7 +222,7 @@ export const useApiProductsWithFiltersServerSide = (
       setLoading(false);
       abortControllerRef.current = null;
     }
-  }, [itemsPerPage, exclusionFilter]);
+  }, [itemsPerPage]);
 
   const debouncedLoadProducts = useCallback((page: number, filters: ApiFilters) => {
     if (debounceTimeoutRef.current) {
@@ -272,7 +262,9 @@ export const useApiProductsWithFiltersServerSide = (
 
   // Load initial products on mount
   useEffect(() => {
-    loadProducts(1, initialFilters);
+    if (enabled) {
+      loadProducts(1, {});
+    }
 
     return () => {
       if (abortControllerRef.current) {
@@ -282,7 +274,7 @@ export const useApiProductsWithFiltersServerSide = (
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, []);
+  }, [enabled, loadProducts]);
 
   return {
     products,

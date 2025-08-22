@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { Product } from '@/types/warehouse';
 import { useOptimizedProductLoader } from '@/hooks/useOptimizedProductLoader';
 import { useOptimizedAttributes } from '@/hooks/useOptimizedAttributes';
-import { useExclusions } from '@/contexts/ExclusionsContext';
+
 import { EPWFilters } from './EPWFilters';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -39,8 +39,6 @@ export const OptimizedProductSelector: React.FC<OptimizedProductSelectorProps> =
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const { shouldExcludeProduct } = useExclusions();
-  const exclusionFilter = useCallback((codigo: string) => shouldExcludeProduct(codigo), [shouldExcludeProduct]);
 
   const {
     products,
@@ -52,7 +50,7 @@ export const OptimizedProductSelector: React.FC<OptimizedProductSelectorProps> =
     loadMore,
     hasMore,
     refresh,
-  } = useOptimizedProductLoader(exclusionFilter, 50);
+  } = useOptimizedProductLoader(undefined, 50);
 
   const {
     modelos: apiModelos,
@@ -184,7 +182,7 @@ export const OptimizedProductSelector: React.FC<OptimizedProductSelectorProps> =
       <EPWFilters
         filters={epwFilters}
         onFilterChange={handleEpwFilterChange}
-        excludedCount={0}
+        
       />
 
       {/* Clear Filters */}
