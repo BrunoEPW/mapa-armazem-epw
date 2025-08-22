@@ -28,7 +28,7 @@ const Products = () => {
     connectionStatus,
     searchQuery,
     setSearchQuery
-  } = useApiProductsSimple();
+  } = useApiProductsSimple(selectedModel !== 'all' ? selectedModel : undefined);
 
   return (
     <div className="min-h-screen bg-background">

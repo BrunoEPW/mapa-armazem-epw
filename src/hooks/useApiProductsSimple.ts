@@ -23,7 +23,7 @@ interface UseApiProductsSimpleReturn {
   setSearchQuery: (query: string) => void;
 }
 
-export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
+export const useApiProductsSimple = (modelo?: string): UseApiProductsSimpleReturn => {
   const itemsPerPage = 20;
   const [products, setProducts] = useState<SimpleProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,14 +67,20 @@ export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
 
     try {
       const start = (page - 1) * itemsPerPage;
-      console.log(`🔍 [useApiProductsSimple] Fetching page ${page} (start: ${start}) with search:`, search);
+      console.log(`🔍 [useApiProductsSimple] Fetching page ${page} (start: ${start}) with search:`, search, 'modelo:', modelo);
+      
+      // Criar filtros para a API
+      const filters: any = {};
+      if (modelo && modelo !== 'all') {
+        filters.Modelo = modelo;
+      }
       
       // Para pesquisa simples, vamos buscar todos os produtos e filtrar localmente
       // devido às limitações da API para filtros por texto
       let response;
       if (search.trim()) {
-        // Buscar mais produtos para pesquisa
-        response = await apiService.fetchArtigosWithTotal(1, 0, 1000);
+        // Buscar mais produtos para pesquisa (mas com filtro de modelo se aplicável)
+        response = await apiService.fetchArtigosWithTotal(1, 0, 1000, filters);
         
         // Filtrar localmente apenas por descrição
         const filtered = response.data.filter(item => 
@@ -91,8 +97,8 @@ export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
           recordsTotal: filtered.length
         };
       } else {
-        // Busca normal com paginação da API
-        response = await apiService.fetchArtigosWithTotal(1, start, itemsPerPage);
+        // Busca normal com paginação da API e filtros
+        response = await apiService.fetchArtigosWithTotal(1, start, itemsPerPage, filters);
       }
       
       console.log(`🔍 [useApiProductsSimple] API response:`, {
@@ -142,7 +148,7 @@ export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
       setLoading(false);
       abortControllerRef.current = null;
     }
-  }, [itemsPerPage]);
+  }, [itemsPerPage, modelo]);
 
   const debouncedLoadProducts = useCallback((page: number, search: string) => {
     if (debounceTimeoutRef.current) {
