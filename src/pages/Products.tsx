@@ -60,7 +60,7 @@ const Products = () => {
         </button>
       </div>
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="w-full px-4 py-8">
 
         {/* API Status */}
         <div className="mb-6">
@@ -106,7 +106,7 @@ const Products = () => {
 
         {/* Filters */}
         <div className="mb-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
             <ModeloSelect
               ref={modeloSelectRef}
               value={selectedModel}
@@ -119,7 +119,7 @@ const Products = () => {
             />
           </div>
           
-          <div className="relative max-w-md mx-auto">
+          <div className="relative w-full max-w-md mx-auto">
             <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Pesquisar por descrição..."

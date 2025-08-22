@@ -158,10 +158,10 @@ const Index = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <div className="p-4 sm:p-6 lg:p-8 relative flex-1">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
         {/* Hero Banner */}
         <div className="flex flex-col items-center mb-6 sm:mb-8">
-          <div className="relative w-full max-w-4xl">
+          <div className="relative w-full">
             <img 
               src={warehouseHeroBanner} 
               alt="Warehouse Management System" 

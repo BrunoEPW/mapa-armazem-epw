@@ -16,7 +16,7 @@ const Search = () => {
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           <button
             onClick={() => navigate('/')}
-            className="relative w-full max-w-2xl transition-all duration-500 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg animate-fade-in"
+            className="relative w-full transition-all duration-500 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg animate-fade-in"
           >
             <img 
               src={searchBanner} 

@@ -18,11 +18,11 @@ const Shelf = () => {
 
   return (
     <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8 flex flex-col">
-      <div className="max-w-6xl mx-auto flex-1">
+      <div className="w-full flex-1">
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           <button
             onClick={() => navigate('/')}
-            className="relative w-full max-w-2xl transition-all duration-500 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg mb-4 animate-fade-in"
+            className="relative w-full transition-all duration-500 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg mb-4 animate-fade-in"
           >
             <img 
               src={shelvesBanner} 
