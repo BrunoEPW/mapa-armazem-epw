@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Search, MapPin, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -17,8 +16,7 @@ const SearchPanel: React.FC = () => {
   const { setSelectedShelf, materials } = useWarehouse();
   
   // Estado para pesquisa avançada (integrada com API)
-  const [selectedModel, setSelectedModel] = useState('');
-  const [searchDescription, setSearchDescription] = useState('');
+  const [selectedModel, setSelectedModel] = useState('all');
   
   // Estado para resultados e UI
   const [searchResults, setSearchResults] = useState<Array<any>>([]);
@@ -29,12 +27,14 @@ const SearchPanel: React.FC = () => {
     products: apiProducts,
     loading,
     error,
-    refresh
+    refresh,
+    searchQuery,
+    setSearchQuery
   } = useApiProductsSimple();
 
   // Função para pesquisar materiais baseado nos produtos da API
   const handleApiSearch = () => {
-    if (!selectedModel && !searchDescription.trim()) {
+    if (selectedModel === 'all' && !searchQuery.trim()) {
       setSearchResults([]);
       return;
     }
@@ -42,14 +42,14 @@ const SearchPanel: React.FC = () => {
     // Filtrar produtos da API baseado nos critérios
     let filteredApiProducts = apiProducts;
     
-    if (selectedModel) {
+    if (selectedModel !== 'all') {
       filteredApiProducts = filteredApiProducts.filter(p => 
         p.codigo && p.codigo.includes(selectedModel)
       );
     }
     
-    if (searchDescription.trim()) {
-      const query = searchDescription.toLowerCase();
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
       filteredApiProducts = filteredApiProducts.filter(p => 
         p.descricao && p.descricao.toLowerCase().includes(query)
       );
@@ -93,8 +93,8 @@ const SearchPanel: React.FC = () => {
         } else {
           // Se não conseguiu decodificar, tentar correspondência direta por descrição
           const relatedMaterials = materials.filter(material => {
-            if (searchDescription.trim()) {
-              const desc = searchDescription.toLowerCase();
+            if (searchQuery.trim()) {
+              const desc = searchQuery.toLowerCase();
               const productDesc = `${material.product.familia} ${material.product.modelo} ${material.product.acabamento}`.toLowerCase();
               return productDesc.includes(desc);
             }
@@ -115,8 +115,8 @@ const SearchPanel: React.FC = () => {
   };
 
   const handleClearApiSearch = () => {
-    setSelectedModel('');
-    setSearchDescription('');
+    setSelectedModel('all');
+    setSearchQuery('');
     setSearchResults([]);
   };
 
@@ -129,8 +129,8 @@ const SearchPanel: React.FC = () => {
     const modelMaterials = materials.filter(m => m.product.modelo === modelo);
     setSearchResults(modelMaterials);
     // Limpar pesquisa avançada quando usar acesso rápido
-    setSelectedModel('');
-    setSearchDescription('');
+    setSelectedModel('all');
+    setSearchQuery('');
   };
 
   // Função para obter o nome do modelo decodificado
@@ -192,31 +192,24 @@ const SearchPanel: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <ModeloSelect 
-                value={selectedModel} 
-                onValueChange={setSelectedModel}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="description">Pesquisa por Descrição</Label>
-              <Input
-                id="description"
-                placeholder="Digite parte da descrição do produto..."
-                value={searchDescription}
-                onChange={(e) => setSearchDescription(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleApiSearch();
-                  }
-                }}
-              />
-            </div>
+          <div className="max-w-md mx-auto">
+            <ModeloSelect 
+              value={selectedModel} 
+              onValueChange={setSelectedModel}
+            />
           </div>
           
-          <div className="flex gap-2">
+          <div className="relative max-w-md mx-auto">
+            <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Pesquisar por descrição..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60"
+            />
+          </div>
+          
+          <div className="flex gap-2 max-w-md mx-auto">
             <Button onClick={handleApiSearch} className="flex-1" disabled={loading}>
               <Search className="w-4 h-4 mr-2" />
               {loading ? 'Pesquisando...' : 'Pesquisar'}
@@ -320,7 +313,7 @@ const SearchPanel: React.FC = () => {
           </CardContent>
         </Card>
       ) : (
-        selectedModel || searchDescription.trim() ? (
+        (selectedModel !== 'all' || searchQuery.trim()) ? (
           <Card>
             <CardContent className="py-8">
               <div className="text-center text-muted-foreground">
