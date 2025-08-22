@@ -26,7 +26,8 @@ const Index = () => {
     movements, 
     selectedShelf, 
     populateTestData,
-    clearAllData
+    clearAllData,
+    clearAllMaterials
   } = useWarehouse();
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [isPopulating, setIsPopulating] = useState(false);
@@ -246,6 +247,21 @@ const Index = () => {
 
         </div>
 
+        {/* Botão para limpar todos os produtos das prateleiras */}
+        <div className="flex justify-center mb-4">
+          <Button 
+            onClick={async () => {
+              const success = await clearAllMaterials();
+              if (success) {
+                console.log('✅ Todos os produtos foram removidos das prateleiras');
+              }
+            }}
+            variant="destructive"
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Remover Todos os Produtos das Prateleiras
+          </Button>
+        </div>
         
         
       </div>
