@@ -141,75 +141,109 @@ export const useSupabaseAdminOperations = () => {
     try {
       console.log('🗑️ [clearAllMaterials] Starting materials clear operation with backup:', createBackupFirst);
       
+      // First test Supabase connection
+      const connectionTest = await testSupabaseConnection();
+      const isOfflineMode = !connectionTest;
+      
+      if (isOfflineMode) {
+        console.log('⚠️ [clearAllMaterials] Supabase offline - working in local mode only');
+      }
+      
       // Create backup before clearing if requested
       if (createBackupFirst) {
-        try {
-          const { data: materials } = await supabase.from('materials').select('*');
-          const { data: products } = await supabase.from('products').select('*');
-          const { data: movements } = await supabase.from('movements').select('*');
-          
-          createBackup(materials || [], products || [], movements || []);
-          console.log('💾 [clearAllMaterials] Backup created before clearing materials');
-        } catch (backupError) {
-          console.error('⚠️ [clearAllMaterials] Backup failed, continuing with clear:', backupError);
+        if (!isOfflineMode) {
+          try {
+            const { data: materials } = await supabase.from('materials').select('*');
+            const { data: products } = await supabase.from('products').select('*');
+            const { data: movements } = await supabase.from('movements').select('*');
+            
+            createBackup(materials || [], products || [], movements || []);
+            console.log('💾 [clearAllMaterials] Backup created before clearing materials');
+          } catch (backupError) {
+            console.error('⚠️ [clearAllMaterials] Backup failed, continuing with clear:', backupError);
+          }
+        } else {
+          // Create backup from localStorage when offline
+          try {
+            const localMaterials = JSON.parse(localStorage.getItem(STORAGE_KEYS.MATERIALS) || '[]');
+            const localProducts = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS) || '[]');
+            const localMovements = JSON.parse(localStorage.getItem(STORAGE_KEYS.MOVEMENTS) || '[]');
+            
+            createBackup(localMaterials, localProducts, localMovements);
+            console.log('💾 [clearAllMaterials] Local backup created before clearing materials');
+          } catch (backupError) {
+            console.error('⚠️ [clearAllMaterials] Local backup failed, continuing with clear:', backupError);
+          }
         }
       }
       
-      // First test Supabase connection
-      const connectionTest = await testSupabaseConnection();
-      if (!connectionTest) {
-        throw new Error('Não foi possível conectar ao Supabase. Verifique a sua ligação à internet.');
-      }
-      
-      console.log('Attempting to clear all movements and materials...');
-      
-      // Use a different approach - select and delete by chunks
       let deletedMovements = 0;
       let deletedMaterials = 0;
       
-      try {
-        // Get all movement IDs first
-        const { data: movements } = await supabase
-          .from('movements')
+      if (!isOfflineMode) {
+        // Online mode - clear from Supabase
+        console.log('🌐 [clearAllMaterials] Clearing materials from Supabase...');
+        
+        try {
+          // Get all movement IDs first
+          const { data: movements } = await supabase
+            .from('movements')
+            .select('id')
+            .limit(1000);
+          
+          if (movements && movements.length > 0) {
+            const { error: movError } = await supabase
+              .from('movements')
+              .delete()
+              .in('id', movements.map(m => m.id));
+            
+            if (!movError) {
+              deletedMovements = movements.length;
+              console.log(`✅ [clearAllMaterials] Deleted ${deletedMovements} movements from Supabase`);
+            }
+          }
+        } catch (error) {
+          console.log('⚠️ [clearAllMaterials] Could not delete movements from Supabase, continuing...');
+        }
+        
+        // Get all material IDs
+        const { data: materials, error: selectError } = await supabase
+          .from('materials')
           .select('id')
           .limit(1000);
         
-        if (movements && movements.length > 0) {
-          const { error: movError } = await supabase
-            .from('movements')
+        if (selectError) {
+          throw new Error(`Erro ao consultar materiais: ${selectError.message}`);
+        }
+        
+        if (materials && materials.length > 0) {
+          const { error: deleteError } = await supabase
+            .from('materials')
             .delete()
-            .in('id', movements.map(m => m.id));
+            .in('id', materials.map(m => m.id));
           
-          if (!movError) {
-            deletedMovements = movements.length;
-            console.log(`Deleted ${deletedMovements} movements`);
+          if (deleteError) {
+            throw new Error(`Erro ao eliminar materiais: ${deleteError.message}`);
           }
+          
+          deletedMaterials = materials.length;
+          console.log(`✅ [clearAllMaterials] Deleted ${deletedMaterials} materials from Supabase`);
         }
-      } catch (error) {
-        console.log('Could not delete movements, continuing...');
-      }
-      
-      // Get all material IDs
-      const { data: materials, error: selectError } = await supabase
-        .from('materials')
-        .select('id')
-        .limit(1000);
-      
-      if (selectError) {
-        throw new Error(`Erro ao consultar materiais: ${selectError.message}`);
-      }
-      
-      if (materials && materials.length > 0) {
-        const { error: deleteError } = await supabase
-          .from('materials')
-          .delete()
-          .in('id', materials.map(m => m.id));
+      } else {
+        // Offline mode - get counts from localStorage before clearing
+        console.log('💾 [clearAllMaterials] Working in offline mode - clearing localStorage only');
         
-        if (deleteError) {
-          throw new Error(`Erro ao eliminar materiais: ${deleteError.message}`);
+        try {
+          const localMaterials = JSON.parse(localStorage.getItem(STORAGE_KEYS.MATERIALS) || '[]');
+          const localMovements = JSON.parse(localStorage.getItem(STORAGE_KEYS.MOVEMENTS) || '[]');
+          
+          deletedMaterials = localMaterials.length;
+          deletedMovements = localMovements.length;
+          
+          console.log(`💾 [clearAllMaterials] Found ${deletedMaterials} materials and ${deletedMovements} movements in localStorage`);
+        } catch (error) {
+          console.error('⚠️ [clearAllMaterials] Error reading localStorage:', error);
         }
-        
-        deletedMaterials = materials.length;
       }
 
       // Clear localStorage materials - NEVER touch exclusions
@@ -218,11 +252,23 @@ export const useSupabaseAdminOperations = () => {
       localStorage.removeItem(STORAGE_KEYS.MOVEMENTS);
       // 🔒 CRITICAL: EXCLUSIONS are intentionally NOT cleared to preserve user settings
 
-      console.log(`Successfully deleted ${deletedMaterials} materials and ${deletedMovements} movements`);
-      toast.success(`Todos os materiais foram removidos! (${deletedMaterials} materiais, ${deletedMovements} movimentos)`);
+      const modeText = isOfflineMode ? '(modo offline)' : '(online)';
+      const successMessage = `Todos os materiais foram removidos! ${modeText} (${deletedMaterials} materiais, ${deletedMovements} movimentos)`;
+      
+      console.log(`✅ [clearAllMaterials] Successfully cleared ${deletedMaterials} materials and ${deletedMovements} movements`);
+      toast.success(successMessage);
+      
+      // Force page refresh to reload data in offline mode
+      if (isOfflineMode) {
+        setTimeout(() => {
+          console.log('🔄 [clearAllMaterials] Reloading page to refresh data');
+          window.location.reload();
+        }, 1500);
+      }
+      
       return true;
     } catch (error) {
-      console.error('Error clearing materials:', error);
+      console.error('❌ [clearAllMaterials] Error clearing materials:', error);
       toast.error(error instanceof Error ? error.message : 'Erro ao limpar materiais');
       return false;
     }
