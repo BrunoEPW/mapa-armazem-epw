@@ -174,8 +174,9 @@ const Reports = () => {
           </button>
         </div>
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="bg-card/80 backdrop-blur">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Materiais</CardTitle>
@@ -477,6 +478,7 @@ const Reports = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
         </div>
       </div>
       <Footer />

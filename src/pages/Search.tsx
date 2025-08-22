@@ -31,13 +31,15 @@ const Search = () => {
           </button>
         </div>
 
-        <SearchPanel />
-        
-        <div className="mt-6">
-          <ProductCodeVerifier 
-            show={showVerifier} 
-            onToggle={() => setShowVerifier(!showVerifier)} 
-          />
+        <div className="max-w-7xl mx-auto">
+          <SearchPanel />
+          
+          <div className="mt-6">
+            <ProductCodeVerifier 
+              show={showVerifier} 
+              onToggle={() => setShowVerifier(!showVerifier)} 
+            />
+          </div>
         </div>
       </div>
 

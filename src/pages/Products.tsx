@@ -60,7 +60,7 @@ const Products = () => {
         </button>
       </div>
       
-      <main className="w-full px-4 py-8">
+      <main className="w-full px-4 py-8 max-w-7xl mx-auto">
 
         {/* API Status */}
         <div className="mb-6">
