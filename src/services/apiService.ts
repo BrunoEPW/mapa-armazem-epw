@@ -354,17 +354,55 @@ class ApiService {
   async fetchAllArtigos(): Promise<ApiArtigo[]> {
     try {
       // Start with a small request to get total count
-      const initialData = await this.fetchArtigos(1, 0, 10);
+      const initialResponse = await this.fetchArtigosWithTotal(1, 0, 10);
+      const totalRecords = initialResponse.recordsTotal;
+      console.log(`📊 [ApiService] Total records available: ${totalRecords}`);
       
-      // Fetch all records (up to 4000)
-      return await this.fetchArtigos(1, 0, 4000);
+      if (totalRecords <= 4000) {
+        // If total is manageable, fetch all at once
+        console.log(`📥 [ApiService] Fetching all ${totalRecords} records in one request`);
+        return await this.fetchArtigos(1, 0, totalRecords);
+      } else {
+        // If too many records, fetch in batches
+        console.log(`📥 [ApiService] Fetching ${totalRecords} records in batches`);
+        return await this.fetchAllArtigosInBatches(totalRecords);
+      }
     } catch (error) {
       console.error('Failed to fetch all artigos:', error);
       return [];
     }
   }
 
-  // Find product by code
+  private async fetchAllArtigosInBatches(totalRecords: number, batchSize: number = 2000): Promise<ApiArtigo[]> {
+    const allProducts: ApiArtigo[] = [];
+    let currentStart = 0;
+
+    while (currentStart < totalRecords) {
+      const remainingRecords = totalRecords - currentStart;
+      const currentBatchSize = Math.min(batchSize, remainingRecords);
+      
+      console.log(`📥 [ApiService] Fetching batch: ${currentStart} to ${currentStart + currentBatchSize} of ${totalRecords}`);
+      
+      try {
+        const batchProducts = await this.fetchArtigos(1, currentStart, currentBatchSize);
+        allProducts.push(...batchProducts);
+        currentStart += currentBatchSize;
+        
+        // Small delay between batches to avoid overwhelming the API
+        if (currentStart < totalRecords) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } catch (error) {
+        console.error(`❌ [ApiService] Error fetching batch starting at ${currentStart}:`, error);
+        break;
+      }
+    }
+
+    console.log(`✅ [ApiService] Successfully fetched ${allProducts.length} products in batches`);
+    return allProducts;
+  }
+
+  // Find product by code with complete search
   async findProductByCode(productCode: string): Promise<ApiArtigo | null> {
     console.log(`🔍 [ApiService] Searching for product with code: ${productCode}`);
     
@@ -384,25 +422,77 @@ class ApiService {
         return exactMatch;
       }
       
-      // If no exact match found with filters, try a broader search
-      console.log(`🔍 [ApiService] No exact match found with filters, trying broader search...`);
-      const broadResponse = await this.fetchArtigosWithTotal(1, 0, 5000);
+      // If no exact match found with filters, do a complete search
+      console.log(`🔍 [ApiService] No exact match found with filters, searching all products...`);
+      const allProducts = await this.fetchAllArtigos();
       
-      const broadMatch = broadResponse.data?.find(item => 
+      const completeMatch = allProducts.find(item => 
         item.strCodigo === productCode
       );
       
-      if (broadMatch) {
-        console.log(`✅ [ApiService] Found match in broader search for ${productCode}:`, broadMatch);
-        return broadMatch;
+      if (completeMatch) {
+        console.log(`✅ [ApiService] Found match in complete search for ${productCode}:`, completeMatch);
+        return completeMatch;
       }
       
-      console.log(`❌ [ApiService] No product found with code: ${productCode}`);
+      console.log(`❌ [ApiService] No product found with code: ${productCode} (searched ${allProducts.length} products)`);
       return null;
       
     } catch (error) {
       console.error(`❌ [ApiService] Error searching for product ${productCode}:`, error);
       return null;
+    }
+  }
+
+  // Batch verification of multiple product codes
+  async verifyProductCodes(productCodes: string[]): Promise<{
+    found: { code: string; product: ApiArtigo }[];
+    notFound: string[];
+    totalSearched: number;
+  }> {
+    console.log(`🔍 [ApiService] Verifying ${productCodes.length} product codes...`);
+    
+    try {
+      // Fetch all products once for batch verification
+      const allProducts = await this.fetchAllArtigos();
+      console.log(`📊 [ApiService] Searching through ${allProducts.length} products`);
+      
+      const found: { code: string; product: ApiArtigo }[] = [];
+      const notFound: string[] = [];
+      
+      for (const code of productCodes) {
+        const product = allProducts.find(item => item.strCodigo === code);
+        
+        if (product) {
+          console.log(`✅ [ApiService] Found ${code}`);
+          found.push({ code, product });
+        } else {
+          console.log(`❌ [ApiService] Not found: ${code}`);
+          notFound.push(code);
+        }
+      }
+      
+      const result = {
+        found,
+        notFound,
+        totalSearched: allProducts.length
+      };
+      
+      console.log(`📊 [ApiService] Verification complete:`, {
+        found: found.length,
+        notFound: notFound.length,
+        totalSearched: allProducts.length
+      });
+      
+      return result;
+      
+    } catch (error) {
+      console.error(`❌ [ApiService] Error verifying product codes:`, error);
+      return {
+        found: [],
+        notFound: productCodes,
+        totalSearched: 0
+      };
     }
   }
 

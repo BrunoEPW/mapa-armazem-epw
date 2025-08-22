@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchPanel from '@/components/warehouse/SearchPanel';
+import { ProductCodeVerifier } from '@/components/warehouse/ProductCodeVerifier';
 import { DebugPanel } from '@/components/ui/DebugPanel';
 import Footer from '@/components/ui/Footer';
 import searchBanner from '@/assets/search-banner.jpg';
 
 const Search = () => {
   const navigate = useNavigate();
+  const [showVerifier, setShowVerifier] = useState(false);
 
   return (
     <div className="min-h-screen bg-warehouse-bg p-4 sm:p-6 lg:p-8 flex flex-col">
@@ -30,6 +32,13 @@ const Search = () => {
         </div>
 
         <SearchPanel />
+        
+        <div className="mt-6">
+          <ProductCodeVerifier 
+            show={showVerifier} 
+            onToggle={() => setShowVerifier(!showVerifier)} 
+          />
+        </div>
       </div>
 
       <DebugPanel additionalInfo={{ page: 'search' }} />
