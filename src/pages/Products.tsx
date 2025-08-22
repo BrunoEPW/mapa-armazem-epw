@@ -12,6 +12,7 @@ import { EPWDecoderTester } from '@/components/warehouse/EPWDecoderTester';
 import { ExclusionsAnalysisPanel } from '@/components/warehouse/ExclusionsAnalysisPanel';
 import { EmergencyResetDialog } from '@/components/warehouse/EmergencyResetDialog';
 import { ShowAllProductsButton } from '@/components/warehouse/ShowAllProductsButton';
+import { ExclusionsRecoveryDialog } from '@/components/warehouse/ExclusionsRecoveryDialog';
 import { mockProducts } from '@/data/mock-data';
 import { DebugPanel } from '@/components/ui/DebugPanel';
 
@@ -181,6 +182,7 @@ const Products: React.FC = () => {
               </div>
               
               <div className="flex gap-2">
+                <ExclusionsRecoveryDialog />
                 <ShowAllProductsButton onRefresh={refresh} />
                 <EmergencyResetDialog 
                   excludedCount={exclusions.prefixes.length}
