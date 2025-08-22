@@ -25,7 +25,8 @@ const Index = () => {
     products, 
     movements, 
     selectedShelf, 
-    populateTestData 
+    populateTestData,
+    clearAllData
   } = useWarehouse();
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [isPopulating, setIsPopulating] = useState(false);
@@ -73,21 +74,24 @@ const Index = () => {
     
     setIsPopulating(true);
     try {
-      // Verificar conectividade com Supabase
-      const isSupabaseAvailable = await checkSupabaseConnection();
+      console.log('🔄 Substituindo dados existentes por dados de teste...');
       
-      if (isSupabaseAvailable) {
-        console.log('🔗 Supabase disponível - usando modo online');
-        await populateTestData();
-      } else {
-        console.log('📱 Supabase indisponível - usando modo offline');
-        // Em modo offline, usar apenas populateTestData com fallback local
-        await populateTestData();
+      // First clear all existing data
+      const clearSuccess = await clearAllData();
+      if (!clearSuccess) {
+        console.error('❌ Erro ao limpar dados existentes');
+        return;
       }
+      
+      console.log('✅ Dados existentes limpos com sucesso');
+      
+      // Then populate with new test data
+      console.log('📦 Populando novos dados de teste...');
+      await populateTestData();
+      
+      console.log('✅ Substituição de dados concluída com sucesso');
     } catch (error) {
-      console.error('Erro ao popular dados de teste:', error);
-      // Em caso de erro, informar o utilizador
-      console.error('Erro ao tentar popular dados:', error);
+      console.error('❌ Erro ao substituir dados de teste:', error);
     } finally {
       setIsPopulating(false);
     }
@@ -210,7 +214,7 @@ const Index = () => {
             variant="outline"
             className="bg-blue-600 hover:bg-blue-700 text-white border-blue-500"
           >
-            {isPopulating ? 'A popular dados...' : 'Popular Dados de Teste'}
+            {isPopulating ? 'A substituir dados...' : 'Substituir Dados de Teste'}
           </Button>
         </div>
 
