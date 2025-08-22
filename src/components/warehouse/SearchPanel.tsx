@@ -171,9 +171,16 @@ const SearchPanel: React.FC = () => {
     
     // Aplicar filtro de modelo se selecionado
     if (selectedModel !== 'all') {
-      filteredMaterials = filteredMaterials.filter(material => 
-        material.product.modelo && material.product.modelo.toLowerCase().includes(selectedModel.toLowerCase())
-      );
+      filteredMaterials = filteredMaterials.filter(material => {
+        const modeloLower = material.product.modelo?.toLowerCase() || '';
+        const descricaoLower = material.product.descricao?.toLowerCase() || '';
+        const familiaLower = material.product.familia?.toLowerCase() || '';
+        const searchTerm = selectedModel.toLowerCase();
+        
+        return modeloLower.includes(searchTerm) || 
+               descricaoLower.includes(searchTerm) || 
+               familiaLower.includes(searchTerm);
+      });
     }
     
     // Aplicar filtro de comprimento se selecionado
@@ -187,7 +194,7 @@ const SearchPanel: React.FC = () => {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filteredMaterials = filteredMaterials.filter(material => {
-        const productDesc = `${material.product.familia} ${material.product.modelo} ${material.product.acabamento} ${material.product.cor}`.toLowerCase();
+        const productDesc = `${material.product.familia || ''} ${material.product.modelo || ''} ${material.product.acabamento || ''} ${material.product.cor || ''} ${material.product.descricao || ''}`.toLowerCase();
         return productDesc.includes(query);
       });
     }
@@ -198,7 +205,9 @@ const SearchPanel: React.FC = () => {
   const filteredMaterials = getFilteredMaterials();
 
   const modelGroups = filteredMaterials.reduce((acc, material) => {
-    const modelo = material.product.modelo;
+    const modelo = material.product.modelo || 'Sem Modelo';
+    const description = material.product.descricao || `${material.product.familia || ''} ${material.product.modelo || ''} ${material.product.acabamento || ''}`.trim();
+    
     if (!acc[modelo]) {
       acc[modelo] = {
         modelo,
@@ -207,7 +216,7 @@ const SearchPanel: React.FC = () => {
         locations: [],
         materials: [],
         firstProduct: material.product,
-        description: material.product.descricao || `${material.product.familia} ${material.product.modelo} ${material.product.acabamento}`.trim()
+        description: description
       };
     }
     acc[modelo].totalPecas += material.pecas;
@@ -236,9 +245,13 @@ const SearchPanel: React.FC = () => {
     firstProduct: any;
   }>);
 
-  // Ordenar por ordem alfabética do modelo (display name)
+  // Ordenar por ordem alfabética da descrição do modelo
   const sortedModels = Object.values(modelGroups)
-    .sort((a, b) => a.displayName.localeCompare(b.displayName, 'pt', { numeric: true, sensitivity: 'base' }));
+    .sort((a, b) => {
+      const descA = a.description || a.displayName || a.modelo || '';
+      const descB = b.description || b.displayName || b.modelo || '';
+      return descA.localeCompare(descB, 'pt', { numeric: true, sensitivity: 'base' });
+    });
 
   return (
     <div className="space-y-6">
