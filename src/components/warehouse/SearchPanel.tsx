@@ -165,7 +165,39 @@ const SearchPanel: React.FC = () => {
   };
 
   // Agrupamentos de materiais por modelo com contagens e localizações detalhadas
-  const modelGroups = materials.reduce((acc, material) => {
+  // Filtrar materiais baseado nos filtros selecionados
+  const getFilteredMaterials = () => {
+    let filteredMaterials = materials;
+    
+    // Aplicar filtro de modelo se selecionado
+    if (selectedModel !== 'all') {
+      filteredMaterials = filteredMaterials.filter(material => 
+        material.product.modelo && material.product.modelo.toLowerCase().includes(selectedModel.toLowerCase())
+      );
+    }
+    
+    // Aplicar filtro de comprimento se selecionado
+    if (selectedComprimento !== 'all') {
+      filteredMaterials = filteredMaterials.filter(material => 
+        material.product.comprimento && material.product.comprimento.toString() === selectedComprimento
+      );
+    }
+    
+    // Aplicar filtro de pesquisa se inserido
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filteredMaterials = filteredMaterials.filter(material => {
+        const productDesc = `${material.product.familia} ${material.product.modelo} ${material.product.acabamento} ${material.product.cor}`.toLowerCase();
+        return productDesc.includes(query);
+      });
+    }
+    
+    return filteredMaterials;
+  };
+
+  const filteredMaterials = getFilteredMaterials();
+
+  const modelGroups = filteredMaterials.reduce((acc, material) => {
     const modelo = material.product.modelo;
     if (!acc[modelo]) {
       acc[modelo] = {
@@ -204,9 +236,9 @@ const SearchPanel: React.FC = () => {
     firstProduct: any;
   }>);
 
+  // Ordenar por ordem alfabética do modelo (display name)
   const sortedModels = Object.values(modelGroups)
-    .sort((a, b) => b.totalPecas - a.totalPecas)
-    .slice(0, 8); // Mostrar apenas os 8 modelos com mais stock
+    .sort((a, b) => a.displayName.localeCompare(b.displayName, 'pt', { numeric: true, sensitivity: 'base' }));
 
   return (
     <div className="space-y-6">
@@ -253,11 +285,19 @@ const SearchPanel: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
             <ModeloSelect 
               value={selectedModel} 
-              onValueChange={setSelectedModel}
+              onValueChange={(value) => {
+                setSelectedModel(value);
+                // Trigger search when filter changes
+                setTimeout(() => handleApiSearch(), 100);
+              }}
             />
             <ComprimentoSelect 
               value={selectedComprimento} 
-              onValueChange={setSelectedComprimento}
+              onValueChange={(value) => {
+                setSelectedComprimento(value);
+                // Trigger search when filter changes
+                setTimeout(() => handleApiSearch(), 100);
+              }}
             />
           </div>
           
@@ -266,10 +306,29 @@ const SearchPanel: React.FC = () => {
             <Input
               placeholder="Pesquisar por descrição..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                // Trigger search when query changes
+                setTimeout(() => handleApiSearch(), 300);
+              }}
               className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60 w-full"
             />
           </div>
+          
+          {/* Botão para limpar filtros */}
+          {(selectedModel !== 'all' || selectedComprimento !== 'all' || searchQuery.trim()) && (
+            <div className="flex justify-center">
+              <Button 
+                onClick={handleClearApiSearch} 
+                variant="outline" 
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <AlertCircle className="w-4 h-4" />
+                Limpar Filtros
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -279,6 +338,11 @@ const SearchPanel: React.FC = () => {
           <CardTitle className="flex items-center gap-2">
             <Package className="w-5 h-5" />
             Acesso Rápido por Modelo
+            {(selectedModel !== 'all' || selectedComprimento !== 'all' || searchQuery.trim()) && (
+              <Badge variant="secondary" className="ml-2">
+                Filtrado
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="w-full">
@@ -336,7 +400,11 @@ const SearchPanel: React.FC = () => {
           {sortedModels.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>Nenhum modelo em stock</p>
+              {(selectedModel !== 'all' || selectedComprimento !== 'all' || searchQuery.trim()) ? (
+                <p>Nenhum modelo encontrado com os filtros aplicados</p>
+              ) : (
+                <p>Nenhum modelo em stock</p>
+              )}
             </div>
           )}
         </CardContent>
@@ -345,7 +413,14 @@ const SearchPanel: React.FC = () => {
       {/* Products List - Direct from API (like Products page) */}
       <Card>
         <CardHeader>
-          <CardTitle>Produtos da API</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            Produtos da API
+            {(selectedModel !== 'all' || selectedComprimento !== 'all' || searchQuery.trim()) && (
+              <Badge variant="secondary" className="ml-2">
+                Filtrado
+              </Badge>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent className="w-full overflow-x-auto">
           {error ? (
