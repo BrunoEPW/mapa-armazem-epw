@@ -52,7 +52,7 @@ export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
     return `${page}-${search}`;
   };
 
-  const loadProducts = useCallback(async (page: number = 1, search: string = '') => {
+  const loadProducts = useCallback(async (page: number = 1, search: string = '', forceRefresh: boolean = false) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -63,16 +63,20 @@ export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
     setLoading(true);
     setError(null);
 
-    // Verificar cache
-    const cacheKey = generateCacheKey(page, search);
-    const cached = cacheRef.current.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < cacheTimeout) {
-      console.log('📦 [useApiProductsSimple] Using cache for:', cacheKey);
-      setProducts(cached.products);
-      setTotalCount(cached.totalCount);
-      setTotalPages(Math.ceil(cached.totalCount / itemsPerPage));
-      setLoading(false);
-      return;
+    // Verificar cache (só se não for refresh forçado)
+    if (!forceRefresh) {
+      const cacheKey = generateCacheKey(page, search);
+      const cached = cacheRef.current.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < cacheTimeout) {
+        console.log('📦 [useApiProductsSimple] Using cache for:', cacheKey);
+        setProducts(cached.products);
+        setTotalCount(cached.totalCount);
+        setTotalPages(Math.ceil(cached.totalCount / itemsPerPage));
+        setLoading(false);
+        return;
+      }
+    } else {
+      console.log('🔄 [useApiProductsSimple] Force refresh requested, ignoring cache');
     }
     
     setConnectionStatus(search ? 'Pesquisando produtos...' : 'Carregando produtos...');
@@ -127,6 +131,7 @@ export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
       setTotalPages(Math.ceil((totalRecords || 0) / itemsPerPage));
 
       // Cache do resultado
+      const cacheKey = generateCacheKey(page, search);
       cacheRef.current.set(cacheKey, {
         products: mappedProducts,
         totalCount: totalRecords || 0,
@@ -168,14 +173,14 @@ export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
     }
 
     debounceTimeoutRef.current = setTimeout(() => {
-      loadProducts(page, search);
+      loadProducts(page, search, false);
     }, 500); // 500ms debounce for search
   }, [loadProducts]);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages && page !== currentPage) {
       setCurrentPage(page);
-      loadProducts(page, searchQuery);
+      loadProducts(page, searchQuery, false);
     }
   };
 
@@ -186,13 +191,14 @@ export const useApiProductsSimple = (): UseApiProductsSimpleReturn => {
   };
 
   const refresh = async () => {
+    console.log('🔄 [useApiProductsSimple] Manual refresh initiated');
     cacheRef.current.clear();
-    await loadProducts(currentPage, searchQuery);
+    await loadProducts(currentPage, searchQuery, true);
   };
 
   // Load initial products on mount
   useEffect(() => {
-    loadProducts(1, '');
+    loadProducts(1, '', false);
 
     return () => {
       if (abortControllerRef.current) {
