@@ -144,7 +144,7 @@ const Index = () => {
       title: 'Gestão de Produtos',
       icon: Package,
       path: '/produtos',
-      color: 'bg-violet-500 hover:bg-violet-600',
+      color: 'bg-primary hover:bg-primary/90',
     },
     {
       title: 'Relatórios',
