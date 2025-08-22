@@ -113,7 +113,10 @@ export const useApiProductsSimple = (modelo?: string): UseApiProductsSimpleRetur
       }
 
       const mappedProducts = response.data.map(mapApiProductToSimple);
-      const totalRecords = search.trim() ? response.recordsFiltered : response.recordsTotal;
+      
+      // Use filtered count when filters are applied (search OR model filter)
+      const hasFilters = search.trim() || (modelo && modelo !== 'all');
+      const totalRecords = hasFilters ? response.recordsFiltered : response.recordsTotal;
       
       setProducts(mappedProducts);
       setTotalCount(totalRecords || 0);
@@ -121,8 +124,8 @@ export const useApiProductsSimple = (modelo?: string): UseApiProductsSimpleRetur
 
       // No caching - just continue
 
-      const statusMessage = search.trim()
-        ? `${mappedProducts.length} produtos encontrados`
+      const statusMessage = hasFilters
+        ? `${mappedProducts.length} produtos encontrados (${totalRecords} total filtrados)`
         : `${mappedProducts.length} produtos carregados`;
       
       setConnectionStatus(statusMessage);
@@ -191,6 +194,16 @@ export const useApiProductsSimple = (modelo?: string): UseApiProductsSimpleRetur
       }
     };
   }, [loadProducts]);
+
+  // Reset to page 1 when model filter changes
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+      loadProducts(1, searchQuery, false);
+    } else {
+      loadProducts(1, searchQuery, false);
+    }
+  }, [modelo]);
 
   return {
     products,
