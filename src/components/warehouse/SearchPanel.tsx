@@ -173,9 +173,18 @@ const SearchPanel: React.FC = () => {
   const getFilteredMaterials = () => {
     let filteredMaterials = materials;
     
-    // Aplicar filtro de modelo se selecionado (correspondência exata)
+    // Aplicar filtro de modelo se selecionado
     if (selectedModel !== 'all') {
       filteredMaterials = filteredMaterials.filter(material => {
+        // Tentar decodificar o código EPW do material se disponível
+        if (material.product.codigo) {
+          const decoded = decodeEPWReference(material.product.codigo, false);
+          if (decoded.success && decoded.product?.modelo?.l) {
+            return decoded.product.modelo.l === selectedModel;
+          }
+        }
+        
+        // Fallback: comparação direta com o campo modelo
         return material.product.modelo === selectedModel;
       });
     }
@@ -187,9 +196,18 @@ const SearchPanel: React.FC = () => {
       );
     }
     
-    // Aplicar filtro de cor se selecionado (correspondência exata)
+    // Aplicar filtro de cor se selecionado
     if (selectedCor !== 'all') {
       filteredMaterials = filteredMaterials.filter(material => {
+        // Tentar decodificar o código EPW do material se disponível
+        if (material.product.codigo) {
+          const decoded = decodeEPWReference(material.product.codigo, false);
+          if (decoded.success && decoded.product?.cor?.l) {
+            return decoded.product.cor.l === selectedCor;
+          }
+        }
+        
+        // Fallback: comparação direta com o campo cor
         return material.product.cor === selectedCor;
       });
     }
