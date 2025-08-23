@@ -18,6 +18,7 @@ interface SearchDebugConsoleProps {
   };
   selectedModel: string;
   selectedComprimento?: string;
+  selectedCor?: string;
   additionalInfo?: Record<string, any>;
 }
 
@@ -25,6 +26,7 @@ export const SearchDebugConsole: React.FC<SearchDebugConsoleProps> = ({
   hookData, 
   selectedModel,
   selectedComprimento = 'all',
+  selectedCor = 'all',
   additionalInfo = {} 
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,6 +35,7 @@ export const SearchDebugConsole: React.FC<SearchDebugConsoleProps> = ({
     timestamp: new Date().toISOString(),
     selectedModel,
     selectedComprimento,
+    selectedCor,
     searchQuery: hookData.searchQuery,
     products: {
       count: hookData.products.length,
@@ -66,7 +69,7 @@ export const SearchDebugConsole: React.FC<SearchDebugConsoleProps> = ({
       noProducts: hookData.products.length === 0 && !hookData.loading,
       hasError: !!hookData.error,
       disconnected: !hookData.isConnected,
-      emptySearch: !hookData.searchQuery.trim() && selectedModel === 'all'
+      emptySearch: !hookData.searchQuery.trim() && selectedModel === 'all' && selectedComprimento === 'all' && selectedCor === 'all'
     },
     ...additionalInfo
   };
@@ -110,9 +113,10 @@ export const SearchDebugConsole: React.FC<SearchDebugConsoleProps> = ({
                 <div className="space-y-1 text-xs">
                   <div>Estado: {hookData.loading ? '🔄 Carregando' : '✅ Pronto'}</div>
                   <div>Conexão: {hookData.isConnected ? '🟢 Online' : '🔴 Offline'}</div>
-                   <div>Modelo: {selectedModel === 'all' ? 'Todos' : selectedModel}</div>
-                   <div>Comprimento: {selectedComprimento === 'all' ? 'Todos' : selectedComprimento}</div>
-                   <div>Pesquisa: {hookData.searchQuery || 'Vazia'}</div>
+                    <div>Modelo: {selectedModel === 'all' ? 'Todos' : selectedModel}</div>
+                    <div>Comprimento: {selectedComprimento === 'all' ? 'Todos' : selectedComprimento}</div>
+                    <div>Cor: {selectedCor === 'all' ? 'Todas' : selectedCor}</div>
+                    <div>Pesquisa: {hookData.searchQuery || 'Vazia'}</div>
                 </div>
               </div>
 

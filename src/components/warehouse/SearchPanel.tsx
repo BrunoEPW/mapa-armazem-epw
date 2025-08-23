@@ -11,6 +11,7 @@ import { ModelLocationsDialog } from './ModelLocationsDialog';
 import { decodeEPWReference } from '@/utils/epwCodeDecoder';
 import { ModeloSelect } from './ModeloSelect';
 import { ComprimentoSelect } from './ComprimentoSelect';
+import { CorSelect } from './CorSelect';
 import { useApiProductsSimple } from '@/hooks/useApiProductsSimple';
 import { SearchDebugConsole } from './SearchDebugConsole';
 
@@ -21,6 +22,7 @@ const SearchPanel: React.FC = () => {
   // Estado para pesquisa avançada (integrada com API)
   const [selectedModel, setSelectedModel] = useState('all');
   const [selectedComprimento, setSelectedComprimento] = useState('all');
+  const [selectedCor, setSelectedCor] = useState('all');
   
   // Estado para resultados e UI
   const [searchResults, setSearchResults] = useState<Array<any>>([]);
@@ -43,12 +45,13 @@ const SearchPanel: React.FC = () => {
     connectionStatus
   } = useApiProductsSimple(
     selectedModel === 'all' ? undefined : selectedModel,
-    selectedComprimento === 'all' ? undefined : selectedComprimento
+    selectedComprimento === 'all' ? undefined : selectedComprimento,
+    selectedCor === 'all' ? undefined : selectedCor
   );
 
   // Função para pesquisar materiais baseado nos produtos da API
   const handleApiSearch = () => {
-    if (selectedModel === 'all' && selectedComprimento === 'all' && !searchQuery.trim()) {
+    if (selectedModel === 'all' && selectedComprimento === 'all' && selectedCor === 'all' && !searchQuery.trim()) {
       setSearchResults([]);
       return;
     }
@@ -131,6 +134,7 @@ const SearchPanel: React.FC = () => {
   const handleClearApiSearch = () => {
     setSelectedModel('all');
     setSelectedComprimento('all');
+    setSelectedCor('all');
     setSearchQuery('');
     setSearchResults([]);
   };
@@ -188,6 +192,15 @@ const SearchPanel: React.FC = () => {
       filteredMaterials = filteredMaterials.filter(material => 
         material.product.comprimento && material.product.comprimento.toString() === selectedComprimento
       );
+    }
+    
+    // Aplicar filtro de cor se selecionado
+    if (selectedCor !== 'all') {
+      filteredMaterials = filteredMaterials.filter(material => {
+        const corLower = material.product.cor?.toLowerCase() || '';
+        const searchTerm = selectedCor.toLowerCase();
+        return corLower.includes(searchTerm);
+      });
     }
     
     // Aplicar filtro de pesquisa se inserido
@@ -295,7 +308,7 @@ const SearchPanel: React.FC = () => {
           </div>
 
           {/* Filtros de pesquisa ocupando largura total */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
             <ModeloSelect 
               value={selectedModel} 
               onValueChange={(value) => {
@@ -308,6 +321,14 @@ const SearchPanel: React.FC = () => {
               value={selectedComprimento} 
               onValueChange={(value) => {
                 setSelectedComprimento(value);
+                // Trigger search when filter changes
+                setTimeout(() => handleApiSearch(), 100);
+              }}
+            />
+            <CorSelect 
+              value={selectedCor} 
+              onValueChange={(value) => {
+                setSelectedCor(value);
                 // Trigger search when filter changes
                 setTimeout(() => handleApiSearch(), 100);
               }}
@@ -329,7 +350,7 @@ const SearchPanel: React.FC = () => {
           </div>
           
           {/* Botão para limpar filtros */}
-          {(selectedModel !== 'all' || selectedComprimento !== 'all' || searchQuery.trim()) && (
+            {(selectedModel !== 'all' || selectedComprimento !== 'all' || selectedCor !== 'all' || searchQuery.trim()) && (
             <div className="flex justify-center">
               <Button 
                 onClick={handleClearApiSearch} 
@@ -351,7 +372,7 @@ const SearchPanel: React.FC = () => {
           <CardTitle className="flex items-center gap-2">
             <Package className="w-5 h-5" />
             Acesso Rápido por Modelo
-            {(selectedModel !== 'all' || selectedComprimento !== 'all' || searchQuery.trim()) && (
+          {(selectedModel !== 'all' || selectedComprimento !== 'all' || selectedCor !== 'all' || searchQuery.trim()) && (
               <Badge variant="secondary" className="ml-2">
                 Filtrado
               </Badge>
@@ -413,7 +434,7 @@ const SearchPanel: React.FC = () => {
           {sortedModels.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              {(selectedModel !== 'all' || selectedComprimento !== 'all' || searchQuery.trim()) ? (
+              {(selectedModel !== 'all' || selectedComprimento !== 'all' || selectedCor !== 'all' || searchQuery.trim()) ? (
                 <p>Nenhum modelo encontrado com os filtros aplicados</p>
               ) : (
                 <p>Nenhum modelo em stock</p>
@@ -428,7 +449,7 @@ const SearchPanel: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             Produtos da API
-            {(selectedModel !== 'all' || selectedComprimento !== 'all' || searchQuery.trim()) && (
+            {(selectedModel !== 'all' || selectedComprimento !== 'all' || selectedCor !== 'all' || searchQuery.trim()) && (
               <Badge variant="secondary" className="ml-2">
                 Filtrado
               </Badge>
@@ -586,6 +607,7 @@ const SearchPanel: React.FC = () => {
         }}
         selectedModel={selectedModel}
         selectedComprimento={selectedComprimento}
+        selectedCor={selectedCor}
         additionalInfo={{ page: 'search', materialsCount: materials.length }}
       />
     </div>
