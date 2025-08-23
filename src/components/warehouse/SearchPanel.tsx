@@ -173,17 +173,10 @@ const SearchPanel: React.FC = () => {
   const getFilteredMaterials = () => {
     let filteredMaterials = materials;
     
-    // Aplicar filtro de modelo se selecionado
+    // Aplicar filtro de modelo se selecionado (correspondência exata)
     if (selectedModel !== 'all') {
       filteredMaterials = filteredMaterials.filter(material => {
-        const modeloLower = material.product.modelo?.toLowerCase() || '';
-        const descricaoLower = material.product.descricao?.toLowerCase() || '';
-        const familiaLower = material.product.familia?.toLowerCase() || '';
-        const searchTerm = selectedModel.toLowerCase();
-        
-        return modeloLower.includes(searchTerm) || 
-               descricaoLower.includes(searchTerm) || 
-               familiaLower.includes(searchTerm);
+        return material.product.modelo === selectedModel;
       });
     }
     
@@ -194,12 +187,10 @@ const SearchPanel: React.FC = () => {
       );
     }
     
-    // Aplicar filtro de cor se selecionado
+    // Aplicar filtro de cor se selecionado (correspondência exata)
     if (selectedCor !== 'all') {
       filteredMaterials = filteredMaterials.filter(material => {
-        const corLower = material.product.cor?.toLowerCase() || '';
-        const searchTerm = selectedCor.toLowerCase();
-        return corLower.includes(searchTerm);
+        return material.product.cor === selectedCor;
       });
     }
     
