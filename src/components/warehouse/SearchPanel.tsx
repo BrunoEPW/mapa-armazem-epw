@@ -369,14 +369,33 @@ const SearchPanel: React.FC = () => {
       {/* Acesso Rápido por Modelo */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="w-5 h-5" />
-            Acesso Rápido por Modelo
-          {(selectedModel !== 'all' || selectedComprimento !== 'all' || selectedCor !== 'all' || searchQuery.trim()) && (
-              <Badge variant="secondary" className="ml-2">
-                Filtrado
-              </Badge>
-            )}
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              Acesso Rápido por Modelo
+              {(selectedModel !== 'all' || selectedComprimento !== 'all' || selectedCor !== 'all' || searchQuery.trim()) && (
+                <Badge variant="secondary" className="ml-2">
+                  {(() => {
+                    const activeFilters = [];
+                    if (selectedModel !== 'all') activeFilters.push('Modelo');
+                    if (selectedComprimento !== 'all') activeFilters.push('Comprimento');
+                    if (selectedCor !== 'all') activeFilters.push('Cor');
+                    if (searchQuery.trim()) activeFilters.push('Pesquisa');
+                    return `Filtrado (${activeFilters.join(', ')})`;
+                  })()}
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="font-medium text-primary">{sortedModels.length}</span>
+              <span>de</span>
+              <span className="font-medium">{Object.keys(materials.reduce((acc, material) => {
+                const modelo = material.product.modelo || 'Sem Modelo';
+                acc[modelo] = true;
+                return acc;
+              }, {} as Record<string, boolean>)).length}</span>
+              <span>modelos</span>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="w-full">
@@ -435,7 +454,18 @@ const SearchPanel: React.FC = () => {
             <div className="text-center py-8 text-muted-foreground">
               <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
               {(selectedModel !== 'all' || selectedComprimento !== 'all' || selectedCor !== 'all' || searchQuery.trim()) ? (
-                <p>Nenhum modelo encontrado com os filtros aplicados</p>
+                <div className="space-y-2">
+                  <p className="text-lg font-medium">Nenhum modelo encontrado</p>
+                  <p className="text-sm">Os filtros aplicados não retornaram resultados</p>
+                  <Button 
+                    onClick={handleClearApiSearch} 
+                    variant="outline" 
+                    size="sm"
+                    className="mt-3"
+                  >
+                    Limpar Filtros
+                  </Button>
+                </div>
               ) : (
                 <p>Nenhum modelo em stock</p>
               )}
