@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, Edit, Trash2, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { RandomConfirmDialog } from '@/components/ui/random-confirm-dialog';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { Material } from '@/types/warehouse';
 import { AddMaterialDialog } from './AddMaterialDialog';
@@ -35,6 +35,7 @@ const ShelfDetailView: React.FC = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [showHistoryFor, setShowHistoryFor] = useState<string | null>(null);
+  const [materialToDelete, setMaterialToDelete] = useState<Material | null>(null);
 
   if (!estante || !prateleira) {
     console.log('❌ ShelfDetailView - Missing route params, navigating to home');
@@ -52,8 +53,15 @@ const ShelfDetailView: React.FC = () => {
     materialsCount: materials.length
   });
 
-  const handleRemoveMaterial = (materialId: string) => {
-    removeMaterial(materialId);
+  const handleRemoveMaterial = async (materialId: string) => {
+    try {
+      console.log('🗑️ [ShelfDetailView] Starting material removal:', materialId);
+      await removeMaterial(materialId);
+      console.log('✅ [ShelfDetailView] Material removed successfully');
+    } catch (error) {
+      console.error('❌ [ShelfDetailView] Error removing material:', error);
+      // Continue anyway since we're in offline mode
+    }
   };
 
   return (
@@ -118,33 +126,13 @@ const ShelfDetailView: React.FC = () => {
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Confirmar Remoção</AlertDialogTitle>
-                            <AlertDialogDescription className="text-base">
-                              Vai apagar este artigo e perder todo o registo de movimentos... é mesmo isso que quer!!!???
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction 
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              onClick={() => handleRemoveMaterial(material.id)}
-                            >
-                              Sim, Apagar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setMaterialToDelete(material)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
@@ -193,6 +181,22 @@ const ShelfDetailView: React.FC = () => {
           <MovementHistoryDialog
             materialId={showHistoryFor}
             onClose={() => setShowHistoryFor(null)}
+          />
+        )}
+
+        {materialToDelete && (
+          <RandomConfirmDialog
+            open={!!materialToDelete}
+            onOpenChange={(open) => !open && setMaterialToDelete(null)}
+            title="Confirmar Remoção"
+            description="Vai apagar este artigo e perder todo o registo de movimentos... é mesmo isso que quer!!!???"
+            confirmText="Sim, Apagar"
+            cancelText="Cancelar"
+            onConfirm={() => {
+              handleRemoveMaterial(materialToDelete.id);
+              setMaterialToDelete(null);
+            }}
+            onCancel={() => setMaterialToDelete(null)}
           />
         )}
       </div>
