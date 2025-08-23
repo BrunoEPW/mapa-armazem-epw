@@ -23,7 +23,7 @@ interface UseApiProductsSimpleReturn {
   setSearchQuery: (query: string) => void;
 }
 
-export const useApiProductsSimple = (modelo?: string, comprimento?: string): UseApiProductsSimpleReturn => {
+export const useApiProductsSimple = (modelo?: string, comprimento?: string, cor?: string): UseApiProductsSimpleReturn => {
   const itemsPerPage = 20;
   const [products, setProducts] = useState<SimpleProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,6 +77,9 @@ export const useApiProductsSimple = (modelo?: string, comprimento?: string): Use
       if (comprimento && comprimento !== 'all') {
         filters.Comprimento = comprimento;
       }
+      if (cor && cor !== 'all') {
+        filters.Cor = cor;
+      }
       
       // Para pesquisa simples, vamos buscar todos os produtos e filtrar localmente
       // devido às limitações da API para filtros por texto
@@ -117,8 +120,8 @@ export const useApiProductsSimple = (modelo?: string, comprimento?: string): Use
 
       const mappedProducts = response.data.map(mapApiProductToSimple);
       
-      // Use filtered count when filters are applied (search OR model filter OR comprimento filter)
-      const hasFilters = search.trim() || (modelo && modelo !== 'all') || (comprimento && comprimento !== 'all');
+      // Use filtered count when filters are applied (search OR model filter OR comprimento filter OR cor filter)
+      const hasFilters = search.trim() || (modelo && modelo !== 'all') || (comprimento && comprimento !== 'all') || (cor && cor !== 'all');
       const totalRecords = hasFilters ? response.recordsFiltered : response.recordsTotal;
       
       setProducts(mappedProducts);
@@ -154,7 +157,7 @@ export const useApiProductsSimple = (modelo?: string, comprimento?: string): Use
       setLoading(false);
       abortControllerRef.current = null;
     }
-  }, [itemsPerPage, modelo, comprimento]);
+  }, [itemsPerPage, modelo, comprimento, cor]);
 
   const debouncedLoadProducts = useCallback((page: number, search: string) => {
     if (debounceTimeoutRef.current) {
@@ -206,7 +209,7 @@ export const useApiProductsSimple = (modelo?: string, comprimento?: string): Use
     } else {
       loadProducts(1, searchQuery, false);
     }
-  }, [modelo, comprimento]);
+  }, [modelo, comprimento, cor]);
 
   return {
     products,

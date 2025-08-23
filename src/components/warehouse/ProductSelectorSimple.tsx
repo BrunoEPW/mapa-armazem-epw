@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, AlertCircle, Search, RefreshCw, FileText } from 'lucide-react';
 import { ModeloSelect, ModeloSelectRef } from './ModeloSelect';
 import { ComprimentoSelect, ComprimentoSelectRef } from './ComprimentoSelect';
+import { CorSelect, CorSelectRef } from './CorSelect';
 
 interface SimpleProduct {
   id: string;
@@ -25,8 +26,10 @@ export const ProductSelectorSimple: React.FC<ProductSelectorSimpleProps> = ({
 }) => {
   const [selectedModel, setSelectedModel] = useState<string>('all');
   const [selectedComprimento, setSelectedComprimento] = useState<string>('all');
+  const [selectedCor, setSelectedCor] = useState<string>('all');
   const modeloSelectRef = useRef<ModeloSelectRef>(null);
   const comprimentoSelectRef = useRef<ComprimentoSelectRef>(null);
+  const corSelectRef = useRef<CorSelectRef>(null);
 
   // Convert SimpleProduct to Product for compatibility
   const convertToProduct = (simpleProduct: SimpleProduct): Product => {
@@ -57,7 +60,8 @@ export const ProductSelectorSimple: React.FC<ProductSelectorSimpleProps> = ({
     setSearchQuery
   } = useApiProductsSimple(
     selectedModel !== 'all' ? selectedModel : undefined,
-    selectedComprimento !== 'all' ? selectedComprimento : undefined
+    selectedComprimento !== 'all' ? selectedComprimento : undefined,
+    selectedCor !== 'all' ? selectedCor : undefined
   );
 
   return (
@@ -86,7 +90,8 @@ export const ProductSelectorSimple: React.FC<ProductSelectorSimpleProps> = ({
                   refresh();
                   modeloSelectRef.current?.refresh();
                   comprimentoSelectRef.current?.refresh();
-                }} 
+                  corSelectRef.current?.refresh();
+                }}
                 variant="outline" 
                 size="sm" 
                 className="flex items-center gap-2"
@@ -104,7 +109,7 @@ export const ProductSelectorSimple: React.FC<ProductSelectorSimpleProps> = ({
 
       {/* Filters */}
       <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
           <ModeloSelect
             ref={modeloSelectRef}
             value={selectedModel}
@@ -114,6 +119,11 @@ export const ProductSelectorSimple: React.FC<ProductSelectorSimpleProps> = ({
             ref={comprimentoSelectRef}
             value={selectedComprimento}
             onValueChange={setSelectedComprimento}
+          />
+          <CorSelect
+            ref={corSelectRef}
+            value={selectedCor}
+            onValueChange={setSelectedCor}
           />
         </div>
         
