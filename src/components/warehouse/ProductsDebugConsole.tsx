@@ -19,6 +19,7 @@ interface ProductsDebugConsoleProps {
   };
   selectedModel: string;
   selectedComprimento?: string;
+  selectedCor?: string;
   additionalInfo?: any;
 }
 
@@ -26,6 +27,7 @@ export const ProductsDebugConsole: React.FC<ProductsDebugConsoleProps> = ({
   hookData,
   selectedModel,
   selectedComprimento,
+  selectedCor,
   additionalInfo
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -47,8 +49,10 @@ export const ProductsDebugConsole: React.FC<ProductsDebugConsoleProps> = ({
     filters: {
       selectedModel,
       selectedComprimento: selectedComprimento || 'all',
+      selectedCor: selectedCor || 'all',
       modelFilter: selectedModel !== 'all' ? selectedModel : 'undefined',
       comprimentoFilter: selectedComprimento && selectedComprimento !== 'all' ? selectedComprimento : 'undefined',
+      corFilter: selectedCor && selectedCor !== 'all' ? selectedCor : 'undefined',
       searchActive: !!hookData.searchQuery,
     },
     pagination: {
@@ -104,9 +108,10 @@ export const ProductsDebugConsole: React.FC<ProductsDebugConsoleProps> = ({
                   <div>Products: <span className="text-blue-400">{hookData.products.length}</span></div>
                   <div>Total Count: <span className="text-blue-400">{hookData.totalCount}</span></div>
                   <div>Page: <span className="text-blue-400">{hookData.currentPage}/{hookData.totalPages}</span></div>
-                  <div>Model Filter: <span className="text-purple-400">{selectedModel}</span></div>
-                  <div>Comprimento Filter: <span className="text-purple-400">{selectedComprimento || 'all'}</span></div>
-                  <div>Search: <span className="text-purple-400">"{hookData.searchQuery}"</span></div>
+                   <div>Model Filter: <span className="text-purple-400">{selectedModel}</span></div>
+                   <div>Comprimento Filter: <span className="text-purple-400">{selectedComprimento || 'all'}</span></div>
+                   <div>Cor Filter: <span className="text-purple-400">{selectedCor || 'all'}</span></div>
+                   <div>Search: <span className="text-purple-400">"{hookData.searchQuery}"</span></div>
                 </div>
               </div>
 

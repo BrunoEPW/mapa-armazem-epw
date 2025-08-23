@@ -9,6 +9,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/ui/Footer';
 import { ModeloSelect, ModeloSelectRef } from '@/components/warehouse/ModeloSelect';
 import { ComprimentoSelect, ComprimentoSelectRef } from '@/components/warehouse/ComprimentoSelect';
+import { CorSelect, CorSelectRef } from '@/components/warehouse/CorSelect';
 import { ProductsDebugConsole } from '@/components/warehouse/ProductsDebugConsole';
 import productsBanner from '@/assets/epw-products-banner.jpg';
 
@@ -16,8 +17,10 @@ const Products = () => {
   const navigate = useNavigate();
   const [selectedModel, setSelectedModel] = useState<string>('all');
   const [selectedComprimento, setSelectedComprimento] = useState<string>('all');
+  const [selectedCor, setSelectedCor] = useState<string>('all');
   const modeloSelectRef = useRef<ModeloSelectRef>(null);
   const comprimentoSelectRef = useRef<ComprimentoSelectRef>(null);
+  const corSelectRef = useRef<CorSelectRef>(null);
 
   const {
     products,
@@ -34,7 +37,8 @@ const Products = () => {
     setSearchQuery
   } = useApiProductsSimple(
     selectedModel !== 'all' ? selectedModel : undefined,
-    selectedComprimento !== 'all' ? selectedComprimento : undefined
+    selectedComprimento !== 'all' ? selectedComprimento : undefined,
+    selectedCor !== 'all' ? selectedCor : undefined
   );
 
   return (
@@ -83,11 +87,12 @@ const Products = () => {
                 
                 <div className="flex items-center gap-2">
                    <Button 
-                    onClick={() => {
-                      refresh();
-                      modeloSelectRef.current?.refresh();
-                      comprimentoSelectRef.current?.refresh();
-                    }} 
+                     onClick={() => {
+                       refresh();
+                       modeloSelectRef.current?.refresh();
+                       comprimentoSelectRef.current?.refresh();
+                       corSelectRef.current?.refresh();
+                     }}
                     variant="outline" 
                     size="sm" 
                     className="flex items-center gap-2"
@@ -106,7 +111,7 @@ const Products = () => {
 
         {/* Filters */}
         <div className="mb-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
             <ModeloSelect
               ref={modeloSelectRef}
               value={selectedModel}
@@ -116,6 +121,11 @@ const Products = () => {
               ref={comprimentoSelectRef}
               value={selectedComprimento}
               onValueChange={setSelectedComprimento}
+            />
+            <CorSelect
+              ref={corSelectRef}
+              value={selectedCor}
+              onValueChange={setSelectedCor}
             />
           </div>
           
@@ -275,6 +285,7 @@ const Products = () => {
         }}
         selectedModel={selectedModel}
         selectedComprimento={selectedComprimento}
+        selectedCor={selectedCor}
       />
       
       <Footer />
