@@ -168,65 +168,8 @@ const SearchPanel: React.FC = () => {
     return modelo || 'Modelo Desconhecido';
   };
 
-  // Agrupamentos de materiais por modelo com contagens e localizações detalhadas
-  // Filtrar materiais baseado nos filtros selecionados
-  const getFilteredMaterials = () => {
-    let filteredMaterials = materials;
-    
-    // Aplicar filtro de modelo se selecionado
-    if (selectedModel !== 'all') {
-      filteredMaterials = filteredMaterials.filter(material => {
-        // Tentar decodificar o código EPW do material se disponível
-        if (material.product.codigo) {
-          const decoded = decodeEPWReference(material.product.codigo, false);
-          if (decoded.success && decoded.product?.modelo?.l) {
-            return decoded.product.modelo.l === selectedModel;
-          }
-        }
-        
-        // Fallback: comparação direta com o campo modelo
-        return material.product.modelo === selectedModel;
-      });
-    }
-    
-    // Aplicar filtro de comprimento se selecionado
-    if (selectedComprimento !== 'all') {
-      filteredMaterials = filteredMaterials.filter(material => 
-        material.product.comprimento && material.product.comprimento.toString() === selectedComprimento
-      );
-    }
-    
-    // Aplicar filtro de cor se selecionado
-    if (selectedCor !== 'all') {
-      filteredMaterials = filteredMaterials.filter(material => {
-        // Tentar decodificar o código EPW do material se disponível
-        if (material.product.codigo) {
-          const decoded = decodeEPWReference(material.product.codigo, false);
-          if (decoded.success && decoded.product?.cor?.l) {
-            return decoded.product.cor.l === selectedCor;
-          }
-        }
-        
-        // Fallback: comparação direta com o campo cor
-        return material.product.cor === selectedCor;
-      });
-    }
-    
-    // Aplicar filtro de pesquisa se inserido
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filteredMaterials = filteredMaterials.filter(material => {
-        const productDesc = `${material.product.familia || ''} ${material.product.modelo || ''} ${material.product.acabamento || ''} ${material.product.cor || ''} ${material.product.descricao || ''}`.toLowerCase();
-        return productDesc.includes(query);
-      });
-    }
-    
-    return filteredMaterials;
-  };
-
-  const filteredMaterials = getFilteredMaterials();
-
-  const modelGroups = filteredMaterials.reduce((acc, material) => {
+  // Agrupamentos de materiais por modelo - SEM FILTRAGEM AUTOMÁTICA
+  const modelGroups = materials.reduce((acc, material) => {
     const modelo = material.product.modelo || 'Sem Modelo';
     const description = material.product.descricao || `${material.product.familia || ''} ${material.product.modelo || ''} ${material.product.acabamento || ''}`.trim();
     
@@ -320,27 +263,15 @@ const SearchPanel: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
             <ModeloSelect 
               value={selectedModel} 
-              onValueChange={(value) => {
-                setSelectedModel(value);
-                // Trigger search when filter changes
-                setTimeout(() => handleApiSearch(), 100);
-              }}
+              onValueChange={setSelectedModel}
             />
             <ComprimentoSelect 
               value={selectedComprimento} 
-              onValueChange={(value) => {
-                setSelectedComprimento(value);
-                // Trigger search when filter changes
-                setTimeout(() => handleApiSearch(), 100);
-              }}
+              onValueChange={setSelectedComprimento}
             />
             <CorSelect 
               value={selectedCor} 
-              onValueChange={(value) => {
-                setSelectedCor(value);
-                // Trigger search when filter changes
-                setTimeout(() => handleApiSearch(), 100);
-              }}
+              onValueChange={setSelectedCor}
             />
           </div>
           
@@ -375,35 +306,17 @@ const SearchPanel: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Acesso Rápido por Modelo */}
+      {/* Acesso Rápido por Modelo - SEM FILTRAGEM */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Package className="w-5 h-5" />
               Acesso Rápido por Modelo
-              {(selectedModel !== 'all' || selectedComprimento !== 'all' || selectedCor !== 'all' || searchQuery.trim()) && (
-                <Badge variant="secondary" className="ml-2">
-                  {(() => {
-                    const activeFilters = [];
-                    if (selectedModel !== 'all') activeFilters.push('Modelo');
-                    if (selectedComprimento !== 'all') activeFilters.push('Comprimento');
-                    if (selectedCor !== 'all') activeFilters.push('Cor');
-                    if (searchQuery.trim()) activeFilters.push('Pesquisa');
-                    return `Filtrado (${activeFilters.join(', ')})`;
-                  })()}
-                </Badge>
-              )}
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span className="font-medium text-primary">{sortedModels.length}</span>
-              <span>de</span>
-              <span className="font-medium">{Object.keys(materials.reduce((acc, material) => {
-                const modelo = material.product.modelo || 'Sem Modelo';
-                acc[modelo] = true;
-                return acc;
-              }, {} as Record<string, boolean>)).length}</span>
-              <span>modelos</span>
+              <span>modelos em stock</span>
             </div>
           </CardTitle>
         </CardHeader>
@@ -462,22 +375,7 @@ const SearchPanel: React.FC = () => {
           {sortedModels.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              {(selectedModel !== 'all' || selectedComprimento !== 'all' || selectedCor !== 'all' || searchQuery.trim()) ? (
-                <div className="space-y-2">
-                  <p className="text-lg font-medium">Nenhum modelo encontrado</p>
-                  <p className="text-sm">Os filtros aplicados não retornaram resultados</p>
-                  <Button 
-                    onClick={handleClearApiSearch} 
-                    variant="outline" 
-                    size="sm"
-                    className="mt-3"
-                  >
-                    Limpar Filtros
-                  </Button>
-                </div>
-              ) : (
-                <p>Nenhum modelo em stock</p>
-              )}
+              <p>Nenhum modelo em stock</p>
             </div>
           )}
         </CardContent>
