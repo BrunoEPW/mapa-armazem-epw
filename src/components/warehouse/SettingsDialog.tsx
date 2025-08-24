@@ -27,7 +27,7 @@ interface EmailSettings {
 }
 
 const SettingsDialog = ({ children }: SettingsDialogProps) => {
-  const { materials, products } = useWarehouse();
+  const { materials, products, movements } = useWarehouse();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [emailSettings, setEmailSettings] = useState<EmailSettings>(() => {
@@ -46,7 +46,10 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
   // Manual backup function
   const exportManualBackup = () => {
     try {
-      const backupData = materials.map(material => ({
+      const wb = XLSX.utils.book_new();
+
+      // Materials backup data
+      const materialsData = materials.map(material => ({
         'ID Material': material.id,
         'Produto ID': material.productId,
         'Modelo': material.product.modelo,
@@ -64,12 +67,11 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
         'Data Backup': format(new Date(), 'dd/MM/yyyy HH:mm:ss')
       }));
 
-      const ws = XLSX.utils.json_to_sheet(backupData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Backup Materiais');
+      const wsMaterials = XLSX.utils.json_to_sheet(materialsData);
+      XLSX.utils.book_append_sheet(wb, wsMaterials, 'Materiais');
 
-      // Add products sheet
-      const productData = products.map(product => ({
+      // Products backup data
+      const productsData = products.map(product => ({
         'ID': product.id,
         'Família': product.familia,
         'Modelo': product.modelo,
@@ -81,15 +83,35 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
         'Foto': product.foto || ''
       }));
       
-      const wsProducts = XLSX.utils.json_to_sheet(productData);
+      const wsProducts = XLSX.utils.json_to_sheet(productsData);
       XLSX.utils.book_append_sheet(wb, wsProducts, 'Produtos');
+
+      // Movements backup data
+      const movementsData = movements.map(movement => {
+        const material = materials.find(m => m.id === movement.materialId);
+        return {
+          'ID Movimento': movement.id,
+          'Material ID': movement.materialId,
+          'Modelo Material': material?.product.modelo || 'N/A',
+          'Família': material?.product.familia || 'N/A',
+          'Localização': material ? `${material.location.estante}${material.location.prateleira}` : 'N/A',
+          'Tipo': movement.type === 'entrada' ? 'Entrada' : 'Saída',
+          'Quantidade': movement.pecas,
+          'NORC': movement.norc,
+          'Data': movement.date,
+          'Data Formatada': format(new Date(movement.date), 'dd/MM/yyyy')
+        };
+      });
+
+      const wsMovements = XLSX.utils.json_to_sheet(movementsData);
+      XLSX.utils.book_append_sheet(wb, wsMovements, 'Movimentos');
 
       const filename = `backup_warehouse_${format(new Date(), 'yyyy-MM-dd_HH-mm-ss')}.xlsx`;
       XLSX.writeFile(wb, filename);
 
       toast({
         title: "Backup exportado com sucesso",
-        description: `Ficheiro ${filename} transferido`,
+        description: `Ficheiro ${filename} transferido com materiais, produtos e movimentos`,
       });
     } catch (error) {
       console.error('Error exporting backup:', error);
@@ -113,8 +135,10 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
         const workbook = XLSX.read(data, { type: 'array' });
         
         // Check if backup has the expected sheets
-        const hasBackupData = workbook.SheetNames.includes('Backup Materiais') || 
-                             workbook.SheetNames.includes('Materiais');
+        const hasBackupData = workbook.SheetNames.includes('Materiais') || 
+                             workbook.SheetNames.includes('Backup Materiais') ||
+                             workbook.SheetNames.includes('Produtos') ||
+                             workbook.SheetNames.includes('Movimentos');
         
         if (!hasBackupData) {
           toast({
@@ -205,6 +229,7 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
                       <li>Informações completas dos materiais</li>
                       <li>Localizações detalhadas (estante, prateleira)</li>
                       <li>Dados dos produtos associados</li>
+                      <li>Histórico completo de movimentos</li>
                       <li>Códigos e descrições</li>
                     </ul>
                   </div>
@@ -213,6 +238,7 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
                     <div className="space-y-1 text-muted-foreground">
                       <div>Materiais: {materials.length}</div>
                       <div>Produtos: {products.length}</div>
+                      <div>Movimentos: {movements.length}</div>
                       <div>Total de peças: {materials.reduce((sum, m) => sum + m.pecas, 0)}</div>
                     </div>
                   </div>
