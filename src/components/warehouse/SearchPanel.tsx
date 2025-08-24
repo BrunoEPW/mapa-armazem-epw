@@ -257,55 +257,62 @@ const SearchPanel: React.FC = () => {
       return allMaterials; // Se não há filtros da API, retorna todos os materiais
     }
 
-    // Criar um conjunto de códigos e palavras-chave dos produtos da API
+    console.log('🔍 [SearchPanel] Filtering local models based on API products:', apiProductsFiltered.map(p => p.codigo));
+
+    // Criar um conjunto de códigos exatos da API
     const apiCodes = new Set<string>();
-    const apiKeywords = new Set<string>();
     
     apiProductsFiltered.forEach(product => {
       if (product.codigo) {
         apiCodes.add(product.codigo.toLowerCase());
-        // Adicionar partes do código como palavras-chave
-        const codeParts = product.codigo.match(/[A-Za-z]+|\d+/g) || [];
-        codeParts.forEach(part => apiKeywords.add(part.toLowerCase()));
-      }
-      if (product.descricao) {
-        // Extrair palavras da descrição
-        const words = product.descricao.toLowerCase().split(/\s+/);
-        words.forEach(word => {
-          if (word.length > 2) { // Apenas palavras com mais de 2 caracteres
-            apiKeywords.add(word);
-          }
-        });
       }
     });
 
-    // Filtrar materiais que correspondem aos produtos da API
-    return allMaterials.filter(material => {
+    console.log('📋 [SearchPanel] API codes to match:', Array.from(apiCodes));
+
+    // Filtrar materiais que correspondem EXATAMENTE aos códigos da API
+    const matchingMaterials = allMaterials.filter(material => {
       if (!material.product) return false;
 
       const modelo = material.product.modelo?.toLowerCase() || '';
       const descricao = material.product.descricao?.toLowerCase() || '';
       const familia = material.product.familia?.toLowerCase() || '';
       const acabamento = material.product.acabamento?.toLowerCase() || '';
+      const codigo = material.product.codigo?.toLowerCase() || '';
 
-      // Verificar correspondência direta por código
-      for (const code of apiCodes) {
-        if (modelo.includes(code) || descricao.includes(code) || 
-            familia.includes(code) || acabamento.includes(code)) {
+      // Primeiro: verificar correspondência EXATA por código
+      for (const apiCode of apiCodes) {
+        if (codigo === apiCode || modelo === apiCode) {
+          console.log(`✅ [SearchPanel] EXACT match found: ${material.product.modelo} matches ${apiCode}`);
           return true;
         }
       }
 
-      // Verificar correspondência por palavras-chave
-      for (const keyword of apiKeywords) {
-        if (modelo.includes(keyword) || descricao.includes(keyword) || 
-            familia.includes(keyword) || acabamento.includes(keyword)) {
+      // Segundo: verificar se o código da API está CONTIDO no modelo (mas não muito genérico)
+      for (const apiCode of apiCodes) {
+        if (apiCode.length > 3 && (modelo.includes(apiCode) || descricao.includes(apiCode))) {
+          console.log(`✅ [SearchPanel] PARTIAL match found: ${material.product.modelo} contains ${apiCode}`);
           return true;
+        }
+      }
+
+      // Terceiro: correspondência por família específica (apenas para códigos EPW)
+      for (const apiCode of apiCodes) {
+        // Verificar se é um código EPW (começa com R, S, etc. seguido de letras)
+        if (apiCode.match(/^[rs][a-z]+\d+[a-z]+\d+$/i)) {
+          const codePrefix = apiCode.substring(0, 3); // Ex: "rfh", "rsh"
+          if (modelo.includes(codePrefix) || familia.includes(codePrefix)) {
+            console.log(`✅ [SearchPanel] EPW PREFIX match found: ${material.product.modelo} matches prefix ${codePrefix} from ${apiCode}`);
+            return true;
+          }
         }
       }
 
       return false;
     });
+
+    console.log(`🎯 [SearchPanel] Filtered ${matchingMaterials.length} materials from ${allMaterials.length} total`);
+    return matchingMaterials;
   }, []);
 
   // Verificar se há filtros ativos
