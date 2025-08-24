@@ -506,7 +506,7 @@ const SearchPanel: React.FC = () => {
                   <div className="flex items-start gap-2 w-full">
                     <div className="w-3 h-3 rounded-full bg-emerald-500 group-hover:bg-primary transition-colors mt-1 flex-shrink-0"></div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm text-white leading-tight mb-2 break-words overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      <div className="font-medium text-sm text-white leading-tight mb-2 break-words whitespace-normal max-h-10 overflow-hidden">
                         {group.description}
                       </div>
                       <div className="flex justify-between items-center">
