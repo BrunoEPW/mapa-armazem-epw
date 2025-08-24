@@ -63,10 +63,23 @@ const ShelfView: React.FC = () => {
           <Button
             variant="outline"
             onClick={() => navigate('/')}
-            className="flex items-center gap-2"
+            className="flex items-center gap-3 p-3 h-auto"
           >
+            <div className="flex items-center gap-1">
+              {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((shelf) => (
+                <div
+                  key={shelf}
+                  className={`w-6 h-12 rounded flex items-center justify-center text-xs font-bold ${
+                    shelf === estante 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted/50 text-muted-foreground border border-muted'
+                  }`}
+                >
+                  {shelf}
+                </div>
+              ))}
+            </div>
             <Home className="w-4 h-4" />
-            Mapa Principal
           </Button>
           
           <h1 className="text-3xl font-bold text-foreground">
