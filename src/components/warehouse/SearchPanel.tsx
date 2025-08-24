@@ -513,6 +513,9 @@ const SearchPanel: React.FC = () => {
                         <span className="font-semibold text-emerald-600 group-hover:text-primary text-sm">
                           {group.totalPecas} peças
                         </span>
+                        <span className="font-semibold text-orange-500 text-sm">
+                          {uniqueLocations.length} locais
+                        </span>
                       </div>
                     </div>
                   </div>
