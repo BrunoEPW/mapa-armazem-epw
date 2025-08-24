@@ -104,6 +104,7 @@ const SelectWithSearch = React.forwardRef<
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="border-0 bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+              maxLength={5}
               autoFocus
             />
           </div>
