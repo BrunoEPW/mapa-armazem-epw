@@ -31,7 +31,7 @@ export const MovementHistoryDialog: React.FC<MovementHistoryDialogProps> = ({
     .filter(mov => mov.type === 'saida')
     .reduce((sum, mov) => sum + mov.pecas, 0);
 
-  const saldoAtual = totalEntradas - totalSaidas;
+  const saldoAtual = material.pecas;
 
   if (!material) {
     return null;
