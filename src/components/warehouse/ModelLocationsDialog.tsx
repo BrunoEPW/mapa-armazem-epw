@@ -75,7 +75,7 @@ export const ModelLocationsDialog: React.FC<ModelLocationsDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-xl">
             <Package className="w-6 h-6 text-primary" />
@@ -122,7 +122,11 @@ export const ModelLocationsDialog: React.FC<ModelLocationsDialogProps> = ({
               {uniqueLocations.map((location) => (
                 <Card 
                   key={`${location.estante}-${location.prateleira}`}
-                  className="hover:bg-white/5 transition-colors border-white/20"
+                  className="hover:bg-white/5 transition-colors border-white/20 cursor-pointer"
+                  onClick={() => handleLocationClick({
+                    estante: location.estante,
+                    prateleira: location.prateleira
+                  })}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -147,18 +151,7 @@ export const ModelLocationsDialog: React.FC<ModelLocationsDialogProps> = ({
                         </div>
                       </div>
                       
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleLocationClick({
-                          estante: location.estante,
-                          prateleira: location.prateleira
-                        })}
-                        className="flex items-center gap-2 hover:bg-primary/10 hover:border-primary/50"
-                      >
-                        <span>Ir para</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </Button>
+                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
                     </div>
                   </CardContent>
                 </Card>
