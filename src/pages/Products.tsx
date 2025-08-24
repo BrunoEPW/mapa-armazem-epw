@@ -57,7 +57,7 @@ const Products = () => {
             className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/80 flex items-center justify-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-white tracking-wider">
+            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-black text-orange-400 tracking-wider drop-shadow-2xl">
               PRODUTOS
             </h1>
           </div>
