@@ -108,28 +108,31 @@ const ShelfDetailView: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {materials.map((material) => (
-              <Card key={material.id}>
+              <Card 
+                key={material.id}
+                className="cursor-pointer hover:bg-white/5 transition-colors"
+                onClick={() => setShowHistoryFor(material.id)}
+              >
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setShowHistoryFor(material.id)}
-                      >
-                        <History className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditingMaterial(material)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingMaterial(material);
+                        }}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => setMaterialToDelete(material)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMaterialToDelete(material);
+                        }}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
