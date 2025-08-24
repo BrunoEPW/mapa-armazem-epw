@@ -29,6 +29,8 @@ const SearchPanel: React.FC = () => {
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
   const [selectedModelData, setSelectedModelData] = useState<any | null>(null);
   const [showModelDialog, setShowModelDialog] = useState(false);
+  const [showApiProductLocations, setShowApiProductLocations] = useState(false);
+  const [selectedApiProductData, setSelectedApiProductData] = useState<any>(null);
   
   // Hook para buscar produtos da API (com filtro de modelo e comprimento)
   const {
@@ -147,6 +149,100 @@ const SearchPanel: React.FC = () => {
   const handleModelClick = (modelData: any) => {
     setSelectedModelData(modelData);
     setShowModelDialog(true);
+  };
+
+  // Função para calcular quantidade em armazém de um produto da API
+  const getApiProductWarehouseQuantity = (apiProduct: any) => {
+    if (!apiProduct.codigo) return 0;
+    
+    // Tentar decodificar o código EPW
+    const decoded = decodeEPWReference(apiProduct.codigo, false);
+    
+    if (decoded.success && decoded.product) {
+      // Buscar materiais que correspondem aos atributos decodificados
+      const relatedMaterials = materials.filter(material => {
+        const product = material.product;
+        let matches = true;
+        
+        if (decoded.product.modelo?.l && product.modelo) {
+          matches = matches && product.modelo.toLowerCase().includes(decoded.product.modelo.l.toLowerCase());
+        }
+        
+        if (decoded.product.acabamento?.l && product.acabamento) {
+          matches = matches && product.acabamento.toLowerCase().includes(decoded.product.acabamento.l.toLowerCase());
+        }
+        
+        if (decoded.product.cor?.l && product.cor) {
+          matches = matches && product.cor.toLowerCase().includes(decoded.product.cor.l.toLowerCase());
+        }
+        
+        return matches;
+      });
+      
+      return relatedMaterials.reduce((total, material) => total + material.pecas, 0);
+    }
+    
+    return 0;
+  };
+
+  // Função para obter dados de localização de um produto da API
+  const getApiProductLocationData = (apiProduct: any) => {
+    if (!apiProduct.codigo) return null;
+    
+    const decoded = decodeEPWReference(apiProduct.codigo, false);
+    
+    if (decoded.success && decoded.product) {
+      const relatedMaterials = materials.filter(material => {
+        const product = material.product;
+        let matches = true;
+        
+        if (decoded.product.modelo?.l && product.modelo) {
+          matches = matches && product.modelo.toLowerCase().includes(decoded.product.modelo.l.toLowerCase());
+        }
+        
+        if (decoded.product.acabamento?.l && product.acabamento) {
+          matches = matches && product.acabamento.toLowerCase().includes(decoded.product.acabamento.l.toLowerCase());
+        }
+        
+        if (decoded.product.cor?.l && product.cor) {
+          matches = matches && product.cor.toLowerCase().includes(decoded.product.cor.l.toLowerCase());
+        }
+        
+        return matches;
+      });
+      
+      if (relatedMaterials.length === 0) return null;
+      
+      const totalPecas = relatedMaterials.reduce((total, material) => total + material.pecas, 0);
+      const locations = relatedMaterials.map(material => ({
+        estante: material.location.estante,
+        prateleira: material.location.prateleira,
+        posicao: material.location.posicao,
+        pecas: material.pecas,
+        locationKey: `${material.location.estante}${material.location.prateleira}`
+      }));
+      
+      return {
+        modelo: decoded.product.modelo?.d || apiProduct.codigo,
+        displayName: decoded.product.modelo?.d || apiProduct.descricao || apiProduct.codigo,
+        description: apiProduct.descricao || '',
+        totalPecas,
+        locations,
+        materials: relatedMaterials,
+        firstProduct: relatedMaterials[0]?.product
+      };
+    }
+    
+    return null;
+  };
+
+  // Função para lidar com clique em produto da API
+  const handleApiProductClick = (apiProduct: any) => {
+    const locationData = getApiProductLocationData(apiProduct);
+    if (locationData) {
+      setSelectedApiProductData(locationData);
+      setShowApiProductLocations(true);
+    }
   };
 
   // Função para obter o nome do modelo decodificado
@@ -419,19 +515,50 @@ const SearchPanel: React.FC = () => {
                     <tr className="border-b border-white/20">
                       <th className="text-left p-4 text-white font-medium">Código</th>
                       <th className="text-left p-4 text-white font-medium">Descrição</th>
+                      <th className="text-center p-4 text-white font-medium">Qtd. Armazém</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {apiProducts.map((product, index) => (
-                      <tr key={product.id || index} className="border-b border-white/10 hover:bg-white/5">
-                        <td className="p-4 text-white font-mono text-sm">
-                          {product.codigo}
-                        </td>
-                        <td className="p-4 text-white">
-                          {product.descricao}
-                        </td>
-                      </tr>
-                    ))}
+                    {apiProducts.map((product, index) => {
+                      const warehouseQuantity = getApiProductWarehouseQuantity(product);
+                      const hasStock = warehouseQuantity > 0;
+                      
+                      return (
+                        <tr 
+                          key={product.id || index} 
+                          className={`border-b border-white/10 transition-colors ${
+                            hasStock 
+                              ? 'hover:bg-primary/10 cursor-pointer' 
+                              : 'hover:bg-white/5 opacity-60'
+                          }`}
+                          onClick={() => hasStock && handleApiProductClick(product)}
+                        >
+                          <td className="p-4 text-white font-mono text-sm">
+                            {product.codigo}
+                          </td>
+                          <td className="p-4 text-white">
+                            {product.descricao}
+                          </td>
+                          <td className="p-4 text-center">
+                            {hasStock ? (
+                              <Badge 
+                                variant="secondary" 
+                                className="bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+                              >
+                                {warehouseQuantity} peças
+                              </Badge>
+                            ) : (
+                              <Badge 
+                                variant="outline" 
+                                className="border-white/30 text-white/60"
+                              >
+                                0 peças
+                              </Badge>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -526,6 +653,13 @@ const SearchPanel: React.FC = () => {
         modelData={selectedModelData}
         isOpen={showModelDialog}
         onClose={() => setShowModelDialog(false)}
+        onLocationClick={handleLocationClick}
+      />
+
+      <ModelLocationsDialog
+        modelData={selectedApiProductData}
+        isOpen={showApiProductLocations}
+        onClose={() => setShowApiProductLocations(false)}
         onLocationClick={handleLocationClick}
       />
 
