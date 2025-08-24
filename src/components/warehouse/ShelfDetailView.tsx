@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RandomConfirmDialog } from '@/components/ui/random-confirm-dialog';
 import { useWarehouse } from '@/contexts/WarehouseContext';
-import { Material } from '@/types/warehouse';
+import { Material, WAREHOUSE_CONFIG } from '@/types/warehouse';
 import { AddMaterialDialog } from './AddMaterialDialog';
 import { EditMaterialDialog } from './EditMaterialDialog';
 import { MovementHistoryDialog } from './MovementHistoryDialog';
@@ -71,10 +71,23 @@ const ShelfDetailView: React.FC = () => {
           <Button
             variant="outline"
             onClick={() => navigate(`/estante/${estante}`)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-3 p-3 h-auto"
           >
             <ArrowLeft className="w-4 h-4" />
-            Voltar à Estante
+            <div className="flex items-center gap-1">
+              {estante && WAREHOUSE_CONFIG.estantes[estante]?.prateleiras.map((shelfNum) => (
+                <div
+                  key={shelfNum}
+                  className={`w-8 h-6 rounded flex items-center justify-center text-xs font-bold ${
+                    shelfNum === parseInt(prateleira) 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted/50 text-muted-foreground border border-muted'
+                  }`}
+                >
+                  {shelfNum}
+                </div>
+              ))}
+            </div>
           </Button>
           
           <h1 className="text-3xl font-bold text-foreground">
