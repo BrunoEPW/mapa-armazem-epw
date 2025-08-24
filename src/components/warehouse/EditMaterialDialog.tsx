@@ -27,14 +27,14 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
     materialId: material.id
   });
   
-  const [pecas, setPecas] = useState(material.pecas.toString());
+  const [movementQuantity, setMovementQuantity] = useState('');
   const [norc, setNorc] = useState('');
   const [norcType, setNorcType] = useState<'escrever' | 'partidas' | 'amostras'>('escrever');
   const [customNorc, setCustomNorc] = useState('');
   const [movementType, setMovementType] = useState<'entrada' | 'saida'>('entrada');
 
   console.log('📊 [EditMaterialDialog] Component state initialized:', {
-    initialPecas: pecas,
+    currentPecas: material.pecas,
     materialInfo: {
       id: material.id,
       currentPecas: material.pecas,
@@ -55,33 +55,38 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
       finalNorc = `AMOSTRAS - ${customNorc}`;
     }
     
-    if (!pecas || !finalNorc) {
+    if (!movementQuantity || !finalNorc) {
       toast.error('Preencha todos os campos');
       return;
     }
 
     try {
-      const newPecas = parseInt(pecas);
-      const oldPecas = material.pecas;
-      const difference = newPecas - oldPecas;
+      const movementPecas = parseInt(movementQuantity);
+      const currentPecas = material.pecas;
+      
+      // Calculate new total based on movement type
+      const newTotal = movementType === 'entrada' 
+        ? currentPecas + movementPecas 
+        : currentPecas - movementPecas;
 
-      if (difference !== 0) {
-        // Update material quantity
-        await updateMaterial(material.id, { pecas: newPecas });
-        
-        // Add movement record
-        await addMovement({
-          materialId: material.id,
-          type: difference > 0 ? 'entrada' : 'saida',
-          pecas: Math.abs(difference),
-          norc: finalNorc,
-          date: new Date().toISOString().split('T')[0],
-        });
-
-        toast.success('Material atualizado com sucesso!');
-      } else {
-        toast.info('Nenhuma alteração foi feita');
+      if (newTotal < 0) {
+        toast.error('Quantidade insuficiente em stock');
+        return;
       }
+
+      // Update material quantity
+      await updateMaterial(material.id, { pecas: newTotal });
+      
+      // Add movement record
+      await addMovement({
+        materialId: material.id,
+        type: movementType,
+        pecas: movementPecas,
+        norc: finalNorc,
+        date: new Date().toISOString().split('T')[0],
+      });
+
+      toast.success('Movimento registado com sucesso!');
 
       onClose();
       
@@ -96,32 +101,44 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            Editar Material - {material.product.modelo}
+            {material.product.descricao || `${material.product.familia} ${material.product.modelo}`}
           </DialogTitle>
         </DialogHeader>
         
-        <div className="mb-4 p-4 bg-muted rounded-lg">
-          <h4 className="font-medium mb-2">Artigo</h4>
-          <p className="text-sm text-muted-foreground break-words whitespace-normal">
-            {material.product.descricao || `${material.product.familia} ${material.product.modelo}`}
-          </p>
-        </div>
-        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="pecas">Nova Quantidade de Peças</Label>
+            <Label>Quantidade de Peças Atual</Label>
+            <div className="p-3 bg-muted rounded-lg">
+              <span className="text-lg font-semibold">{material.pecas} peças</span>
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="movementType">Tipo de Saída/Entrada</Label>
+            <Select value={movementType} onValueChange={(value: 'entrada' | 'saida') => setMovementType(value)}>
+              <SelectTrigger className="w-full bg-background border border-border">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border border-border shadow-lg z-50">
+                <SelectItem value="entrada">Entrada</SelectItem>
+                <SelectItem value="saida">Saída</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="movementQuantity">Quantidade de Peças a {movementType === 'entrada' ? 'Entrar' : 'Sair'}</Label>
             <Input
-              id="pecas"
+              id="movementQuantity"
               type="number"
-              value={pecas}
-              onChange={(e) => setPecas(e.target.value)}
-              placeholder="Ex: 25"
-              min="0"
+              value={movementQuantity}
+              onChange={(e) => setMovementQuantity(e.target.value)}
+              placeholder="Ex: 10"
+              min="1"
             />
           </div>
 
           <div>
-            <Label htmlFor="norcType">Tipo de Saída/Entrada</Label>
+            <Label htmlFor="norcType">NORC</Label>
             <Select value={norcType} onValueChange={(value: 'escrever' | 'partidas' | 'amostras') => setNorcType(value)}>
               <SelectTrigger className="w-full bg-background border border-border">
                 <SelectValue placeholder="Selecione o tipo" />
@@ -150,7 +167,7 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
 
           <div className="flex gap-2 pt-4">
             <Button type="submit" className="flex-1">
-              Atualizar
+              Registar Movimento
             </Button>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
