@@ -120,11 +120,31 @@ export const useApiProductsSimple = (modelo?: string, comprimento?: string, cor?
 
       const mappedProducts = response.data.map(mapApiProductToSimple);
       
+      // Deduplicate products by codigo to avoid showing the same product multiple times
+      const uniqueProductsMap = new Map<string, SimpleProduct>();
+      let duplicatesRemoved = 0;
+      
+      mappedProducts.forEach(product => {
+        const codigo = product.codigo.toLowerCase();
+        if (uniqueProductsMap.has(codigo)) {
+          duplicatesRemoved++;
+          console.log(`🔄 [useApiProductsSimple] Duplicate removed: ${product.codigo} (keeping first occurrence)`);
+        } else {
+          uniqueProductsMap.set(codigo, product);
+        }
+      });
+      
+      const deduplicatedProducts = Array.from(uniqueProductsMap.values());
+      
+      if (duplicatesRemoved > 0) {
+        console.log(`✨ [useApiProductsSimple] Deduplication complete: ${duplicatesRemoved} duplicates removed, ${deduplicatedProducts.length} unique products remain`);
+      }
+      
       // Use filtered count when filters are applied (search OR model filter OR comprimento filter OR cor filter)
       const hasFilters = search.trim() || (modelo && modelo !== 'all') || (comprimento && comprimento !== 'all') || (cor && cor !== 'all');
       const totalRecords = hasFilters ? response.recordsFiltered : response.recordsTotal;
       
-      setProducts(mappedProducts);
+      setProducts(deduplicatedProducts);
       setTotalCount(totalRecords || 0);
       setTotalPages(Math.ceil((totalRecords || 0) / itemsPerPage));
 
