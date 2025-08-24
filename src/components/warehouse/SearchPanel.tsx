@@ -270,41 +270,18 @@ const SearchPanel: React.FC = () => {
 
     console.log('📋 [SearchPanel] API codes to match:', Array.from(apiCodes));
 
-    // Filtrar materiais que correspondem EXATAMENTE aos códigos da API
+    // Filtrar materiais que correspondem EXATAMENTE aos códigos da API (sem prefix matching)
     const matchingMaterials = allMaterials.filter(material => {
       if (!material.product) return false;
 
       const modelo = material.product.modelo?.toLowerCase() || '';
-      const descricao = material.product.descricao?.toLowerCase() || '';
-      const familia = material.product.familia?.toLowerCase() || '';
-      const acabamento = material.product.acabamento?.toLowerCase() || '';
       const codigo = material.product.codigo?.toLowerCase() || '';
 
-      // Primeiro: verificar correspondência EXATA por código
+      // Verificar correspondência EXATA por código ou modelo
       for (const apiCode of apiCodes) {
         if (codigo === apiCode || modelo === apiCode) {
           console.log(`✅ [SearchPanel] EXACT match found: ${material.product.modelo} matches ${apiCode}`);
           return true;
-        }
-      }
-
-      // Segundo: verificar se o código da API está CONTIDO no modelo (mas não muito genérico)
-      for (const apiCode of apiCodes) {
-        if (apiCode.length > 3 && (modelo.includes(apiCode) || descricao.includes(apiCode))) {
-          console.log(`✅ [SearchPanel] PARTIAL match found: ${material.product.modelo} contains ${apiCode}`);
-          return true;
-        }
-      }
-
-      // Terceiro: correspondência por família específica (apenas para códigos EPW)
-      for (const apiCode of apiCodes) {
-        // Verificar se é um código EPW (começa com R, S, etc. seguido de letras)
-        if (apiCode.match(/^[rs][a-z]+\d+[a-z]+\d+$/i)) {
-          const codePrefix = apiCode.substring(0, 3); // Ex: "rfh", "rsh"
-          if (modelo.includes(codePrefix) || familia.includes(codePrefix)) {
-            console.log(`✅ [SearchPanel] EPW PREFIX match found: ${material.product.modelo} matches prefix ${codePrefix} from ${apiCode}`);
-            return true;
-          }
         }
       }
 
