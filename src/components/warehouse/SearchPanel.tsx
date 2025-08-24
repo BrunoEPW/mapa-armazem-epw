@@ -58,21 +58,8 @@ const SearchPanel: React.FC = () => {
       return;
     }
 
-    // Filtrar produtos da API baseado nos critérios
-    let filteredApiProducts = apiProducts;
-    
-    if (selectedModel !== 'all') {
-      filteredApiProducts = filteredApiProducts.filter(p => 
-        p.codigo && p.codigo.includes(selectedModel)
-      );
-    }
-    
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filteredApiProducts = filteredApiProducts.filter(p => 
-        p.descricao && p.descricao.toLowerCase().includes(query)
-      );
-    }
+    // Usar os produtos da API já filtrados pelo hook (sem filtragem duplicada)
+    const filteredApiProducts = apiProducts;
 
     // Para cada produto da API, encontrar materiais correspondentes no armazém
     const matchingMaterials: any[] = [];
