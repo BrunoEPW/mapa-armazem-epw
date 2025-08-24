@@ -593,53 +593,26 @@ const SearchPanel: React.FC = () => {
               <div className="w-full">
                 <table className="w-full min-w-full">
                   <thead>
-                    <tr className="border-b border-white/20">
-                      <th className="text-left p-4 text-white font-medium">Código</th>
-                      <th className="text-left p-4 text-white font-medium">Descrição</th>
-                      <th className="text-center p-4 text-white font-medium">Qtd. Armazém</th>
-                    </tr>
+                     <tr className="border-b border-white/20">
+                       <th className="text-left p-4 text-white font-medium">Código</th>
+                       <th className="text-left p-4 text-white font-medium">Descrição</th>
+                     </tr>
                   </thead>
                   <tbody>
-                    {apiProducts.map((product, index) => {
-                      const warehouseQuantity = getApiProductWarehouseQuantity(product);
-                      const hasStock = warehouseQuantity > 0;
-                      
-                      return (
-                        <tr 
-                          key={product.id || index} 
-                          className={`border-b border-white/10 transition-colors ${
-                            hasStock 
-                              ? 'hover:bg-primary/10 cursor-pointer' 
-                              : 'hover:bg-white/5 opacity-60'
-                          }`}
-                          onClick={() => hasStock && handleApiProductClick(product)}
-                        >
-                          <td className="p-4 text-white font-mono text-sm">
-                            {product.codigo}
-                          </td>
-                          <td className="p-4 text-white">
-                            {product.descricao}
-                          </td>
-                          <td className="p-4 text-center">
-                            {hasStock ? (
-                              <Badge 
-                                variant="secondary" 
-                                className="bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
-                              >
-                                {warehouseQuantity} peças
-                              </Badge>
-                            ) : (
-                              <Badge 
-                                variant="outline" 
-                                className="border-white/30 text-white/60"
-                              >
-                                0 peças
-                              </Badge>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                     {apiProducts.map((product, index) => (
+                         <tr 
+                           key={product.id || index} 
+                           className="border-b border-white/10 transition-colors hover:bg-primary/10 cursor-pointer"
+                           onClick={() => handleApiProductClick(product)}
+                         >
+                           <td className="p-4 text-white font-mono text-sm">
+                             {product.codigo}
+                           </td>
+                           <td className="p-4 text-white">
+                             {product.descricao}
+                           </td>
+                         </tr>
+                       ))}
                   </tbody>
                 </table>
               </div>
