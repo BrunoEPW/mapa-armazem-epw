@@ -2,8 +2,10 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface MovementHistoryDialogProps {
   materialId: string;
@@ -74,20 +76,29 @@ export const MovementHistoryDialog: React.FC<MovementHistoryDialogProps> = ({
             </Card>
           </div>
 
-          <div className="max-h-96 overflow-y-auto space-y-2">
+          <div className="border rounded-lg">
             {materialMovements.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
                 Nenhuma movimentação registrada
               </p>
             ) : (
-              materialMovements.map((movement) => (
-                <Card key={movement.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>NORC</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead className="text-right">Quantidade</TableHead>
+                    <TableHead>Data</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {materialMovements.map((movement) => (
+                    <TableRow key={movement.id}>
+                      <TableCell className="font-medium">{movement.norc}</TableCell>
+                      <TableCell>
                         <Badge 
                           variant={movement.type === 'entrada' ? 'default' : 'destructive'}
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 w-fit"
                         >
                           {movement.type === 'entrada' ? (
                             <TrendingUp className="w-3 h-3" />
@@ -96,16 +107,17 @@ export const MovementHistoryDialog: React.FC<MovementHistoryDialogProps> = ({
                           )}
                           {movement.type === 'entrada' ? 'Entrada' : 'Saída'}
                         </Badge>
-                        <span className="font-medium">{movement.pecas} peças</span>
-                      </div>
-                      <div className="text-right text-sm text-muted-foreground">
-                        <p>{movement.norc}</p>
-                        <p>{new Date(movement.date).toLocaleDateString('pt-PT')}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {movement.pecas} peças
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(movement.date), 'dd/MM/yyyy')}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </div>
         </div>
