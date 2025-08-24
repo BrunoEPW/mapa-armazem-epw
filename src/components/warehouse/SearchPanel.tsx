@@ -251,8 +251,101 @@ const SearchPanel: React.FC = () => {
     return modelo || 'Modelo Desconhecido';
   };
 
-  // Agrupamentos de materiais por modelo - SEM FILTRAGEM AUTOMÁTICA
-  const modelGroups = materials.reduce((acc, material) => {
+  // Função para verificar se um material corresponde aos produtos da API filtrados
+  const getMatchingLocalModels = React.useCallback((apiProductsFiltered: any[], allMaterials: any[]) => {
+    if (!apiProductsFiltered || apiProductsFiltered.length === 0 || !allMaterials) {
+      return allMaterials; // Se não há filtros da API, retorna todos os materiais
+    }
+
+    // Criar um conjunto de códigos e palavras-chave dos produtos da API
+    const apiCodes = new Set<string>();
+    const apiKeywords = new Set<string>();
+    
+    apiProductsFiltered.forEach(product => {
+      if (product.codigo) {
+        apiCodes.add(product.codigo.toLowerCase());
+        // Adicionar partes do código como palavras-chave
+        const codeParts = product.codigo.match(/[A-Za-z]+|\d+/g) || [];
+        codeParts.forEach(part => apiKeywords.add(part.toLowerCase()));
+      }
+      if (product.descricao) {
+        // Extrair palavras da descrição
+        const words = product.descricao.toLowerCase().split(/\s+/);
+        words.forEach(word => {
+          if (word.length > 2) { // Apenas palavras com mais de 2 caracteres
+            apiKeywords.add(word);
+          }
+        });
+      }
+    });
+
+    // Filtrar materiais que correspondem aos produtos da API
+    return allMaterials.filter(material => {
+      if (!material.product) return false;
+
+      const modelo = material.product.modelo?.toLowerCase() || '';
+      const descricao = material.product.descricao?.toLowerCase() || '';
+      const familia = material.product.familia?.toLowerCase() || '';
+      const acabamento = material.product.acabamento?.toLowerCase() || '';
+
+      // Verificar correspondência direta por código
+      for (const code of apiCodes) {
+        if (modelo.includes(code) || descricao.includes(code) || 
+            familia.includes(code) || acabamento.includes(code)) {
+          return true;
+        }
+      }
+
+      // Verificar correspondência por palavras-chave
+      for (const keyword of apiKeywords) {
+        if (modelo.includes(keyword) || descricao.includes(keyword) || 
+            familia.includes(keyword) || acabamento.includes(keyword)) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+  }, []);
+
+  // Verificar se há filtros ativos
+  const hasActiveFilters = React.useMemo(() => {
+    return selectedModel !== 'all' || 
+           selectedComprimento !== 'all' || 
+           selectedCor !== 'all' || 
+           (searchQuery && searchQuery.trim().length > 0);
+  }, [selectedModel, selectedComprimento, selectedCor, searchQuery]);
+
+  // Filtrar materiais baseado nos produtos da API quando há filtros ativos
+  const filteredMaterials = React.useMemo(() => {
+    if (!materials) return [];
+    
+    if (hasActiveFilters && apiProducts && apiProducts.length > 0) {
+      return getMatchingLocalModels(apiProducts, materials);
+    }
+    
+    return materials;
+  }, [materials, hasActiveFilters, apiProducts, getMatchingLocalModels]);
+
+  // Interface para o tipo de modelo
+  interface ModelGroup {
+    modelo: string;
+    displayName: string;
+    description: string;
+    totalPecas: number;
+    locations: Array<{
+      estante: string;
+      prateleira: number;
+      posicao?: string;
+      pecas: number;
+      locationKey: string;
+    }>;
+    materials: any[];
+    firstProduct: any;
+  }
+
+  // Agrupamentos de materiais por modelo - COM FILTRAGEM BASEADA NA API
+  const modelGroups: Record<string, ModelGroup> = filteredMaterials.reduce((acc, material) => {
     const modelo = material.product.modelo || 'Sem Modelo';
     const description = material.product.descricao || `${material.product.familia || ''} ${material.product.modelo || ''} ${material.product.acabamento || ''}`.trim();
     
@@ -277,24 +370,10 @@ const SearchPanel: React.FC = () => {
     });
     acc[modelo].materials.push(material);
     return acc;
-  }, {} as Record<string, { 
-    modelo: string; 
-    displayName: string;
-    description: string;
-    totalPecas: number; 
-    locations: Array<{
-      estante: string;
-      prateleira: number;
-      posicao?: string;
-      pecas: number;
-      locationKey: string;
-    }>; 
-    materials: any[];
-    firstProduct: any;
-  }>);
+  }, {} as Record<string, ModelGroup>);
 
   // Ordenar por ordem alfabética da descrição do modelo
-  const sortedModels = Object.values(modelGroups)
+  const sortedModels: ModelGroup[] = Object.values(modelGroups)
     .sort((a, b) => {
       const descA = a.description || a.displayName || a.modelo || '';
       const descB = b.description || b.displayName || b.modelo || '';
@@ -389,7 +468,7 @@ const SearchPanel: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Acesso Rápido por Modelo - SEM FILTRAGEM */}
+      {/* Acesso Rápido por Modelo - COM FILTRAGEM BASEADA NA API */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -399,7 +478,15 @@ const SearchPanel: React.FC = () => {
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span className="font-medium text-primary">{sortedModels.length}</span>
-              <span>modelos em stock</span>
+              {hasActiveFilters ? (
+                <span>modelos filtrados ({materials?.reduce((acc, m) => {
+                  const modelo = m.product?.modelo;
+                  if (!modelo || acc.includes(modelo)) return acc;
+                  return [...acc, modelo];
+                }, [] as string[]).length || 0} total)</span>
+              ) : (
+                <span>modelos em stock</span>
+              )}
             </div>
           </CardTitle>
         </CardHeader>
