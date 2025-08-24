@@ -501,26 +501,18 @@ const SearchPanel: React.FC = () => {
                   key={group.modelo}
                   variant="outline"
                   onClick={() => handleModelClick(group)}
-                  className="h-auto p-4 flex flex-col gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all duration-200 group text-left"
+                  className="h-auto p-3 flex items-center gap-3 border-2 hover:border-primary hover:bg-primary/5 transition-all duration-200 group text-left"
                 >
-                  <div className="flex items-start gap-2 w-full">
-                    <div className="w-3 h-3 rounded-full bg-emerald-500 group-hover:bg-primary transition-colors mt-1 flex-shrink-0"></div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm text-white leading-tight mb-1 truncate">
-                        {group.description}
-                      </div>
-                      <div className="flex justify-between items-center text-xs mb-1">
-                        <span className="font-semibold text-emerald-600 group-hover:text-primary">
-                          {group.totalPecas} peças
-                        </span>
-                        <span className="text-orange-600 group-hover:text-primary">
-                          {uniqueLocations.length} loc.
-                        </span>
-                      </div>
-                      <div className="text-xs text-muted-foreground leading-tight">
-                        {locationText}
-                      </div>
+                  <div className="w-3 h-3 rounded-full bg-emerald-500 group-hover:bg-primary transition-colors flex-shrink-0"></div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-base text-white leading-tight break-words">
+                      {group.description}
                     </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <span className="font-semibold text-emerald-600 group-hover:text-primary text-sm">
+                      {group.totalPecas} peças
+                    </span>
                   </div>
                 </Button>
               );
