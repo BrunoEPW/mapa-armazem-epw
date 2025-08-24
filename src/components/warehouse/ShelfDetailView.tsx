@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, History } from 'lucide-react';
+import { ArrowLeft, Plus, ArrowUpDown, Trash2, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -136,8 +136,9 @@ const ShelfDetailView: React.FC = () => {
                           e.stopPropagation();
                           setEditingMaterial(material);
                         }}
+                        title="Registar Movimento"
                       >
-                        <Edit className="w-4 h-4" />
+                        <ArrowUpDown className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="destructive"
