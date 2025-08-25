@@ -4,23 +4,7 @@ import { config } from '@/lib/config';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-interface UseSupabaseWarehouseDataProps {
-  products: Product[];
-  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
-  materials: Material[];
-  setMaterials: React.Dispatch<React.SetStateAction<Material[]>>;
-  movements: Movement[];
-  setMovements: React.Dispatch<React.SetStateAction<Movement[]>>;
-}
-
-export const useSupabaseWarehouseData = ({
-  products,
-  setProducts,
-  materials,
-  setMaterials,
-  movements,
-  setMovements,
-}: UseSupabaseWarehouseDataProps) => {
+export const useSupabaseWarehouseData = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
@@ -128,18 +112,6 @@ export const useSupabaseWarehouseData = ({
   }, []);
 
   return {
-    // Data state
-    materials,
-    products,
-    movements,
-    loading: isLoading,
-    dataSource: 'mock' as const,
-    
-    // Setters
-    setMaterials,
-    setProducts,
-    setMovements,
-    
     // Loading states
     isLoading,
     lastSync,
@@ -148,6 +120,8 @@ export const useSupabaseWarehouseData = ({
     isLoadingMovements,
     error,
     canUpload,
+    loading: isLoading,
+    dataSource: 'mock' as const,
     
     // Methods
     migrateToSupabase,

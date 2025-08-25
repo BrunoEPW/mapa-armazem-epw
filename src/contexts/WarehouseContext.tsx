@@ -52,15 +52,8 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [materials, setMaterials] = useState<Material[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
   
-  // Then use hooks with the state
-  const warehouseData = useSupabaseWarehouseData({
-    products,
-    setProducts,
-    materials,
-    setMaterials,
-    movements,
-    setMovements
-  });
+  // Then use hooks
+  const warehouseData = useSupabaseWarehouseData();
   const { clearAllData, clearDataPreservingMaterials } = useDataReset(setMaterials, setProducts, setMovements);
   
   // Operations without auth checks for development
