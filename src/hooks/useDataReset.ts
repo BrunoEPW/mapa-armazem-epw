@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { createBackup, restoreFromBackup, shouldPreserveMaterials, STORAGE_KEYS } from '@/lib/storage';
+import { STORAGE_KEYS } from '@/lib/storage';
 import { 
-  createMaterialBackup, 
-  isMaterialPreservationEnabled,
-  restoreMaterialsFromBackup 
-} from '@/utils/materialPreservation';
+  saveMaterials, 
+  loadMaterials, 
+  isPreservationEnabled 
+} from '@/utils/unifiedMaterialManager';
 
 export const useDataReset = (
   setMaterials: React.Dispatch<React.SetStateAction<any[]>>,
@@ -20,7 +20,7 @@ export const useDataReset = (
       setIsResetting(true);
       
       // Verificar se a preservação automática está ativada
-      const autoPreservationEnabled = isMaterialPreservationEnabled();
+      const autoPreservationEnabled = isPreservationEnabled();
       const shouldPreserve = preserveMaterials || autoPreservationEnabled;
       
       console.log('🗑️ [clearAllData] Starting data clear with preserveMaterials:', shouldPreserve);
@@ -28,16 +28,11 @@ export const useDataReset = (
 
       // Step 1: Get current data from localStorage for backup
       const currentMaterials = JSON.parse(localStorage.getItem(STORAGE_KEYS.MATERIALS) || '[]');
-      const currentProducts = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS) || '[]');
-      const currentMovements = JSON.parse(localStorage.getItem(STORAGE_KEYS.MOVEMENTS) || '[]');
       
-      // Sempre criar backup automático se há materiais
-      if (currentMaterials.length > 0) {
-        createMaterialBackup(currentMaterials);
-        if (shouldPreserve) {
-          createBackup(currentMaterials, currentProducts, currentMovements);
-          console.log('💾 [clearAllData] Backup created for material preservation');
-        }
+      // Guardar materiais se necessário
+      if (currentMaterials.length > 0 && shouldPreserve) {
+        saveMaterials(currentMaterials, 'user');
+        console.log('💾 [clearAllData] Materials saved with unified system');
       }
 
       // Step 2: Clear Supabase data (com preservação inteligente)
@@ -90,7 +85,7 @@ export const useDataReset = (
 
   const clearAllDataFull = async () => {
     // Só limpa tudo se a preservação automática estiver explicitamente desativada
-    const autoPreservationEnabled = isMaterialPreservationEnabled();
+    const autoPreservationEnabled = isPreservationEnabled();
     if (autoPreservationEnabled) {
       console.log('🔒 [clearAllDataFull] Preservação automática ativa - preservando materiais');
       return clearAllData(true);

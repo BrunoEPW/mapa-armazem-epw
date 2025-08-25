@@ -6,13 +6,11 @@ import { mockProducts, mockMaterials, mockMovements } from '@/data/mock-data';
 import { toast } from 'sonner';
 import { config } from '@/lib/config';
 import { 
-  createMaterialBackup, 
-  restoreMaterialsFromBackup, 
+  saveMaterials, 
+  loadMaterials, 
   detectMaterialLoss, 
-  updateMaterialHeartbeat,
-  initializeMaterialPreservation,
-  isMaterialPreservationEnabled 
-} from '@/utils/materialPreservation';
+  initializeUnifiedSystem
+} from '@/utils/unifiedMaterialManager';
 
 export const useSupabaseWarehouseData = () => {
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -21,16 +19,20 @@ export const useSupabaseWarehouseData = () => {
   const [loading, setLoading] = useState(true);
   const [dataSource, setDataSource] = useState<'mock' | 'supabase' | 'error'>('mock');
 
-  // Inicializar sistema de preservação
+  // Inicializar sistema unificado
   useEffect(() => {
-    initializeMaterialPreservation();
+    initializeUnifiedSystem();
   }, []);
 
-  // Criar backup automático quando os materiais mudam
+  // Guardar materiais automaticamente quando mudam (apenas se forem dados reais)
   useEffect(() => {
     if (materials.length > 0) {
-      createMaterialBackup(materials);
-      updateMaterialHeartbeat(materials);
+      // Só guardar se não estivermos a carregar dados mock
+      const timeoutId = setTimeout(() => {
+        saveMaterials(materials, 'user');
+      }, 1000); // Delay para evitar guardas durante loading
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [materials]);
 
@@ -144,12 +146,12 @@ export const useSupabaseWarehouseData = () => {
       if (manuallyCleared === 'true') {
         console.log('🚫 Data was manually cleared - verificando preservação de materiais');
         
-        // Tentar restaurar materiais se a preservação estiver ativada
-        const restoredMaterials = restoreMaterialsFromBackup();
+        // Tentar restaurar materiais com sistema unificado
+        const restoredMaterials = loadMaterials();
         if (restoredMaterials && restoredMaterials.length > 0) {
           console.log(`🔄 Restaurando ${restoredMaterials.length} materiais preservados`);
           setMaterials(restoredMaterials);
-          toast.success(`${restoredMaterials.length} materiais restaurados do backup!`);
+          toast.success(`${restoredMaterials.length} materiais restaurados!`);
         } else {
           setMaterials([]);
         }
@@ -168,16 +170,19 @@ export const useSupabaseWarehouseData = () => {
       // Detectar perda de materiais e tentar restaurar
       const materialLossDetected = detectMaterialLoss([]);
       if (materialLossDetected) {
-        const restoredMaterials = restoreMaterialsFromBackup();
+        const restoredMaterials = loadMaterials();
         if (restoredMaterials && restoredMaterials.length > 0) {
           console.log(`🚨 Perda de materiais detectada - restaurando ${restoredMaterials.length} materiais`);
           setMaterials(restoredMaterials);
           toast.warning(`Perda de materiais detectada! ${restoredMaterials.length} materiais restaurados.`);
         } else {
+          // Guardar dados mock como referência, mas não como dados do usuário
           setMaterials(mockMaterials);
+          saveMaterials(mockMaterials, 'mock');
         }
       } else {
         setMaterials(mockMaterials);
+        saveMaterials(mockMaterials, 'mock');
       }
       
       // Simulate a brief loading period
@@ -299,16 +304,18 @@ export const useSupabaseWarehouseData = () => {
 
       // Verificar se houve perda de materiais e tentar restaurar se necessário
       if (transformedMaterials.length === 0) {
-        const restoredMaterials = restoreMaterialsFromBackup();
+        const restoredMaterials = loadMaterials();
         if (restoredMaterials && restoredMaterials.length > 0) {
-          console.log(`🔄 Materiais vazios no Supabase - restaurando ${restoredMaterials.length} materiais do backup`);
+          console.log(`🔄 Materiais vazios no Supabase - restaurando ${restoredMaterials.length} materiais`);
           setMaterials(restoredMaterials);
-          toast.success(`${restoredMaterials.length} materiais restaurados do backup local!`);
+          toast.success(`${restoredMaterials.length} materiais restaurados!`);
         } else {
           setMaterials(transformedMaterials);
         }
       } else {
         setMaterials(transformedMaterials);
+        // Guardar materiais do Supabase como dados do usuário
+        saveMaterials(transformedMaterials, 'user');
       }
 
       setProducts(transformedProducts);
@@ -325,13 +332,14 @@ export const useSupabaseWarehouseData = () => {
       setDataSource('error');
       
       // Tentar restaurar materiais preservados primeiro
-      const restoredMaterials = restoreMaterialsFromBackup();
+      const restoredMaterials = loadMaterials();
       if (restoredMaterials && restoredMaterials.length > 0) {
         console.log(`🔄 Erro no Supabase - restaurando ${restoredMaterials.length} materiais preservados`);
         setMaterials(restoredMaterials);
-        toast.warning(`Erro no Supabase - ${restoredMaterials.length} materiais restaurados do backup!`);
+        toast.warning(`Erro no Supabase - ${restoredMaterials.length} materiais restaurados!`);
       } else {
         setMaterials(mockMaterials);
+        saveMaterials(mockMaterials, 'mock');
       }
       
       // Fallback to mock data para produtos e movimentos
