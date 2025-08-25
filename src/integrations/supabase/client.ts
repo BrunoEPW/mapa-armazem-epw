@@ -2,8 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://okesbnfvadhagjmtdevx.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rZXNibmZ2YWRoYWdqbXRkZXZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5ODMyOTUsImV4cCI6MjA2NzU1OTI5NX0.OZGWJ1cuQmZg1b-L9_Cfk0CD6os0ifawIE95reoXJ4U";
+const SUPABASE_URL = "https://iwwavpqhetsgrpsxzzpg.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3d2F2cHFoZXRzZ3Jwc3h6enBnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ2MDYwMDUsImV4cCI6MjA3MDE4MjAwNX0.w5M5zN2Km3Osq3L-lEyg1AHELtyaTCV8WqCOJUdMsO0";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -13,34 +13,5 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  },
-  global: {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  },
-  db: {
-    schema: 'public',
-  },
-});
-
-// Test Supabase connectivity
-export const testSupabaseConnection = async () => {
-  try {
-    console.log('Testing Supabase connection...');
-    const { data, error } = await supabase
-      .from('products')
-      .select('count(*)', { count: 'exact', head: true });
-    
-    if (error) {
-      console.error('Supabase connection test failed:', error);
-      return false;
-    }
-    
-    console.log('Supabase connection test successful');
-    return true;
-  } catch (error) {
-    console.error('Supabase connection test error:', error);
-    return false;
   }
-};
+});
