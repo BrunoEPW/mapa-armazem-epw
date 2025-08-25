@@ -29,7 +29,14 @@ export const QuickResetDialog: React.FC<QuickResetDialogProps> = ({
   const [isRestoringMock, setIsRestoringMock] = useState(false);
   const [preserveMaterials, setPreserveMaterials] = useState(true);
   const { clearAllData, clearDataPreservingMaterials, clearAllMaterials } = useWarehouse();
-  const { restoreMockData } = useSupabaseWarehouseData();
+  const { restoreMockData } = useSupabaseWarehouseData({
+    products: [],
+    setProducts: () => {},
+    materials: [],
+    setMaterials: () => {},
+    movements: [],
+    setMovements: () => {}
+  });
 
   const handleConfirm = async () => {
     setIsResetting(true);

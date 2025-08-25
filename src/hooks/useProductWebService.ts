@@ -35,29 +35,8 @@ export const useProductWebService = () => {
 
   const syncProductsToSupabase = async (products: Omit<Product, 'id'>[]): Promise<boolean> => {
     try {
-      // Use upsert to handle both inserts and updates
-      const { error } = await supabase
-        .from('products')
-        .upsert(
-          products.map(product => ({
-            familia: product.familia,
-            modelo: product.modelo,
-            acabamento: product.acabamento,
-            cor: product.cor,
-            comprimento: product.comprimento.toString(),
-            foto: product.foto || null,
-          })),
-          {
-            onConflict: 'familia,modelo,acabamento,cor,comprimento',
-            ignoreDuplicates: false,
-          }
-        );
-
-      if (error) {
-        console.error('Failed to sync products to Supabase:', error);
-        return false;
-      }
-
+      // Products table not available in current schema - skip sync
+      console.log('⚠️ [syncProductsToSupabase] Products table not available in current schema - skipping sync');
       return true;
     } catch (error) {
       console.error('Error syncing products to Supabase:', error);

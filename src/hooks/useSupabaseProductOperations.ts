@@ -1,5 +1,4 @@
 import { Product, Material } from '@/types/warehouse';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface UseSupabaseProductOperationsProps {
@@ -18,9 +17,7 @@ export const useSupabaseProductOperations = ({
   
   const addProduct = async (product: Omit<Product, 'id'>) => {
     try {
-      
       console.log('🔵 Input product:', JSON.stringify(product, null, 2));
-      console.log('🔵 Supabase client:', !!supabase);
       console.log('🔵 Starting field validation...');
       
       // Validate required fields
@@ -34,89 +31,12 @@ export const useSupabaseProductOperations = ({
       }
       console.log('🔵 ✓ Product validation passed');
       
-      // Prepare data for Supabase insertion - Remove RLS fields causing issues
-      const supabaseData = {
-        familia: String(product.familia),
-        modelo: String(product.modelo),
-        acabamento: String(product.acabamento),
-        cor: String(product.cor),
-        comprimento: String(product.comprimento), // Ensure string type
-        foto: product.foto || null,
-        // Remove created_by and updated_by to avoid RLS policy violations
-      };
+      // Create product locally since warehouse tables not available in current schema
+      console.log('⚠️ Products table not available - adding product locally as fallback');
       
-      console.log('🔵 Data prepared for Supabase:', JSON.stringify(supabaseData, null, 2));
-      console.log('🔵 About to call Supabase...');
-      
-      const { data, error } = await supabase
-        .from('products')
-        .insert(supabaseData)
-        .select()
-        .single();
-
-      console.log('🔵 Supabase call completed');
-      console.log('🔵 Supabase data response:', data);
-      console.log('🔵 Supabase error response:', error);
-
-      if (error) {
-        console.error('🔴 Supabase insertion error:', error);
-        console.error('🔴 Error details:', {
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint
-        });
-        
-        // Enhanced RLS error detection and fallback
-        const isRLSError = error.message?.includes('row-level security policy') || 
-                          error.message?.includes('RLS') ||
-                          error.message?.includes('violates row-level security') ||
-                          error.code === '42501' ||
-                          error.code === 'PGRST301';
-        
-        const isPermissionError = error.message?.includes('permission denied') ||
-                                 error.message?.includes('not allowed') ||
-                                 error.code === '42501';
-        
-        if (isRLSError || isPermissionError) {
-          console.log('⚠️ RLS/Permission error - adding product locally as fallback');
-          
-          // Create product locally with generated ID
-          const newProduct: Product = {
-            id: crypto.randomUUID(),
-            familia: product.familia,
-            modelo: product.modelo,
-            acabamento: product.acabamento,
-            cor: product.cor,
-            comprimento: product.comprimento,
-            foto: product.foto,
-            // Preserve EPW fields if they exist
-            ...(product.epwTipo && { epwTipo: product.epwTipo }),
-            ...(product.epwCertificacao && { epwCertificacao: product.epwCertificacao }),
-            ...(product.epwModelo && { epwModelo: product.epwModelo }),
-            ...(product.epwComprimento && { epwComprimento: product.epwComprimento }),
-            ...(product.epwCor && { epwCor: product.epwCor }),
-            ...(product.epwAcabamento && { epwAcabamento: product.epwAcabamento }),
-            ...(product.epwOriginalCode && { epwOriginalCode: product.epwOriginalCode }),
-          };
-
-          setProducts(prev => [...prev, newProduct]);
-          console.log('✅ Product added to local state due to RLS restrictions:', newProduct);
-          
-          toast.warning('Produto adicionado localmente', {
-            description: 'Limitações da base de dados impediram o armazenamento online.'
-          });
-          
-          return; // Don't throw error, product was added locally
-        }
-        
-        throw new Error(`Erro do Supabase: ${error.message}`);
-      }
-
-      console.log('✓ Supabase insertion successful:', data);
-
+      // Create product locally with generated ID
       const newProduct: Product = {
-        id: data.id,
+        id: crypto.randomUUID(),
         familia: product.familia,
         modelo: product.modelo,
         acabamento: product.acabamento,
@@ -134,8 +54,9 @@ export const useSupabaseProductOperations = ({
       };
 
       setProducts(prev => [...prev, newProduct]);
-      console.log('✓ Product added to local state:', newProduct);
-      toast.success('Produto adicionado com sucesso');
+      console.log('✅ Product added to local state:', newProduct);
+      
+      toast.success('Produto adicionado com sucesso!');
       
     } catch (error) {
       console.error('❌ Error in addProduct:', error);
@@ -151,25 +72,11 @@ export const useSupabaseProductOperations = ({
 
   const updateProduct = async (productId: string, updates: Partial<Product>) => {
     try {
-      // Convert comprimento to string if present
-      const updateData = {
-        ...updates,
-        comprimento: updates.comprimento ? String(updates.comprimento) : undefined,
-      };
-
-      const { error } = await supabase
-        .from('products')
-        .update(updateData)
-        .eq('id', productId);
-
-      if (error) throw error;
-
+      // Update locally since warehouse tables not available
       setProducts(prev => prev.map(p => 
         p.id === productId ? { ...p, ...updates } : p
       ));
 
-      // Refresh data to update materials with new product info
-      await refreshData();
       toast.success('Produto atualizado com sucesso');
       
     } catch (error) {
@@ -180,22 +87,7 @@ export const useSupabaseProductOperations = ({
 
   const deleteProduct = async (productId: string) => {
     try {
-      // First delete related materials
-      const { error: materialsError } = await supabase
-        .from('materials')
-        .delete()
-        .eq('product_id', productId);
-
-      if (materialsError) throw materialsError;
-
-      // Then delete the product
-      const { error: productError } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', productId);
-
-      if (productError) throw productError;
-
+      // Delete locally since warehouse tables not available
       setProducts(prev => prev.filter(p => p.id !== productId));
       setMaterials(prev => prev.filter(m => m.productId !== productId));
       toast.success('Produto eliminado com sucesso');

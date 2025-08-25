@@ -46,13 +46,21 @@ interface WarehouseContextType {
 const WarehouseContext = createContext<WarehouseContextType | undefined>(undefined);
 
 export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // All useState calls first
+  // Initialize state first
   const [selectedShelf, setSelectedShelf] = useState<ShelfLocation | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [movements, setMovements] = useState<Movement[]>([]);
   
-  // No authentication required
-  
-  // All hooks must be called consistently
-  const { materials, products, movements, loading, dataSource, setMaterials, setProducts, setMovements, refreshData } = useSupabaseWarehouseData();
+  // Then use hooks with the state
+  const warehouseData = useSupabaseWarehouseData({
+    products,
+    setProducts,
+    materials,
+    setMaterials,
+    movements,
+    setMovements
+  });
   const { clearAllData, clearDataPreservingMaterials } = useDataReset(setMaterials, setProducts, setMovements);
   
   // Operations without auth checks for development
@@ -63,14 +71,14 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setMaterials,
     setProducts,
     setMovements,
-    refreshData,
+    refreshData: warehouseData.refreshData,
   });
   
   const adminOps = useSupabaseAdminOperations();
   const { syncStatus, syncProducts } = useProductWebService();
   
   // Enable real-time synchronization
-  useRealTimeSync(refreshData, refreshData, refreshData);
+  useRealTimeSync(warehouseData.refreshData, warehouseData.refreshData, warehouseData.refreshData);
 
   const createProductFromApi = async (apiProductOrCode: any): Promise<Product | null> => {
     
@@ -344,7 +352,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const success = await adminOps.clearAllMaterials();
     if (success) {
       // Refresh data to update the UI
-      await refreshData();
+      await warehouseData.refreshData();
     }
     return success;
   };
@@ -364,8 +372,8 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     products,
     movements,
     selectedShelf,
-    loading,
-    dataSource,
+    loading: warehouseData.loading,
+    dataSource: warehouseData.dataSource,
     setSelectedShelf,
     clearAllData,
     clearDataPreservingMaterials,

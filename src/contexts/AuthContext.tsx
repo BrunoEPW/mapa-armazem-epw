@@ -96,25 +96,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser({
           id: profile.id,
           email: profile.email,
-          name: profile.name,
-          role: profile.role,
+          name: profile.full_name,
+          role: 'viewer', // Default role since not in current schema
           created_at: profile.created_at,
           updated_at: profile.updated_at,
-          last_seen: profile.last_seen,
+          last_seen: new Date().toISOString(), // Default current time
         });
       } else {
         // Create new profile if it doesn't exist
         const newProfileData = {
           user_id: authUser.id,
           email: authUser.email || '',
-          name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
-          role: 'viewer' as const, // Default role
-          last_seen: new Date().toISOString(),
+          full_name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
         };
 
         const { data: createdProfile, error: createError } = await supabase
           .from('profiles')
-          .insert([newProfileData])
+          .insert(newProfileData)
           .select()
           .single();
 
@@ -124,11 +122,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser({
             id: createdProfile.id,
             email: createdProfile.email,
-            name: createdProfile.name,
-            role: createdProfile.role,
+            name: createdProfile.full_name,
+            role: 'viewer', // Default role
             created_at: createdProfile.created_at,
             updated_at: createdProfile.updated_at,
-            last_seen: createdProfile.last_seen,
+            last_seen: new Date().toISOString(), // Default current time
           });
         }
       }
@@ -301,7 +299,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .order('last_seen', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching users:', error);
@@ -311,11 +309,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return (data || []).map(profile => ({
         id: profile.id,
         email: profile.email,
-        name: profile.name,
-        role: profile.role,
+        name: profile.full_name,
+        role: 'viewer' as const, // Default role
         created_at: profile.created_at,
         updated_at: profile.updated_at,
-        last_seen: profile.last_seen,
+        last_seen: new Date().toISOString(), // Default current time
       }));
     } catch (error) {
       console.error('Error getting active users:', error);
