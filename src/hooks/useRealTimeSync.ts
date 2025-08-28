@@ -23,112 +23,13 @@ export const useRealTimeSync = (
   useEffect(() => {
     if (!user) return;
 
-    // Subscribe to materials changes
-    const materialsSubscription = supabase
-      .channel('materials-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'materials',
-        },
-        (payload) => {
-          console.log('Materials change detected:', payload);
-          
-          if (payload.eventType === 'INSERT') {
-            addNotification('Material adicionado ao estoque', 'success');
-          } else if (payload.eventType === 'UPDATE') {
-            addNotification('Material atualizado no estoque', 'info');
-          } else if (payload.eventType === 'DELETE') {
-            addNotification('Material removido do estoque', 'warning');
-          }
-          
-          onMaterialsChange?.();
-        }
-      )
-      .subscribe();
-
-    // Subscribe to products changes
-    const productsSubscription = supabase
-      .channel('products-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'products',
-        },
-        (payload) => {
-          console.log('Products change detected:', payload);
-          
-          if (payload.eventType === 'INSERT') {
-            addNotification('Novo produto criado', 'success');
-          } else if (payload.eventType === 'UPDATE') {
-            addNotification('Produto atualizado', 'info');
-          } else if (payload.eventType === 'DELETE') {
-            addNotification('Produto eliminado', 'warning');
-          }
-          
-          onProductsChange?.();
-        }
-      )
-      .subscribe();
-
-    // Subscribe to movements changes
-    const movementsSubscription = supabase
-      .channel('movements-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'movements',
-        },
-        (payload) => {
-          console.log('Movements change detected:', payload);
-          
-          if (payload.eventType === 'INSERT') {
-            const movement = payload.new as any;
-            const type = movement.type === 'entrada' ? 'entrada' : 'saída';
-            addNotification(`Nova ${type} registada`, 'info');
-          }
-          
-          onMovementsChange?.();
-        }
-      )
-      .subscribe();
-
-    // Subscribe to user presence
-    const presenceSubscription = supabase
-      .channel('user-presence')
-      .on('presence', { event: 'sync' }, () => {
-        const state = presenceSubscription.presenceState();
-        const users = Object.keys(state);
-        setConnectedUsers(users);
-      })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        addNotification(`Utilizador ${key} entrou`, 'info');
-      })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log('User left:', key, leftPresences);
-        addNotification(`Utilizador ${key} saiu`, 'info');
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await presenceSubscription.track({
-            user_id: user.id,
-            user_name: user.name,
-            online_at: new Date().toISOString(),
-          });
-        }
-      });
-
+    console.log('🔄 [useRealTimeSync] Real-time subscriptions disabled - warehouse tables not available');
+    
+    // Skip real-time subscriptions since warehouse tables don't exist yet
+    // This prevents WebSocket errors in production
+    
     return () => {
-      materialsSubscription.unsubscribe();
-      productsSubscription.unsubscribe();
-      movementsSubscription.unsubscribe();
-      presenceSubscription.unsubscribe();
+      // No subscriptions to cleanup
     };
   }, [user, onMaterialsChange, onProductsChange, onMovementsChange]);
 
