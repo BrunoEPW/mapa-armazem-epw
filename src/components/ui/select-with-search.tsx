@@ -62,8 +62,6 @@ const SelectWithSearch = React.forwardRef<
       onOpenChange={setOpen}
       value={value}
       onValueChange={(value) => {
-        console.log('🔍 [SelectWithSearch] Value changed to:', value);
-        console.log('🔍 [SelectWithSearch] Available options:', options.slice(0, 3));
         onValueChange(value);
       }}
       disabled={disabled || loading}

@@ -13,7 +13,6 @@ import { ModeloSelect } from './ModeloSelect';
 import { ComprimentoSelect } from './ComprimentoSelect';
 import { CorSelect } from './CorSelect';
 import { useApiProductsSimple } from '@/hooks/useApiProductsSimple';
-import { SearchDebugConsole } from './SearchDebugConsole';
 
 const SearchPanel: React.FC = () => {
   const navigate = useNavigate();
@@ -260,8 +259,6 @@ const SearchPanel: React.FC = () => {
       return allMaterials; // Se não há filtros da API, retorna todos os materiais
     }
 
-    console.log('🔍 [SearchPanel] Filtering local models based on API products:', apiProductsFiltered.map(p => p.codigo));
-
     // Criar um conjunto de códigos exatos da API
     const apiCodes = new Set<string>();
     
@@ -270,8 +267,6 @@ const SearchPanel: React.FC = () => {
         apiCodes.add(product.codigo.toLowerCase());
       }
     });
-
-    console.log('📋 [SearchPanel] API codes to match:', Array.from(apiCodes));
 
     // Filtrar materiais que correspondem EXATAMENTE aos códigos da API (sem prefix matching)
     const matchingMaterials = allMaterials.filter(material => {
@@ -283,7 +278,6 @@ const SearchPanel: React.FC = () => {
       // Verificar correspondência EXATA por código ou modelo
       for (const apiCode of apiCodes) {
         if (codigo === apiCode || modelo === apiCode) {
-          console.log(`✅ [SearchPanel] EXACT match found: ${material.product.modelo} matches ${apiCode}`);
           return true;
         }
       }
@@ -291,7 +285,6 @@ const SearchPanel: React.FC = () => {
       return false;
     });
 
-    console.log(`🎯 [SearchPanel] Filtered ${matchingMaterials.length} materials from ${allMaterials.length} total`);
     return matchingMaterials;
   }, []);
 
@@ -694,24 +687,6 @@ const SearchPanel: React.FC = () => {
         onLocationClick={handleLocationClick}
       />
 
-      {/* Debug Console */}
-      <SearchDebugConsole
-        hookData={{
-          products: apiProducts,
-          loading,
-          error,
-          currentPage,
-          totalPages,
-          totalCount,
-          isConnected: !error && apiProducts.length >= 0,
-          connectionStatus,
-          searchQuery
-        }}
-        selectedModel={selectedModel}
-        selectedComprimento={selectedComprimento}
-        selectedCor={selectedCor}
-        additionalInfo={{ page: 'search', materialsCount: materials.length }}
-      />
     </div>
   );
 };

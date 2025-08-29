@@ -37,71 +37,38 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
       
       
       
-      
-      
-      
       // Validation checks
       if (!selectedProduct || !pecas || !norc.trim()) {
-        
-        console.log('❌ ERROR: Missing required fields');
         toast.error('Por favor, preencha todos os campos');
         return;
       }
       
       if (!selectedProductId || !selectedProduct) {
-        
-        console.log('❌ ERROR: No product selected');
         toast.error('Por favor, selecione um produto');
         return;
       }
 
     if (pecas <= 0) {
-      console.log('ERROR: Invalid pecas:', pecas);
       toast.error('Por favor, especifique uma quantidade válida');
       return;
     }
 
-      
-      
-
     try {
-      
       let productToUse = selectedProduct;
 
       // Safety check for selectedProduct.id
       if (!selectedProduct.id || typeof selectedProduct.id !== 'string') {
-        console.error('❌ ERROR: selectedProduct.id is invalid:', selectedProduct.id);
-        console.error('❌ selectedProduct.id type:', typeof selectedProduct.id);
-        console.error('❌ Full selectedProduct:', JSON.stringify(selectedProduct, null, 2));
         toast.error('Erro: ID do produto inválido');
         return;
       }
-      
-      console.log('✅ selectedProduct.id validation passed');
-      
 
       // If it's an API product, create it locally first
       if (selectedProduct.id.startsWith('api_')) {
-        console.log('🔄 Creating local product from API data...');
-        
         try {
-          console.log('📞 About to call createProductFromApi...');
-          console.log('📞 Function type:', typeof createProductFromApi);
           const createdProduct = await createProductFromApi(selectedProduct);
-          console.log('✅ Product created from API successfully:', createdProduct);
           productToUse = createdProduct;
         } catch (createError) {
-          console.error('❌ Error creating product from API:', createError);
-          console.error('❌ Create error details:', {
-            message: createError?.message,
-            stack: createError?.stack,
-            name: createError?.name,
-            cause: createError?.cause
-          });
-          
           // Enhanced error handling - don't fail the material creation
-          console.log('🔄 Product creation failed, but continuing with material creation...');
-          
           // Use the original API product data as fallback
           productToUse = selectedProduct;
           
@@ -110,35 +77,15 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
             description: 'O material será adicionado com dados temporários do produto.'
           });
         }
-      } else {
-        console.log('📋 Using existing local product:', productToUse);
       }
 
       const materialId = `${productToUse.id}_${location.estante}${location.prateleira}_${Date.now()}`;
-      console.log('Generated materialId:', materialId);
-      
-      console.log('About to call addMaterial with:', {
-        productId: productToUse.id,
-        product: productToUse,
-        pecas,
-        location,
-      });
       
       const createdMaterial = await addMaterial({
         productId: productToUse.id,
         product: productToUse,
         pecas,
         location,
-      });
-
-      console.log('Material created successfully:', createdMaterial);
-
-      console.log('About to call addMovement with:', {
-        materialId: createdMaterial.id,
-        type: 'entrada',
-        pecas,
-        norc: norc.trim(),
-        date: new Date().toISOString(),
       });
 
       await addMovement({
@@ -148,23 +95,13 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
         norc: norc.trim(),
         date: new Date().toISOString(),
       });
-
-      console.log('Movement added successfully');
       
       toast.success(`Material adicionado com sucesso! ${pecas} peças de ${selectedProduct.epwModelo?.d || selectedProduct.modelo} em ${location.estante}${location.prateleira}`);
       onSuccess();
     } catch (error) {
-      console.error('=== ERROR ADDING MATERIAL ===');
-      console.error('Error details:', error);
-      console.error('Error message:', error?.message);
-      console.error('Error stack:', error?.stack);
       toast.error('Erro ao adicionar material. Tente novamente.');
     }
     } catch (mainError) {
-      console.error('=== CRITICAL ERROR IN HANDLE SUBMIT ===');
-      console.error('Critical error details:', mainError);
-      console.error('Critical error message:', mainError?.message);
-      console.error('Critical error stack:', mainError?.stack);
       toast.error('Erro crítico. Tente novamente.');
     }
   };

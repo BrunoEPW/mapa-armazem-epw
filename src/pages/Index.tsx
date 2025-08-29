@@ -14,7 +14,6 @@ import InvertedTSeparator from '@/components/ui/inverted-t-separator';
 
 import Header from '@/components/Header';
 import Footer from '@/components/ui/Footer';
-import { DebugPanel } from '@/components/ui/DebugPanel';
 
 
 
@@ -70,24 +69,17 @@ const Index = () => {
     
     setIsPopulating(true);
     try {
-      console.log('🔄 Substituindo dados existentes por dados de teste...');
-      
       // First clear all existing data
       const clearSuccess = await clearAllData();
       if (!clearSuccess) {
-        console.error('❌ Erro ao limpar dados existentes');
         return;
       }
       
-      console.log('✅ Dados existentes limpos com sucesso');
-      
       // Then populate with new test data
-      console.log('📦 Populando novos dados de teste...');
       await populateTestData();
       
-      console.log('✅ Substituição de dados concluída com sucesso');
     } catch (error) {
-      console.error('❌ Erro ao substituir dados de teste:', error);
+      // Error handled silently
     } finally {
       setIsPopulating(false);
     }
@@ -245,35 +237,6 @@ const Index = () => {
         </div>
       </div>
 
-      <DebugPanel 
-        materials={materials}
-        onMaterialsRestore={(restoredMaterials) => {
-          // Atualizar os materiais quando restaurados do backup
-          if (restoredMaterials && restoredMaterials.length > 0) {
-            console.log('🔄 [Index] Restaurando materiais do backup no estado principal');
-            // Aqui poderíamos chamar uma função do contexto para atualizar os materiais
-            // Por agora, apenas logamos a operação
-          }
-        }}
-        additionalInfo={{
-          warehouseStats: {
-            totalProducts: products.length,
-            totalMaterials: materials.length,
-            totalMovements: movements.length,
-            lastUpdate,
-          },
-          shelfStatus: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(estante => ({
-            shelf: estante,
-            status: getShelfStatus(estante),
-            materialCount: materials.filter(m => m.location.estante === estante).length,
-          })),
-          preservationInfo: {
-            systemEnabled: true,
-            materialsBackedUp: materials.length > 0,
-            lastBackupCheck: new Date().toISOString(),
-          }
-        }}
-      />
 
       <Footer />
     </div>

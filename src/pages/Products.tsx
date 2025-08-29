@@ -11,7 +11,6 @@ import Footer from '@/components/ui/Footer';
 import { ModeloSelect, ModeloSelectRef } from '@/components/warehouse/ModeloSelect';
 import { ComprimentoSelect, ComprimentoSelectRef } from '@/components/warehouse/ComprimentoSelect';
 import { CorSelect, CorSelectRef } from '@/components/warehouse/CorSelect';
-import { ProductsDebugConsole } from '@/components/warehouse/ProductsDebugConsole';
 import productsBanner from '@/assets/epw-products-banner.jpg';
 
 const Products = () => {
@@ -279,26 +278,6 @@ const Products = () => {
           </div>
         )}
       </main>
-      
-      {/* Debug Console */}
-      <ProductsDebugConsole
-        hookData={{
-          products,
-          loading,
-          error,
-          currentPage,
-          totalPages,
-          totalCount,
-          itemsPerPage: 20,
-          isConnected,
-          connectionStatus,
-          searchQuery
-        }}
-        selectedModel={selectedModel}
-        selectedComprimento={selectedComprimento}
-        selectedCor={selectedCor}
-      />
-      
       <Footer />
     </div>
   );

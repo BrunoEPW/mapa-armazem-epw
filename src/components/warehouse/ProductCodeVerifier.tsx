@@ -52,7 +52,7 @@ export const ProductCodeVerifier: React.FC<ProductCodeVerifierProps> = ({
         description: `Encontrados: ${verificationResults.found.length}, Não encontrados: ${verificationResults.notFound.length}`,
       });
     } catch (error) {
-      console.error('Error verifying codes:', error);
+      // Error handled silently
       toast({
         title: "Erro",
         description: "Erro ao verificar códigos na API",

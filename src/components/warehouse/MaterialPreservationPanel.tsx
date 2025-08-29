@@ -80,7 +80,7 @@ export const MaterialPreservationPanel = ({
         });
       }
     } catch (error) {
-      console.error('Erro ao verificar backup:', error);
+      // Error handled silently
     }
   };
 

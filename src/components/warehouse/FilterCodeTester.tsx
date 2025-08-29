@@ -34,7 +34,6 @@ export const FilterCodeTester: React.FC<FilterCodeTesterProps> = ({
 
     const attributes = attributeMap[filterType] || [];
     if (attributes.length === 0) {
-      console.warn(`No attributes available for ${filterType}`);
       return;
     }
 

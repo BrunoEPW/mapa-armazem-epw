@@ -21,26 +21,11 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
   
   const { updateMaterial, addMovement } = useWarehouse();
   
-  console.log('🔍 [EditMaterialDialog] Functions available:', {
-    updateMaterial: typeof updateMaterial,
-    addMovement: typeof addMovement,
-    materialId: material.id
-  });
-  
   const [movementQuantity, setMovementQuantity] = useState('');
   const [norc, setNorc] = useState('');
   const [norcType, setNorcType] = useState<'escrever' | 'partidas' | 'amostras' | 'devolucao'>('escrever');
   const [customNorc, setCustomNorc] = useState('');
   const [movementType, setMovementType] = useState<'entrada' | 'saida' | null>(null);
-
-  console.log('📊 [EditMaterialDialog] Component state initialized:', {
-    currentPecas: material.pecas,
-    materialInfo: {
-      id: material.id,
-      currentPecas: material.pecas,
-      produto: material.product.modelo
-    }
-  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +78,6 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
       onClose();
       
     } catch (error) {
-      console.error('Error updating material:', error);
       toast.error(`Erro: ${error?.message || 'Erro desconhecido'}`);
     }
   };

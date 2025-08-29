@@ -22,9 +22,7 @@ const ShelfDetailView: React.FC = () => {
   let warehouseContext;
   try {
     warehouseContext = useWarehouse();
-    console.log('✅ ShelfDetailView - Warehouse context loaded successfully');
   } catch (error) {
-    console.error('❌ ShelfDetailView - Error loading warehouse context:', error);
     // Fallback - redirect to home if context fails
     navigate('/');
     return <div>Erro: Contexto do armazém não disponível. A redirecionar...</div>;
@@ -38,7 +36,6 @@ const ShelfDetailView: React.FC = () => {
   const [materialToDelete, setMaterialToDelete] = useState<Material | null>(null);
 
   if (!estante || !prateleira) {
-    console.log('❌ ShelfDetailView - Missing route params, navigating to home');
     navigate('/');
     return null;
   }
@@ -63,20 +60,11 @@ const ShelfDetailView: React.FC = () => {
     }
   }, [highlightMaterialId, materials.length]);
 
-  console.log('ShelfDetailView - Current state:', {
-    showAddDialog,
-    estante,
-    prateleira,
-    materialsCount: materials.length
-  });
 
   const handleRemoveMaterial = async (materialId: string) => {
     try {
-      console.log('🗑️ [ShelfDetailView] Starting material removal:', materialId);
       await removeMaterial(materialId);
-      console.log('✅ [ShelfDetailView] Material removed successfully');
     } catch (error) {
-      console.error('❌ [ShelfDetailView] Error removing material:', error);
       // Continue anyway since we're in offline mode
     }
   };
@@ -125,9 +113,7 @@ const ShelfDetailView: React.FC = () => {
           {!isReadOnly && (
             <Button
               onClick={() => {
-                console.log('Adicionar Material button clicked!');
                 setShowAddDialog(true);
-                console.log('showAddDialog set to true');
               }}
               className="flex items-center gap-2"
             >
@@ -230,7 +216,6 @@ const ShelfDetailView: React.FC = () => {
           <AddMaterialDialog
             location={location}
             onClose={() => {
-              console.log('AddMaterialDialog - onClose called');
               setShowAddDialog(false);
             }}
           />

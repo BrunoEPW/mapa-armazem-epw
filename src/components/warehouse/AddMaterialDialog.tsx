@@ -13,7 +13,7 @@ export const AddMaterialDialog: React.FC<AddMaterialDialogProps> = ({
   location,
   onClose,
 }) => {
-  console.log('AddMaterialDialog - Component mounted with location:', location);
+  
   
   return (
     <Dialog open onOpenChange={onClose}>

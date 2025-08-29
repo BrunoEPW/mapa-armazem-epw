@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import SearchPanel from '@/components/warehouse/SearchPanel';
 import { ProductCodeVerifier } from '@/components/warehouse/ProductCodeVerifier';
-import { DebugPanel } from '@/components/ui/DebugPanel';
 import Footer from '@/components/ui/Footer';
 import searchBanner from '@/assets/search-banner.jpg';
 
@@ -55,7 +54,6 @@ const Search = () => {
         </div>
       </div>
 
-      <DebugPanel additionalInfo={{ page: 'search' }} />
 
       <Footer />
     </div>

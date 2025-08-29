@@ -16,7 +16,6 @@ import * as XLSX from 'xlsx';
 import EPWLogo from '@/components/ui/epw-logo';
 import Footer from '@/components/ui/Footer';
 import { ModelLocationsDialog } from '@/components/warehouse/ModelLocationsDialog';
-import { UnifiedMaterialDebugPanel } from '@/components/warehouse/UnifiedMaterialDebugPanel';
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -49,10 +48,6 @@ const Reports = () => {
     const targetDate = format(date, 'yyyy-MM-dd');
     const historicalMaterials = new Map();
 
-    console.log(`📅 [calculateHistoricalStock] Calculating stock for date: ${targetDate}`);
-    console.log(`📦 [calculateHistoricalStock] Available materials: ${materials.length}`);
-    console.log(`🔄 [calculateHistoricalStock] Available movements: ${movements.length}`);
-
     // Start with current stock (this includes materials added directly)
     materials.forEach(material => {
       const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
@@ -68,8 +63,6 @@ const Reports = () => {
       existing.locations.add(`${material.location.estante}${material.location.prateleira}`);
     });
 
-    console.log(`🔍 [calculateHistoricalStock] Starting with current stock: ${historicalMaterials.size} products`);
-
     // Reverse movements that happened AFTER the target date
     // Normalize dates to compare only the date part (YYYY-MM-DD)
     const futureMovements = movements
@@ -78,8 +71,6 @@ const Reports = () => {
         return movementDate > targetDate;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Reverse chronological order
-
-    console.log(`📋 [calculateHistoricalStock] Future movements to reverse: ${futureMovements.length}`);
 
     futureMovements.forEach((movement, index) => {
       const material = materials.find(m => m.id === movement.materialId);
@@ -94,15 +85,11 @@ const Reports = () => {
           } else {
             existing.totalPecas += movement.pecas;
           }
-          
-          console.log(`🔄 Reversing movement ${index + 1}: ${material.product.modelo} reverse-${movement.type} ${movement.pecas} (${previousStock} → ${existing.totalPecas})`);
         }
       }
     });
 
     const result = Array.from(historicalMaterials.values()).filter(item => item.totalPecas > 0);
-    console.log(`📊 [calculateHistoricalStock] Final historical result: ${result.length} products with stock > 0`);
-    console.log(`📊 [calculateHistoricalStock] Products:`, result.map(r => `${r.product.modelo}: ${r.totalPecas}`));
     
     return result;
   };
@@ -249,18 +236,6 @@ const Reports = () => {
             </button>
           </div>
           
-          {/* Material Recovery Debug Panel */}
-          <div className="mb-8">
-            <UnifiedMaterialDebugPanel 
-              materials={materials} 
-              onMaterialsRestore={(restored) => {
-                console.log('🔄 Restoring materials from debug panel:', restored.length);
-                // Force a page refresh to trigger the warehouse context reload
-                window.location.reload();
-              }}
-            />
-          </div>
-
 
         {/* Stock por Produto */}
         <div className="mb-6">
