@@ -53,14 +53,9 @@ const Reports = () => {
     console.log(`📦 [calculateHistoricalStock] Available materials: ${materials.length}`);
     console.log(`🔄 [calculateHistoricalStock] Available movements: ${movements.length}`);
 
-    // Initialize all products with zero stock
-    // Include products from both current materials and from movements (in case some products no longer exist)
-    const allProductKeys = new Set();
-    
-    // Add current materials
+    // Start with current stock (this includes materials added directly)
     materials.forEach(material => {
       const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
-      allProductKeys.add(key);
       if (!historicalMaterials.has(key)) {
         historicalMaterials.set(key, {
           product: material.product,
@@ -68,48 +63,35 @@ const Reports = () => {
           locations: new Set()
         });
       }
+      const existing = historicalMaterials.get(key);
+      existing.totalPecas += material.pecas;
+      existing.locations.add(`${material.location.estante}${material.location.prateleira}`);
     });
 
-    // Add products from movements history
-    movements.forEach(movement => {
-      const material = materials.find(m => m.id === movement.materialId);
-      if (material) {
-        const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
-        allProductKeys.add(key);
-        if (!historicalMaterials.has(key)) {
-          historicalMaterials.set(key, {
-            product: material.product,
-            totalPecas: 0,
-            locations: new Set()
-          });
-        }
-      }
-    });
+    console.log(`🔍 [calculateHistoricalStock] Starting with current stock: ${historicalMaterials.size} products`);
 
-    console.log(`🔍 [calculateHistoricalStock] Total unique products: ${historicalMaterials.size}`);
+    // Reverse movements that happened AFTER the target date
+    const futureMovements = movements
+      .filter(movement => movement.date > targetDate)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Reverse chronological order
 
-    // Apply ONLY movements up to and including the target date (chronological order)
-    const historicalMovements = movements
-      .filter(movement => movement.date <= targetDate)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    console.log(`📋 [calculateHistoricalStock] Future movements to reverse: ${futureMovements.length}`);
 
-    console.log(`📋 [calculateHistoricalStock] Historical movements to apply: ${historicalMovements.length}`);
-
-    historicalMovements.forEach((movement, index) => {
+    futureMovements.forEach((movement, index) => {
       const material = materials.find(m => m.id === movement.materialId);
       if (material) {
         const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
         const existing = historicalMaterials.get(key);
         if (existing) {
           const previousStock = existing.totalPecas;
+          // Reverse the movement: entrada becomes saída and vice-versa
           if (movement.type === 'entrada') {
-            existing.totalPecas += movement.pecas;
-          } else {
             existing.totalPecas -= movement.pecas;
+          } else {
+            existing.totalPecas += movement.pecas;
           }
-          existing.locations.add(`${material.location.estante}${material.location.prateleira}`);
           
-          console.log(`🔄 Movement ${index + 1}: ${material.product.modelo} ${movement.type} ${movement.pecas} (${previousStock} → ${existing.totalPecas})`);
+          console.log(`🔄 Reversing movement ${index + 1}: ${material.product.modelo} reverse-${movement.type} ${movement.pecas} (${previousStock} → ${existing.totalPecas})`);
         }
       }
     });
