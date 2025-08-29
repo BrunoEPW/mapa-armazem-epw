@@ -80,10 +80,7 @@ export const ModelLocationsDialog: React.FC<ModelLocationsDialogProps> = ({
           <DialogTitle className="flex items-center gap-3 text-xl">
             <Package className="w-6 h-6 text-primary" />
             <div className="flex-1">
-              <div className="text-lg font-semibold text-primary">
-                {modelData.displayName}
-              </div>
-              <div className="text-sm text-muted-foreground font-normal">
+              <div className="text-lg font-medium text-muted-foreground font-normal">
                 {modelData.description}
               </div>
             </div>
