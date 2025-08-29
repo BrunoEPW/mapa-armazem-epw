@@ -17,6 +17,7 @@ const ShelfDetailView: React.FC = () => {
   const { estante, prateleira } = useParams<{ estante: string; prateleira: string }>();
   const [searchParams] = useSearchParams();
   const highlightMaterialId = searchParams.get('highlight');
+  const isReadOnly = searchParams.get('readOnly') === 'true';
   
   let warehouseContext;
   try {
@@ -110,17 +111,19 @@ const ShelfDetailView: React.FC = () => {
             Prateleira {estante}{prateleira}
           </h1>
           
-          <Button
-            onClick={() => {
-              console.log('Adicionar Material button clicked!');
-              setShowAddDialog(true);
-              console.log('showAddDialog set to true');
-            }}
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Adicionar Material
-          </Button>
+          {!isReadOnly && (
+            <Button
+              onClick={() => {
+                console.log('Adicionar Material button clicked!');
+                setShowAddDialog(true);
+                console.log('showAddDialog set to true');
+              }}
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Adicionar Material
+            </Button>
+          )}
         </div>
 
         {materials.length === 0 ? (
@@ -160,29 +163,31 @@ const ShelfDetailView: React.FC = () => {
               >
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingMaterial(material);
-                        }}
-                        title="Registar Movimento"
-                      >
-                        <ArrowUpDown className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMaterialToDelete(material);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    {!isReadOnly && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingMaterial(material);
+                          }}
+                          title="Registar Movimento"
+                        >
+                          <ArrowUpDown className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMaterialToDelete(material);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -210,7 +215,7 @@ const ShelfDetailView: React.FC = () => {
           </div>
         )}
 
-        {showAddDialog && (
+        {!isReadOnly && showAddDialog && (
           <AddMaterialDialog
             location={location}
             onClose={() => {
@@ -220,7 +225,7 @@ const ShelfDetailView: React.FC = () => {
           />
         )}
 
-        {editingMaterial && (
+        {!isReadOnly && editingMaterial && (
           <EditMaterialDialog
             material={editingMaterial}
             onClose={() => setEditingMaterial(null)}
@@ -234,7 +239,7 @@ const ShelfDetailView: React.FC = () => {
           />
         )}
 
-        {materialToDelete && (
+        {!isReadOnly && materialToDelete && (
           <RandomConfirmDialog
             open={!!materialToDelete}
             onOpenChange={(open) => !open && setMaterialToDelete(null)}

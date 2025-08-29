@@ -179,7 +179,8 @@ const Reports = () => {
   };
 
   const handleLocationClick = (location: { estante: string; prateleira: number }) => {
-    navigate(`/prateleira/${location.estante}/${location.prateleira}`);
+    // Navigate to shelf detail but in read-only mode by adding a query parameter
+    navigate(`/prateleira/${location.estante}/${location.prateleira}?readOnly=true`);
   };
 
   const exportToExcel = (type: 'current' | 'historical') => {
