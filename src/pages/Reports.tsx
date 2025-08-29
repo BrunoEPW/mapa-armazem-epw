@@ -71,8 +71,12 @@ const Reports = () => {
     console.log(`🔍 [calculateHistoricalStock] Starting with current stock: ${historicalMaterials.size} products`);
 
     // Reverse movements that happened AFTER the target date
+    // Normalize dates to compare only the date part (YYYY-MM-DD)
     const futureMovements = movements
-      .filter(movement => movement.date > targetDate)
+      .filter(movement => {
+        const movementDate = movement.date.split('T')[0]; // Extract YYYY-MM-DD part
+        return movementDate > targetDate;
+      })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Reverse chronological order
 
     console.log(`📋 [calculateHistoricalStock] Future movements to reverse: ${futureMovements.length}`);
