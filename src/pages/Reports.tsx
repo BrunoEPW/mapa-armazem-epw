@@ -445,12 +445,9 @@ const Reports = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Modelo</TableHead>
-                      <TableHead>Acabamento</TableHead>
-                      <TableHead>Cor</TableHead>
-                      <TableHead>Comprimento</TableHead>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Descrição</TableHead>
                       <TableHead className="text-right">Quantidade</TableHead>
-                      <TableHead>Localizações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -459,28 +456,14 @@ const Reports = () => {
                         .sort((a, b) => b.totalPecas - a.totalPecas)
                         .map((item, index) => (
                           <TableRow key={index}>
-                            <TableCell className="font-medium">{item.product.modelo}</TableCell>
-                            <TableCell>{item.product.acabamento}</TableCell>
-                            <TableCell>{item.product.cor}</TableCell>
-                            <TableCell>{item.product.comprimento} mm</TableCell>
+                            <TableCell className="font-medium">{item.product.codigo || item.product.modelo}</TableCell>
+                            <TableCell>{item.product.descricao || `${item.product.familia} ${item.product.modelo} ${item.product.acabamento} ${item.product.cor}`}</TableCell>
                             <TableCell className="text-right font-bold">{item.totalPecas}</TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap gap-1">
-                                {Array.from(item.locations).map((location, idx) => (
-                                  <span
-                                    key={`${location}-${idx}`}
-                                    className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-secondary text-secondary-foreground"
-                                  >
-                                    {location as string}
-                                  </span>
-                                ))}
-                              </div>
-                            </TableCell>
                           </TableRow>
                         ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
                           Nenhum material em stock na data selecionada
                         </TableCell>
                       </TableRow>
