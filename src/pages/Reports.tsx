@@ -16,6 +16,7 @@ import * as XLSX from 'xlsx';
 import EPWLogo from '@/components/ui/epw-logo';
 import Footer from '@/components/ui/Footer';
 import { ModelLocationsDialog } from '@/components/warehouse/ModelLocationsDialog';
+import { UnifiedMaterialDebugPanel } from '@/components/warehouse/UnifiedMaterialDebugPanel';
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -227,6 +228,18 @@ const Reports = () => {
         </div>
 
         <div className="max-w-7xl mx-auto">
+          {/* Material Recovery Debug Panel */}
+          <div className="mb-8">
+            <UnifiedMaterialDebugPanel 
+              materials={materials} 
+              onMaterialsRestore={(restored) => {
+                console.log('🔄 Restoring materials from debug panel:', restored.length);
+                // Force a page refresh to trigger the warehouse context reload
+                window.location.reload();
+              }}
+            />
+          </div>
+
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="bg-card/80 backdrop-blur">
