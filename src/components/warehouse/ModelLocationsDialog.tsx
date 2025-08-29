@@ -157,16 +157,6 @@ export const ModelLocationsDialog: React.FC<ModelLocationsDialogProps> = ({
           </div>
         </div>
 
-        <DialogClose asChild>
-          <Button
-            variant="outline"
-            className="absolute right-4 top-4 w-8 h-8 p-0"
-            onClick={onClose}
-          >
-            <X className="w-4 h-4" />
-            <span className="sr-only">Fechar</span>
-          </Button>
-        </DialogClose>
       </DialogContent>
     </Dialog>
   );
