@@ -53,63 +53,53 @@ const Reports = () => {
     console.log(`📦 [calculateHistoricalStock] Available materials: ${materials.length}`);
     console.log(`🔄 [calculateHistoricalStock] Available movements: ${movements.length}`);
 
-    // Start with empty stock - build up from movements
-    // First, collect all unique products from both materials and movements
-    const allProducts = new Set();
-    
-    // Add products from current materials
+    // Initialize with current material stock (assuming all materials existed before the target date)
     materials.forEach(material => {
       const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
-      allProducts.add(key);
-      historicalMaterials.set(key, {
-        product: material.product,
-        totalPecas: 0,
-        locations: new Set()
-      });
-    });
-
-    // Add products from movements (for products that might not exist anymore)
-    movements.forEach(movement => {
-      const material = materials.find(m => m.id === movement.materialId);
-      if (material) {
-        const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
-        if (!historicalMaterials.has(key)) {
-          historicalMaterials.set(key, {
-            product: material.product,
-            totalPecas: 0,
-            locations: new Set()
-          });
-        }
+      if (!historicalMaterials.has(key)) {
+        historicalMaterials.set(key, {
+          product: material.product,
+          totalPecas: material.pecas, // Start with current stock
+          locations: new Set()
+        });
+      } else {
+        // Add to existing product
+        const existing = historicalMaterials.get(key);
+        existing.totalPecas += material.pecas;
       }
+      
+      const existing = historicalMaterials.get(key);
+      existing.locations.add(`${material.location.estante}${material.location.prateleira}`);
     });
 
-    console.log(`🔍 [calculateHistoricalStock] Unique products found: ${historicalMaterials.size}`);
+    console.log(`🔍 [calculateHistoricalStock] Products with initial stock: ${historicalMaterials.size}`);
 
-    // Apply all movements up to and including the selected date
-    const relevantMovements = movements
-      .filter(movement => movement.date <= targetDate)
+    // Apply movements that happened AFTER the target date (subtract them)
+    const futureMovements = movements
+      .filter(movement => movement.date > targetDate)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    console.log(`📋 [calculateHistoricalStock] Relevant movements: ${relevantMovements.length}`);
+    console.log(`📋 [calculateHistoricalStock] Future movements to reverse: ${futureMovements.length}`);
 
-    relevantMovements.forEach(movement => {
+    futureMovements.forEach(movement => {
       const material = materials.find(m => m.id === movement.materialId);
       if (material) {
         const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
         const existing = historicalMaterials.get(key);
         if (existing) {
+          // Reverse the movement effect
           if (movement.type === 'entrada') {
-            existing.totalPecas += movement.pecas;
+            existing.totalPecas -= movement.pecas; // Remove future entries
           } else {
-            existing.totalPecas -= movement.pecas;
+            existing.totalPecas += movement.pecas; // Add back future exits
           }
-          existing.locations.add(`${material.location.estante}${material.location.prateleira}`);
         }
       }
     });
 
     const result = Array.from(historicalMaterials.values()).filter(item => item.totalPecas > 0);
-    console.log(`📊 [calculateHistoricalStock] Final result: ${result.length} products with stock > 0`);
+    console.log(`📊 [calculateHistoricalStock] Final historical result: ${result.length} products with stock > 0`);
+    console.log(`📊 [calculateHistoricalStock] Products:`, result.map(r => `${r.product.modelo}: ${r.totalPecas}`));
     
     return result;
   };
