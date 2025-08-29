@@ -84,6 +84,17 @@ const ShelfDetailView: React.FC = () => {
   return (
     <div className="min-h-screen bg-warehouse-bg p-8" style={{ backgroundColor: 'hsl(220 20% 6%)' }}>
       <div className="max-w-4xl mx-auto">
+        {/* Back Button */}
+        <div className="flex items-center mb-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-white hover:text-orange-400 transition-colors duration-200 p-2 rounded-lg hover:bg-white/10"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">Voltar</span>
+          </button>
+        </div>
+        
         <div className="flex items-center justify-between mb-8">
           <Button
             variant="outline"

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, Package, ArrowUpDown, Calendar as CalendarIcon, Search, Download } from 'lucide-react';
+import { TrendingUp, Package, ArrowUpDown, Calendar as CalendarIcon, Search, Download, ArrowLeft } from 'lucide-react';
 import reportsBanner from '@/assets/reports-banner.jpg';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -238,6 +238,17 @@ const Reports = () => {
         </div>
 
         <div className="max-w-7xl mx-auto">
+          {/* Back Button */}
+          <div className="flex items-center mb-6">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-white hover:text-orange-400 transition-colors duration-200 p-2 rounded-lg hover:bg-white/10"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Voltar</span>
+            </button>
+          </div>
+          
           {/* Material Recovery Debug Panel */}
           <div className="mb-8">
             <UnifiedMaterialDebugPanel 
