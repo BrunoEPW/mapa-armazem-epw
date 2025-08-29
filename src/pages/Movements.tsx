@@ -114,7 +114,7 @@ const Movements = () => {
                   <h1 className="text-3xl sm:text-4xl lg:text-6xl font-black text-white tracking-wider drop-shadow-2xl mb-2">
                     MOVIMENTOS
                   </h1>
-                  <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-blue-400 tracking-wide drop-shadow-2xl">
+                  <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-orange-400 tracking-wide drop-shadow-2xl">
                     Histórico de Entradas e Saídas
                   </h2>
                 </div>
