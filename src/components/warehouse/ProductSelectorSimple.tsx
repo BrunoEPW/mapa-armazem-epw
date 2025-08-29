@@ -64,6 +64,38 @@ export const ProductSelectorSimple: React.FC<ProductSelectorSimpleProps> = ({
     selectedCor !== 'all' ? selectedCor : undefined
   );
 
+  // Find the selected product
+  const selectedProduct = selectedProductId 
+    ? simpleProducts.find(p => p.id === selectedProductId)
+    : null;
+
+  // If a product is selected, show simplified view
+  if (selectedProduct) {
+    return (
+      <div className="space-y-4">
+        <Card className="bg-white/10 border-white/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-white font-medium mb-1">Produto Selecionado</h3>
+                <p className="text-sm text-muted-foreground font-mono">{selectedProduct.codigo}</p>
+                <p className="text-white">{selectedProduct.descricao}</p>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => onProductSelect('', {} as Product)}
+                className="text-white border-white/20 hover:bg-white/10"
+              >
+                Alterar Produto
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* API Status */}
