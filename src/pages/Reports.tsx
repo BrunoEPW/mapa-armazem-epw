@@ -49,50 +49,67 @@ const Reports = () => {
     const targetDate = format(date, 'yyyy-MM-dd');
     const historicalMaterials = new Map();
 
-    console.log(`📅 [calculateHistoricalStock] Calculating for date: ${targetDate}`);
+    console.log(`📅 [calculateHistoricalStock] Calculating stock for date: ${targetDate}`);
     console.log(`📦 [calculateHistoricalStock] Available materials: ${materials.length}`);
     console.log(`🔄 [calculateHistoricalStock] Available movements: ${movements.length}`);
 
-    // Initialize with current material stock (assuming all materials existed before the target date)
+    // Initialize all products with zero stock
+    // Include products from both current materials and from movements (in case some products no longer exist)
+    const allProductKeys = new Set();
+    
+    // Add current materials
     materials.forEach(material => {
       const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
+      allProductKeys.add(key);
       if (!historicalMaterials.has(key)) {
         historicalMaterials.set(key, {
           product: material.product,
-          totalPecas: material.pecas, // Start with current stock
+          totalPecas: 0,
           locations: new Set()
         });
-      } else {
-        // Add to existing product
-        const existing = historicalMaterials.get(key);
-        existing.totalPecas += material.pecas;
       }
-      
-      const existing = historicalMaterials.get(key);
-      existing.locations.add(`${material.location.estante}${material.location.prateleira}`);
     });
 
-    console.log(`🔍 [calculateHistoricalStock] Products with initial stock: ${historicalMaterials.size}`);
+    // Add products from movements history
+    movements.forEach(movement => {
+      const material = materials.find(m => m.id === movement.materialId);
+      if (material) {
+        const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
+        allProductKeys.add(key);
+        if (!historicalMaterials.has(key)) {
+          historicalMaterials.set(key, {
+            product: material.product,
+            totalPecas: 0,
+            locations: new Set()
+          });
+        }
+      }
+    });
 
-    // Apply movements that happened AFTER the target date (subtract them)
-    const futureMovements = movements
-      .filter(movement => movement.date > targetDate)
+    console.log(`🔍 [calculateHistoricalStock] Total unique products: ${historicalMaterials.size}`);
+
+    // Apply ONLY movements up to and including the target date (chronological order)
+    const historicalMovements = movements
+      .filter(movement => movement.date <= targetDate)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    console.log(`📋 [calculateHistoricalStock] Future movements to reverse: ${futureMovements.length}`);
+    console.log(`📋 [calculateHistoricalStock] Historical movements to apply: ${historicalMovements.length}`);
 
-    futureMovements.forEach(movement => {
+    historicalMovements.forEach((movement, index) => {
       const material = materials.find(m => m.id === movement.materialId);
       if (material) {
         const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
         const existing = historicalMaterials.get(key);
         if (existing) {
-          // Reverse the movement effect
+          const previousStock = existing.totalPecas;
           if (movement.type === 'entrada') {
-            existing.totalPecas -= movement.pecas; // Remove future entries
+            existing.totalPecas += movement.pecas;
           } else {
-            existing.totalPecas += movement.pecas; // Add back future exits
+            existing.totalPecas -= movement.pecas;
           }
+          existing.locations.add(`${material.location.estante}${material.location.prateleira}`);
+          
+          console.log(`🔄 Movement ${index + 1}: ${material.product.modelo} ${movement.type} ${movement.pecas} (${previousStock} → ${existing.totalPecas})`);
         }
       }
     });
