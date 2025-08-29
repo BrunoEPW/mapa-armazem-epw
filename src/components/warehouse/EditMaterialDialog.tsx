@@ -31,7 +31,7 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
   const [norc, setNorc] = useState('');
   const [norcType, setNorcType] = useState<'escrever' | 'partidas' | 'amostras' | 'devolucao'>('escrever');
   const [customNorc, setCustomNorc] = useState('');
-  const [movementType, setMovementType] = useState<'entrada' | 'saida'>('entrada');
+  const [movementType, setMovementType] = useState<'entrada' | 'saida' | null>(null);
 
   console.log('📊 [EditMaterialDialog] Component state initialized:', {
     currentPecas: material.pecas,
@@ -114,53 +114,99 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
               <span className="text-lg font-semibold">{material.pecas} peças</span>
             </div>
           </div>
+          
           <div>
-            <Label htmlFor="movementType">Tipo de Movimento</Label>
-            <Select value={movementType} onValueChange={(value: 'entrada' | 'saida') => setMovementType(value)}>
-              <SelectTrigger className="w-full bg-background border border-border">
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent className="bg-background border border-border shadow-lg z-50">
-                <SelectItem value="entrada">Entrada</SelectItem>
-                <SelectItem value="saida">Saída</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>Tipo de Movimento</Label>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <Button
+                type="button"
+                variant={movementType === 'entrada' ? 'default' : 'outline'}
+                onClick={() => {
+                  setMovementType('entrada');
+                  setNorcType('escrever');
+                  setCustomNorc('');
+                }}
+                className="w-full"
+              >
+                Entrada
+              </Button>
+              <Button
+                type="button"
+                variant={movementType === 'saida' ? 'default' : 'outline'}
+                onClick={() => {
+                  setMovementType('saida');
+                  setNorcType('escrever');
+                  setCustomNorc('');
+                }}
+                className="w-full"
+              >
+                Saída
+              </Button>
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="movementQuantity">Quantidade de Peças a {movementType === 'entrada' ? 'Entrar' : 'Sair'}</Label>
-            <Input
-              id="movementQuantity"
-              type="number"
-              value={movementQuantity}
-              onChange={(e) => setMovementQuantity(e.target.value)}
-              placeholder="Ex: 10"
-              min="1"
-            />
-          </div>
+          {movementType && (
+            <div>
+              <Label htmlFor="movementQuantity">Quantidade de Peças a {movementType === 'entrada' ? 'Entrar' : 'Sair'}</Label>
+              <Input
+                id="movementQuantity"
+                type="number"
+                value={movementQuantity}
+                onChange={(e) => setMovementQuantity(e.target.value)}
+                placeholder="Ex: 10"
+                min="1"
+              />
+            </div>
+          )}
 
-          <div>
-            <Label htmlFor="norcType">Tipo</Label>
-            <Select value={norcType} onValueChange={(value: 'escrever' | 'partidas' | 'amostras' | 'devolucao') => setNorcType(value)}>
-              <SelectTrigger className="w-full bg-background border border-border">
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent className="bg-background border border-border shadow-lg z-50">
+          {movementType && (
+            <div>
+              <Label>Tipo</Label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <Button
+                  type="button"
+                  variant={norcType === 'escrever' ? 'default' : 'outline'}
+                  onClick={() => setNorcType('escrever')}
+                  className="w-full"
+                >
+                  NORC
+                </Button>
                 {movementType === 'entrada' ? (
-                  <>
-                    <SelectItem value="escrever">NORC</SelectItem>
-                    <SelectItem value="devolucao">Devolução</SelectItem>
-                  </>
+                  <Button
+                    type="button"
+                    variant={norcType === 'devolucao' ? 'default' : 'outline'}
+                    onClick={() => setNorcType('devolucao')}
+                    className="w-full"
+                  >
+                    Devolução
+                  </Button>
                 ) : (
                   <>
-                    <SelectItem value="escrever">NORC</SelectItem>
-                    <SelectItem value="partidas">Partidas</SelectItem>
-                    <SelectItem value="amostras">Amostras</SelectItem>
+                    <Button
+                      type="button"
+                      variant={norcType === 'partidas' ? 'default' : 'outline'}
+                      onClick={() => setNorcType('partidas')}
+                      className="w-full"
+                    >
+                      Partidas
+                    </Button>
                   </>
                 )}
-              </SelectContent>
-            </Select>
-          </div>
+              </div>
+              {movementType === 'saida' && (
+                <div className="mt-2">
+                  <Button
+                    type="button"
+                    variant={norcType === 'amostras' ? 'default' : 'outline'}
+                    onClick={() => setNorcType('amostras')}
+                    className="w-full"
+                  >
+                    Amostras
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
 
           {(norcType === 'escrever' || norcType === 'amostras' || norcType === 'devolucao') && (
             <div>
