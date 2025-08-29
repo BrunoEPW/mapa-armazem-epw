@@ -29,7 +29,7 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
   
   const [movementQuantity, setMovementQuantity] = useState('');
   const [norc, setNorc] = useState('');
-  const [norcType, setNorcType] = useState<'escrever' | 'partidas' | 'amostras'>('escrever');
+  const [norcType, setNorcType] = useState<'escrever' | 'partidas' | 'amostras' | 'devolucao'>('escrever');
   const [customNorc, setCustomNorc] = useState('');
   const [movementType, setMovementType] = useState<'entrada' | 'saida'>('entrada');
 
@@ -53,6 +53,8 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
       finalNorc = 'PARTIDAS';
     } else if (norcType === 'amostras') {
       finalNorc = `AMOSTRAS - ${customNorc}`;
+    } else if (norcType === 'devolucao') {
+      finalNorc = `DEVOLUÇÃO - ${customNorc}`;
     }
     
     if (!movementQuantity || !finalNorc) {
@@ -139,28 +141,43 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
 
           <div>
             <Label htmlFor="norcType">NORC</Label>
-            <Select value={norcType} onValueChange={(value: 'escrever' | 'partidas' | 'amostras') => setNorcType(value)}>
+            <Select value={norcType} onValueChange={(value: 'escrever' | 'partidas' | 'amostras' | 'devolucao') => setNorcType(value)}>
               <SelectTrigger className="w-full bg-background border border-border">
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
               <SelectContent className="bg-background border border-border shadow-lg z-50">
-                <SelectItem value="escrever">NORC (Entrada/Saída)</SelectItem>
-                <SelectItem value="partidas">Partidas (Saída)</SelectItem>
-                <SelectItem value="amostras">Amostras (Saída)</SelectItem>
+                {movementType === 'entrada' ? (
+                  <>
+                    <SelectItem value="escrever">NORC</SelectItem>
+                    <SelectItem value="devolucao">Devolução</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="escrever">NORC</SelectItem>
+                    <SelectItem value="partidas">Partidas</SelectItem>
+                    <SelectItem value="amostras">Amostras</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
 
-          {(norcType === 'escrever' || norcType === 'amostras') && (
+          {(norcType === 'escrever' || norcType === 'amostras' || norcType === 'devolucao') && (
             <div>
               <Label htmlFor="customNorc">
-                {norcType === 'escrever' ? 'NORC (Número de Ordem)' : 'Nome da Amostra'}
+                {norcType === 'escrever' ? 'NORC (Número de Ordem)' : 
+                 norcType === 'devolucao' ? 'Nome do Cliente' : 
+                 'Nome da Amostra'}
               </Label>
               <Input
                 id="customNorc"
                 value={customNorc}
                 onChange={(e) => setCustomNorc(e.target.value)}
-                placeholder={norcType === 'escrever' ? 'Ex: NORC001, OF123456' : 'Ex: Amostra Cliente X'}
+                placeholder={
+                  norcType === 'escrever' ? 'Ex: NORC001, OF123456' : 
+                  norcType === 'devolucao' ? 'Ex: Cliente ABC, Lda' : 
+                  'Ex: Amostra Cliente X'
+                }
               />
             </div>
           )}
