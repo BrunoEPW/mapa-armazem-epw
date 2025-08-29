@@ -23,6 +23,8 @@ const Reports = () => {
   // State for date selection and filters
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [searchFilter, setSearchFilter] = useState('');
+  const [sortBy, setSortBy] = useState<'nome' | 'quantidade'>('quantidade');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [exportType, setExportType] = useState<'modelo' | 'familia'>('modelo');
 
   // Calculate statistics
@@ -97,7 +99,15 @@ const Reports = () => {
         searchFilter === '' || 
         item.product.modelo.toLowerCase().includes(searchFilter.toLowerCase())
       )
-      .sort((a, b) => b.totalPecas - a.totalPecas);
+      .sort((a, b) => {
+        if (sortBy === 'nome') {
+          const compareResult = a.product.modelo.localeCompare(b.product.modelo);
+          return sortOrder === 'asc' ? compareResult : -compareResult;
+        } else {
+          const compareResult = a.totalPecas - b.totalPecas;
+          return sortOrder === 'asc' ? compareResult : -compareResult;
+        }
+      });
   };
 
   const historicalStock = calculateHistoricalStock(selectedDate);
@@ -238,7 +248,7 @@ const Reports = () => {
                 <Package className="h-5 w-5" />
                 Stock por Produto
               </CardTitle>
-              <div className="flex items-center gap-4 justify-between">
+              <div className="flex flex-col sm:flex-row gap-4 justify-between">
                 <div className="flex items-center gap-2">
                   <Search className="h-4 w-4 text-muted-foreground" />
                   <Input
@@ -248,7 +258,40 @@ const Reports = () => {
                     className="max-w-sm"
                   />
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant={sortBy === 'nome' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        if (sortBy === 'nome') {
+                          setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setSortBy('nome');
+                          setSortOrder('asc');
+                        }
+                      }}
+                      className="text-xs"
+                    >
+                      Nome {sortBy === 'nome' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </Button>
+                    <Button
+                      variant={sortBy === 'quantidade' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        if (sortBy === 'quantidade') {
+                          setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setSortBy('quantidade');
+                          setSortOrder('desc');
+                        }
+                      }}
+                      className="text-xs"
+                    >
+                      Quantidade {sortBy === 'quantidade' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
                   <Select value={exportType} onValueChange={(value: 'modelo' | 'familia') => setExportType(value)}>
                     <SelectTrigger className="w-[140px]">
                       <SelectValue placeholder="Exportar por" />
@@ -262,6 +305,7 @@ const Reports = () => {
                     <Download className="h-4 w-4 mr-2" />
                     Exportar
                   </Button>
+                  </div>
                 </div>
               </div>
             </CardHeader>
