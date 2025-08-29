@@ -239,18 +239,18 @@ export const detectMaterialLoss = (currentMaterials: Material[]): boolean => {
 export const cleanLegacyData = (): void => {
   console.log('🧹 [UnifiedManager] Limpando dados antigos conflituantes...');
   
-  // Remover chaves antigas do sistema de preservação
+  // Remover APENAS chaves antigas que não são usadas pelo sistema atual
   const legacyKeys = [
     'materials_backup_preservation',
-    'materials_backup_metadata',
+    'materials_backup_metadata', 
     'materials_preservation_enabled',
     'materials_heartbeat',
-    'materials_restore_attempts',
-    'warehouse-materials-backup',
-    'warehouse-products-backup',
-    'warehouse-movements-backup',
-    'warehouse-materials-preserve',
-    'warehouse-backup-metadata'
+    'materials_restore_attempts'
+    // REMOVED: 'warehouse-materials-backup' - STILL IN USE BY CURRENT SYSTEM
+    // REMOVED: 'warehouse-products-backup' - STILL IN USE BY CURRENT SYSTEM  
+    // REMOVED: 'warehouse-movements-backup' - STILL IN USE BY CURRENT SYSTEM
+    // REMOVED: 'warehouse-materials-preserve' - STILL IN USE BY CURRENT SYSTEM
+    // REMOVED: 'warehouse-backup-metadata' - STILL IN USE BY CURRENT SYSTEM
   ];
   
   legacyKeys.forEach(key => {

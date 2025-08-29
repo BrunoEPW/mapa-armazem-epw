@@ -12,8 +12,21 @@ export const useWarehouseData = () => {
   useEffect(() => {
     console.log('useWarehouseData - Loading data from storage...');
     const savedProducts = loadFromStorage(STORAGE_KEYS.PRODUCTS, mockProducts);
-    const savedMaterials = loadFromStorage(STORAGE_KEYS.MATERIALS, mockMaterials);
+    let savedMaterials = loadFromStorage(STORAGE_KEYS.MATERIALS, mockMaterials);
     const savedMovements = loadFromStorage(STORAGE_KEYS.MOVEMENTS, mockMovements);
+    
+    // 🔄 Recovery: If no materials found, try to restore from backup
+    if (savedMaterials.length === 0 || savedMaterials === mockMaterials) {
+      console.log('🔄 [useWarehouseData] Attempting to restore materials from backup...');
+      const backupMaterials = loadFromStorage(STORAGE_KEYS.MATERIALS_BACKUP, null);
+      if (backupMaterials && Array.isArray(backupMaterials) && backupMaterials.length > 0) {
+        console.log(`🔄 [useWarehouseData] Found ${backupMaterials.length} materials in backup - restoring`);
+        savedMaterials = backupMaterials;
+        // Save restored materials back to main storage
+        saveToStorage(STORAGE_KEYS.MATERIALS, backupMaterials);
+      }
+    }
+    
     console.log('useWarehouseData - Loaded:', { 
       products: savedProducts.length, 
       materials: savedMaterials.length, 
