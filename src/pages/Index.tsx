@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Package, BarChart3 } from 'lucide-react';
+import { Search, Package, BarChart3, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { WAREHOUSE_CONFIG } from '@/types/warehouse';
@@ -146,6 +146,12 @@ const Index = () => {
       icon: Package,
       path: '/produtos',
       color: 'bg-primary hover:bg-primary/90',
+    },
+    {
+      title: 'Movimentos',
+      icon: ArrowUpDown,
+      path: '/movimentos',
+      color: 'bg-blue-500 hover:bg-blue-600',
     },
     {
       title: 'Relatórios',

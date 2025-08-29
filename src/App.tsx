@@ -13,7 +13,7 @@ import Shelf from "./pages/Shelf";
 import ShelfDetail from "./pages/ShelfDetail";
 import Search from "./pages/Search";
 import Products from "./pages/Products";
-
+import Movements from "./pages/Movements";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
@@ -36,6 +36,7 @@ const App = () => (
                 <Route path="/prateleira/:estante/:prateleira" element={<ShelfDetail />} />
                 <Route path="/pesquisa" element={<Search />} />
                 <Route path="/produtos" element={<Products />} />
+                <Route path="/movimentos" element={<Movements />} />
                 <Route path="/relatorios" element={<Reports />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
