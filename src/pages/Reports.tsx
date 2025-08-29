@@ -472,21 +472,10 @@ const Reports = () => {
                     />
                   </PopoverContent>
                 </Popover>
-                <div className="flex items-center gap-2">
-                  <Select value={exportType} onValueChange={(value: 'modelo' | 'familia') => setExportType(value)}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Exportar por" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="modelo">Por Modelo</SelectItem>
-                      <SelectItem value="familia">Por Família</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="secondary" onClick={() => exportToExcel('historical')}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Exportar
-                  </Button>
-                </div>
+                <Button variant="secondary" onClick={() => exportToExcel('historical')}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
