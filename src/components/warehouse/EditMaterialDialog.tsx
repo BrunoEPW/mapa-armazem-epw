@@ -113,7 +113,7 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
             </div>
           </div>
           <div>
-            <Label htmlFor="movementType">Tipo de Saída/Entrada</Label>
+            <Label htmlFor="movementType">Tipo de Movimento</Label>
             <Select value={movementType} onValueChange={(value: 'entrada' | 'saida') => setMovementType(value)}>
               <SelectTrigger className="w-full bg-background border border-border">
                 <SelectValue placeholder="Selecione o tipo" />
