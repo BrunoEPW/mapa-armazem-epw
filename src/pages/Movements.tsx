@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import Header from '@/components/Header';
 import Footer from '@/components/ui/Footer';
+import movementsBanner from '@/assets/movements-banner.jpg';
 
 const Movements = () => {
   const navigate = useNavigate();
@@ -99,18 +100,26 @@ const Movements = () => {
         <div className="w-full">
           {/* Hero Banner */}
           <div className="flex flex-col items-center mb-6 sm:mb-8">
-            <div className="relative w-full">
-              <div className="w-full h-48 sm:h-64 lg:h-80 bg-gradient-to-r from-blue-600 via-blue-500 to-blue-700 rounded-xl shadow-2xl flex items-center justify-center">
+            <button
+              onClick={() => navigate('/')}
+              className="relative w-full transition-all duration-500 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg animate-fade-in"
+            >
+              <img 
+                src={movementsBanner} 
+                alt="Movements Banner" 
+                className="w-full h-48 sm:h-64 lg:h-80 object-cover rounded-xl shadow-2xl transition-all duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/80 rounded-xl flex items-center justify-center px-6 sm:px-8 lg:px-12">
                 <div className="text-center">
                   <h1 className="text-3xl sm:text-4xl lg:text-6xl font-black text-white tracking-wider drop-shadow-2xl mb-2">
                     MOVIMENTOS
                   </h1>
-                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-200 tracking-wide drop-shadow-2xl">
+                  <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-blue-400 tracking-wide drop-shadow-2xl">
                     Histórico de Entradas e Saídas
                   </h2>
                 </div>
               </div>
-            </div>
+            </button>
           </div>
 
           <div className="max-w-7xl mx-auto">
