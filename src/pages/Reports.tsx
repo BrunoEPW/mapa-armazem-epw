@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import * as XLSX from 'xlsx';
 import EPWLogo from '@/components/ui/epw-logo';
 import Footer from '@/components/ui/Footer';
+import { ModelLocationsDialog } from '@/components/warehouse/ModelLocationsDialog';
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -26,6 +27,10 @@ const Reports = () => {
   const [sortBy, setSortBy] = useState<'nome' | 'quantidade'>('quantidade');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [exportType, setExportType] = useState<'modelo' | 'familia'>('modelo');
+  
+  // State for locations dialog
+  const [showLocationsDialog, setShowLocationsDialog] = useState(false);
+  const [selectedProductData, setSelectedProductData] = useState<any>(null);
 
   // Calculate statistics
   const totalMaterials = materials.length;
@@ -114,6 +119,43 @@ const Reports = () => {
   const productStock = groupedProducts();
 
   // Export functions
+  // Prepare product location data for dialog
+  const prepareProductLocationData = (productStockItem: any) => {
+    const productMaterials = materials.filter(material => {
+      const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
+      const itemKey = `${productStockItem.product.modelo}-${productStockItem.product.acabamento}-${productStockItem.product.cor}-${productStockItem.product.comprimento}`;
+      return key === itemKey;
+    });
+
+    const locations = productMaterials.map(material => ({
+      estante: material.location.estante,
+      prateleira: material.location.prateleira,
+      posicao: material.location.posicao,
+      pecas: material.pecas,
+      locationKey: `${material.location.estante}-${material.location.prateleira}`
+    }));
+
+    return {
+      modelo: productStockItem.product.codigo || productStockItem.product.modelo,
+      displayName: productStockItem.product.codigo || productStockItem.product.modelo,
+      description: productStockItem.product.descricao || `${productStockItem.product.familia} ${productStockItem.product.modelo} ${productStockItem.product.acabamento} ${productStockItem.product.cor}`,
+      totalPecas: productStockItem.totalPecas,
+      locations,
+      materials: productMaterials,
+      firstProduct: productStockItem.product
+    };
+  };
+
+  const handleProductClick = (productStockItem: any) => {
+    const locationData = prepareProductLocationData(productStockItem);
+    setSelectedProductData(locationData);
+    setShowLocationsDialog(true);
+  };
+
+  const handleLocationClick = (location: { estante: string; prateleira: number }) => {
+    navigate(`/prateleira/${location.estante}/${location.prateleira}`);
+  };
+
   const exportToExcel = (type: 'current' | 'historical') => {
     const data = type === 'current' ? productStock : historicalStock;
     
@@ -322,7 +364,11 @@ const Reports = () => {
                   <TableBody>
                     {productStock.length > 0 ? (
                       productStock.map((item, index) => (
-                        <TableRow key={index}>
+                        <TableRow 
+                          key={index}
+                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => handleProductClick(item)}
+                        >
                           <TableCell className="font-medium">{item.product.codigo || item.product.modelo}</TableCell>
                           <TableCell>{item.product.descricao || `${item.product.familia} ${item.product.modelo} ${item.product.acabamento} ${item.product.cor}`}</TableCell>
                           <TableCell className="text-right font-bold">{item.totalPecas}</TableCell>
@@ -509,6 +555,14 @@ const Reports = () => {
         </div>
       </div>
       <Footer />
+      
+      {/* Model Locations Dialog */}
+      <ModelLocationsDialog
+        modelData={selectedProductData}
+        isOpen={showLocationsDialog}
+        onClose={() => setShowLocationsDialog(false)}
+        onLocationClick={handleLocationClick}
+      />
     </div>
   );
 };
