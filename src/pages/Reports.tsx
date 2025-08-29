@@ -202,41 +202,52 @@ const Reports = () => {
     let exportData;
     let filename;
     
-    if (exportType === 'familia') {
-      // Group by family
-      const familyGroups = new Map();
-      data.forEach(item => {
-        const familia = item.product.familia;
-        if (!familyGroups.has(familia)) {
-          familyGroups.set(familia, {
-            familia,
-            totalPecas: 0,
-            modelos: new Set()
-          });
-        }
-        const group = familyGroups.get(familia);
-        group.totalPecas += item.totalPecas;
-        group.modelos.add(item.product.modelo);
-      });
-      
-      exportData = Array.from(familyGroups.values()).map(group => ({
-        'Família': group.familia,
-        'Total de Peças': group.totalPecas,
-        'Modelos': Array.from(group.modelos).join(', ')
-      }));
-      filename = `relatorio_familias_${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
-    } else {
-      // Export by model
+    if (type === 'historical') {
+      // Stock histórico: apenas código, descrição e quantidade
       exportData = data.map(item => ({
-        'Modelo': item.product.modelo,
-        'Acabamento': item.product.acabamento,
-        'Cor': item.product.cor,
-        'Comprimento (mm)': item.product.comprimento,
-        'Família': item.product.familia,
-        'Quantidade': item.totalPecas,
-        'Localizações': Array.from(item.locations).join(', ')
+        'Código Artigo': item.product.codigo || item.product.modelo,
+        'Descrição': item.product.descricao || `${item.product.familia} ${item.product.modelo} ${item.product.acabamento} ${item.product.cor}`,
+        'Quantidade': item.totalPecas
       }));
-      filename = `relatorio_modelos_${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
+      filename = `stock_historico_${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
+    } else {
+      // Stock atual: formato completo baseado no tipo de exportação
+      if (exportType === 'familia') {
+        // Group by family
+        const familyGroups = new Map();
+        data.forEach(item => {
+          const familia = item.product.familia;
+          if (!familyGroups.has(familia)) {
+            familyGroups.set(familia, {
+              familia,
+              totalPecas: 0,
+              modelos: new Set()
+            });
+          }
+          const group = familyGroups.get(familia);
+          group.totalPecas += item.totalPecas;
+          group.modelos.add(item.product.modelo);
+        });
+        
+        exportData = Array.from(familyGroups.values()).map(group => ({
+          'Família': group.familia,
+          'Total de Peças': group.totalPecas,
+          'Modelos': Array.from(group.modelos).join(', ')
+        }));
+        filename = `relatorio_familias_${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
+      } else {
+        // Export by model
+        exportData = data.map(item => ({
+          'Modelo': item.product.modelo,
+          'Acabamento': item.product.acabamento,
+          'Cor': item.product.cor,
+          'Comprimento (mm)': item.product.comprimento,
+          'Família': item.product.familia,
+          'Quantidade': item.totalPecas,
+          'Localizações': Array.from(item.locations).join(', ')
+        }));
+        filename = `relatorio_modelos_${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
+      }
     }
 
     const ws = XLSX.utils.json_to_sheet(exportData);
