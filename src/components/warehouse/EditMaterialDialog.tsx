@@ -140,7 +140,7 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="norcType">NORC</Label>
+            <Label htmlFor="norcType">Tipo</Label>
             <Select value={norcType} onValueChange={(value: 'escrever' | 'partidas' | 'amostras' | 'devolucao') => setNorcType(value)}>
               <SelectTrigger className="w-full bg-background border border-border">
                 <SelectValue placeholder="Selecione o tipo" />
@@ -165,7 +165,7 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
           {(norcType === 'escrever' || norcType === 'amostras' || norcType === 'devolucao') && (
             <div>
               <Label htmlFor="customNorc">
-                {norcType === 'escrever' ? 'NORC (Número de Ordem)' : 
+                {norcType === 'escrever' ? 'NORC' : 
                  norcType === 'devolucao' ? 'Nome do Cliente' : 
                  'Nome da Amostra'}
               </Label>
