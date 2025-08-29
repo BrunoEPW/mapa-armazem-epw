@@ -17,12 +17,14 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  isMaterialPreservationEnabled,
-  enableMaterialPreservation,
-  restoreMaterialsFromBackup,
-  clearPreservationData,
-  PRESERVATION_KEYS
-} from '@/utils/materialPreservation';
+  isPreservationEnabled,
+  setPreservationEnabled,
+  loadMaterials,
+  getSystemStats,
+  saveMaterials,
+  detectMaterialLoss,
+  UNIFIED_KEYS
+} from '@/utils/unifiedMaterialManager';
 
 interface MaterialPreservationPanelProps {
   materials: any[];
@@ -48,35 +50,38 @@ export const MaterialPreservationPanel = ({
 
   // Carregar estado atual da preservação
   useEffect(() => {
-    const enabled = isMaterialPreservationEnabled();
+    const enabled = isPreservationEnabled();
     setPreservationEnabled(enabled);
     
     // Verificar informações do backup
     checkBackupInfo();
-  }, []);
+    
+    // Detectar perda de materiais automaticamente
+    if (enabled && detectMaterialLoss(materials)) {
+      toast.error('Perda de materiais detectada!', {
+        description: 'Clique em "Restaurar Backup" para recuperar os seus materiais.',
+        duration: 10000
+      });
+    }
+  }, [materials]);
 
   const checkBackupInfo = () => {
     try {
-      const backupData = localStorage.getItem(PRESERVATION_KEYS.MATERIALS_BACKUP);
-      const restoreAttempts = parseInt(localStorage.getItem(PRESERVATION_KEYS.MATERIALS_RESTORE_ATTEMPTS) || '0');
+      const stats = getSystemStats();
       
-      if (backupData) {
-        const backup = JSON.parse(backupData);
-        const materials = backup.materials || backup;
-        const metadata = backup.metadata;
-        
+      if (stats.hasBackup && stats.metadata) {
         setBackupInfo({
           hasBackup: true,
-          backupCount: Array.isArray(materials) ? materials.length : 0,
-          backupDate: metadata?.timestamp ? new Date(metadata.timestamp).toLocaleString() : null,
-          restoreAttempts
+          backupCount: stats.metadata.count || 0,
+          backupDate: stats.metadata.timestamp ? new Date(stats.metadata.timestamp).toLocaleString() : null,
+          restoreAttempts: 0 // Reset with unified system
         });
       } else {
         setBackupInfo({
           hasBackup: false,
           backupCount: 0,
           backupDate: null,
-          restoreAttempts
+          restoreAttempts: 0
         });
       }
     } catch (error) {
@@ -87,19 +92,21 @@ export const MaterialPreservationPanel = ({
   const handleTogglePreservation = () => {
     const newEnabled = !preservationEnabled;
     
+    setPreservationEnabled(newEnabled);
+    
     if (newEnabled) {
-      enableMaterialPreservation();
       toast.success('Preservação de materiais ativada!');
+      // Guardar materiais atuais se existirem
+      if (materials.length > 0) {
+        saveMaterials(materials, 'user');
+      }
     } else {
-      localStorage.setItem(PRESERVATION_KEYS.MATERIALS_PRESERVATION_ENABLED, 'false');
       toast.warning('Preservação de materiais desativada!');
     }
-    
-    setPreservationEnabled(newEnabled);
   };
 
   const handleRestoreFromBackup = () => {
-    const restoredMaterials = restoreMaterialsFromBackup();
+    const restoredMaterials = loadMaterials();
     
     if (restoredMaterials && restoredMaterials.length > 0) {
       onMaterialsRestore?.(restoredMaterials);
@@ -112,7 +119,10 @@ export const MaterialPreservationPanel = ({
 
   const handleClearPreservationData = () => {
     if (confirm('Tem certeza que deseja limpar todos os dados de preservação? Esta ação não pode ser desfeita.')) {
-      clearPreservationData();
+      // Clear unified system data
+      Object.values(UNIFIED_KEYS).forEach(key => {
+        localStorage.removeItem(key);
+      });
       checkBackupInfo();
       toast.success('Dados de preservação limpos');
     }

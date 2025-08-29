@@ -14,6 +14,10 @@ import InvertedTSeparator from '@/components/ui/inverted-t-separator';
 
 import Header from '@/components/Header';
 import Footer from '@/components/ui/Footer';
+import { MaterialPreservationPanel } from '@/components/warehouse/MaterialPreservationPanel';
+import { MaterialLossIndicator } from '@/components/warehouse/MaterialLossIndicator';
+import { saveMaterials, detectMaterialLoss, isPreservationEnabled } from '@/utils/unifiedMaterialManager';
+import { toast } from 'sonner';
 
 
 
@@ -34,6 +38,11 @@ const Index = () => {
 
   useEffect(() => {
     setLastUpdate(new Date());
+    
+    // Auto-save materials when they change and preservation is enabled
+    if (isPreservationEnabled() && materials.length > 0) {
+      saveMaterials(materials, 'user');
+    }
   }, [materials]);
 
   const getShelfStatus = (estante: string) => {
@@ -233,12 +242,38 @@ const Index = () => {
             ))}
           </div>
 
+          {/* Material Preservation Panel */}
+          <div className="mt-6" data-testid="material-preservation-panel">
+            <MaterialPreservationPanel 
+              materials={materials}
+              onMaterialsRestore={(restoredMaterials) => {
+                // Note: In the current architecture, materials would be automatically 
+                // updated when the context refreshes data from storage
+                toast.success('Materiais restaurados com sucesso!');
+                // Force a page reload to refresh all data
+                window.location.reload();
+              }}
+            />
+          </div>
+
         </div>
         </div>
       </div>
 
 
       <Footer />
+      
+      {/* Material Loss Indicator - Floating */}
+      <MaterialLossIndicator 
+        materials={materials}
+        onRestore={() => {
+          // Scroll to preservation panel
+          const panel = document.querySelector('[data-testid="material-preservation-panel"]');
+          if (panel) {
+            panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }}
+      />
     </div>
   );
 };
