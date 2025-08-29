@@ -151,43 +151,33 @@ const ShelfDetailView: React.FC = () => {
               <Card 
                 key={material.id}
                 id={`material-${material.id}`}
-                className={`cursor-pointer transition-all duration-500 ${
+                className={`relative cursor-pointer transition-all duration-500 ${
                   isHighlighted 
                     ? 'bg-orange-500/20 border-orange-500/50 ring-2 ring-orange-500/30 hover:bg-orange-500/25 animate-pulse' 
                     : 'hover:bg-white/5'
                 }`}
                 onClick={() => setShowHistoryFor(material.id)}
               >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between">
                     {!isReadOnly && (
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingMaterial(material);
-                          }}
-                          title="Registar Movimento"
-                        >
-                          <ArrowUpDown className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setMaterialToDelete(material);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingMaterial(material);
+                        }}
+                        title="Registar Movimento"
+                        className="flex items-center gap-2 h-12 px-4 hover-scale"
+                      >
+                        <ArrowUpDown className="w-5 h-5" />
+                        <span className="hidden sm:inline">Entrada/Saída</span>
+                      </Button>
                     )}
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="relative">
                   <div className="space-y-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Descrição</p>
@@ -205,6 +195,22 @@ const ShelfDetailView: React.FC = () => {
                       </Badge>
                     </div>
                   </div>
+                  
+                  {/* Delete button positioned at bottom right */}
+                  {!isReadOnly && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMaterialToDelete(material);
+                      }}
+                      className="absolute bottom-4 right-4 w-10 h-10 p-0 hover-scale"
+                      title="Apagar Material"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
                 );
