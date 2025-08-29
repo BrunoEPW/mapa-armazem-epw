@@ -263,60 +263,6 @@ const Reports = () => {
             />
           </div>
 
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-card/80 backdrop-blur">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Materiais</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalMaterials}</div>
-              <p className="text-xs text-muted-foreground">
-                Tipos de materiais diferentes
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/80 backdrop-blur">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Peças</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalPecas}</div>
-              <p className="text-xs text-muted-foreground">
-                Peças em stock
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/80 backdrop-blur">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Movimentações</CardTitle>
-              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalMovements}</div>
-              <p className="text-xs text-muted-foreground">
-                Entradas e saídas registadas
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/80 backdrop-blur">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Produtos Cadastrados</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalProducts}</div>
-              <p className="text-xs text-muted-foreground">
-                Fichas de produtos criadas
-              </p>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Stock por Produto */}
         <div className="mb-6">
