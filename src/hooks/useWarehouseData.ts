@@ -69,13 +69,8 @@ export const useWarehouseData = () => {
       movements: savedMovements.length 
     });
 
-    // Migrate existing products to include familia if missing
-    const migratedProducts = savedProducts.map((product: Product) => {
-      if (!product.familia) {
-        return { ...product, familia: 'Classicos' }; // Default familia for migration
-      }
-      return product;
-    });
+    // No migration needed - familia removed
+    const migratedProducts = savedProducts;
 
     setProducts(migratedProducts);
     setMaterials(savedMaterials);

@@ -442,10 +442,7 @@ function validateFrontPart(tipo: string, certif: string, modelo: string): number
   return score;
 }
 
-// Helper function to get familia from decoded EPW data
-export const getEPWFamilia = (decoded: EPWDecodedProduct): string => {
-  return `${decoded.tipo.d} ${decoded.modelo.d}`.trim();
-};
+// Familia helper removed - no longer needed
 
 // Helper function to get modelo from decoded EPW data
 export const getEPWModelo = (decoded: EPWDecodedProduct): string => {

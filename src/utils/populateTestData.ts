@@ -72,7 +72,7 @@ export const populateTestData = async ({
           const basicProduct: Product = {
             id: `local-product-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             codigo: productCode,
-            familia: 'EPW',
+            
             modelo: productCode.substring(0, 6),
             acabamento: productCode.substring(6, 8),
             cor: productCode.substring(8, 10),

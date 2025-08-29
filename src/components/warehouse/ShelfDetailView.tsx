@@ -158,7 +158,7 @@ const ShelfDetailView: React.FC = () => {
                     <div>
                       <p className="text-sm text-muted-foreground">Descrição</p>
                       <p className="font-medium">
-                        {material.product.descricao || `${material.product.familia} ${material.product.modelo}`}
+                        {material.product.descricao || material.product.modelo}
                       </p>
                     </div>
                     <div>

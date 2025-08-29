@@ -67,12 +67,9 @@ export const useWarehouseOperations = ({
     };
   };
 
-  const searchMaterials = (query: { familia?: string; modelo?: string; acabamento?: string; comprimento?: number }): Material[] => {
+  const searchMaterials = (query: { modelo?: string; acabamento?: string; comprimento?: number }): Material[] => {
     return materials.filter(material => {
       const { product } = material;
-      if (query.familia && !product.familia.toLowerCase().includes(query.familia.toLowerCase())) {
-        return false;
-      }
       if (query.modelo && !product.modelo.toLowerCase().includes(query.modelo.toLowerCase())) {
         return false;
       }

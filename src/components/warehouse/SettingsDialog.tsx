@@ -55,7 +55,7 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
         'ID Material': material.id,
         'Produto ID': material.productId,
         'Modelo': material.product.modelo,
-        'Família': material.product.familia,
+        
         'Acabamento': material.product.acabamento,
         'Cor': material.product.cor,
         'Comprimento (mm)': material.product.comprimento,
@@ -75,7 +75,7 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
       // Products backup data
       const productsData = products.map(product => ({
         'ID': product.id,
-        'Família': product.familia,
+        
         'Modelo': product.modelo,
         'Acabamento': product.acabamento,
         'Cor': product.cor,
@@ -95,7 +95,7 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
           'ID Movimento': movement.id,
           'Material ID': movement.materialId,
           'Modelo Material': material?.product.modelo || 'N/A',
-          'Família': material?.product.familia || 'N/A',
+          
           'Localização': material ? `${material.location.estante}${material.location.prateleira}` : 'N/A',
           'Tipo': movement.type === 'entrada' ? 'Entrada' : 'Saída',
           'Quantidade': movement.pecas,

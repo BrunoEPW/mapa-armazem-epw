@@ -40,7 +40,7 @@ export const populateTestDataOffline = async ({
         const basicProduct: Product = {
           id: `offline-product-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           codigo: testProduct.code,
-          familia: 'TESTE_OFFLINE',
+          
           modelo: testProduct.code.substring(0, 6),
           acabamento: 'PADRÃO',
           cor: 'NATURAL',

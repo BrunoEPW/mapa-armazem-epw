@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Product } from '@/types/warehouse';
 import { apiService, ApiFilters } from '@/services/apiService';
 import { config } from '@/lib/config';
-import { decodeEPWReference, getEPWFamilia, getEPWModelo, getEPWAcabamento, getEPWCor, getEPWComprimento } from '@/utils/epwCodeDecoder';
+import { decodeEPWReference, getEPWModelo, getEPWAcabamento, getEPWCor, getEPWComprimento } from '@/utils/epwCodeDecoder';
 
 interface UseApiProductsWithFiltersServerSideOptions {
   enabled?: boolean;
@@ -56,7 +56,7 @@ export const useApiProductsWithFiltersServerSide = (
       
       return {
         id: `api_${apiProduct.Id}`,
-        familia: getEPWFamilia(decoded),
+        
         modelo: getEPWModelo(decoded),
         acabamento: getEPWAcabamento(decoded),
         cor: getEPWCor(decoded),
@@ -76,7 +76,7 @@ export const useApiProductsWithFiltersServerSide = (
       // Non-EPW product - do NOT set epwOriginalCode
       return {
         id: `api_${apiProduct.Id}`,
-        familia: 'Produto API',
+        
         modelo: codigo,
         acabamento: description,
         cor: 'N/A',

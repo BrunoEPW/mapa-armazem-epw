@@ -185,7 +185,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Step 7: Build product data with comprehensive fallbacks
       const productData: Omit<Product, 'id'> = {
         // Use API data or EPW decoded data as fallback
-        familia: safeString(apiProduct.familia || decodedEpw?.tipo?.d, 'EPW'),
+        
         modelo: safeString(apiProduct.modelo || decodedEpw?.modelo?.l, codigo.substring(0, 6)),
         acabamento: safeString(apiProduct.acabamento || decodedEpw?.acabamento?.l, codigo.substring(6, 8)),
         cor: safeString(apiProduct.cor || decodedEpw?.cor?.l, codigo.substring(8, 10)),
@@ -225,7 +225,7 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       };
 
       const requiredFields = [
-        { name: 'familia', value: productData.familia },
+        
         { name: 'modelo', value: productData.modelo },
         { name: 'acabamento', value: productData.acabamento },
         { name: 'cor', value: productData.cor },

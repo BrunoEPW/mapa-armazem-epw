@@ -28,7 +28,7 @@ export const useApiProducts = (): UseApiProductsReturn => {
     
     return {
       id: `api_${apiProduct.Id}`,
-      familia: 'API',
+      
       modelo: codigo,  // Keep for backward compatibility
       acabamento: description,  // Keep for backward compatibility
       cor: 'N/A',

@@ -24,7 +24,6 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
-    familia: product?.familia || '',
     modelo: product?.modelo || '',
     acabamento: product?.acabamento || '',
     cor: product?.cor || '',
@@ -37,13 +36,12 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.familia || !formData.modelo || !formData.acabamento || !formData.cor || !formData.comprimento) {
+    if (!formData.modelo || !formData.acabamento || !formData.cor || !formData.comprimento) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
 
     const productData = {
-      familia: formData.familia,
       modelo: formData.modelo,
       acabamento: formData.acabamento,
       cor: formData.cor,
@@ -57,7 +55,6 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
     } else {
       // Check for duplicates before adding
       const isDuplicate = products.some(p => 
-        p.familia === productData.familia &&
         p.modelo === productData.modelo &&
         p.acabamento === productData.acabamento &&
         p.cor === productData.cor &&
@@ -134,42 +131,13 @@ export const ProductDialog: React.FC<ProductDialogProps> = ({
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="familia">Família *</Label>
-            <Select value={formData.familia} onValueChange={(value) => {
-              handleInputChange('familia', value);
-              handleInputChange('modelo', ''); // Reset modelo when familia changes
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma família" />
-              </SelectTrigger>
-              <SelectContent>
-                {FAMILIAS.map((familia) => (
-                  <SelectItem key={familia} value={familia}>
-                    {familia}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
             <Label htmlFor="modelo">Modelo *</Label>
-            <Select 
-              value={formData.modelo} 
-              onValueChange={(value) => handleInputChange('modelo', value)}
-              disabled={!formData.familia}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={formData.familia ? "Selecione um modelo" : "Selecione primeiro uma família"} />
-              </SelectTrigger>
-              <SelectContent>
-                {formData.familia && MODELOS_POR_FAMILIA[formData.familia as keyof typeof MODELOS_POR_FAMILIA]?.map((modelo) => (
-                  <SelectItem key={modelo} value={modelo}>
-                    {modelo}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              id="modelo"
+              value={formData.modelo}
+              onChange={(e) => handleInputChange('modelo', e.target.value)}
+              placeholder="Digite o modelo do produto"
+            />
           </div>
 
           <div>

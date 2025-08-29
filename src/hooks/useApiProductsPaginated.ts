@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Product } from '@/types/warehouse';
 import { apiService } from '@/services/apiService';
 import { config } from '@/lib/config';
-import { decodeEPWReference, getEPWFamilia, getEPWModelo, getEPWAcabamento, getEPWCor, getEPWComprimento } from '@/utils/epwCodeDecoder';
+import { decodeEPWReference, getEPWModelo, getEPWAcabamento, getEPWCor, getEPWComprimento } from '@/utils/epwCodeDecoder';
 
 interface UseApiProductsPaginatedReturn {
   products: Product[];
@@ -57,7 +57,7 @@ export const useApiProductsPaginated = (
       
       return {
         id: `api_${apiProduct.Id}`,
-        familia: getEPWFamilia(decoded),
+        
         modelo: getEPWModelo(decoded),
         acabamento: getEPWAcabamento(decoded),
         cor: getEPWCor(decoded),
@@ -76,7 +76,7 @@ export const useApiProductsPaginated = (
       // Fallback to original mapping for non-EPW products
       return {
         id: `api_${apiProduct.Id}`,
-        familia: 'API',
+        
         modelo: codigo, // Keep for backward compatibility
         acabamento: description, // Keep for backward compatibility
         cor: 'N/A',

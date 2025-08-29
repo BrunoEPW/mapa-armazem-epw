@@ -25,7 +25,7 @@ export const useCombinedProducts = (localProducts: Product[]): UseCombinedProduc
 
     // Create a unique key for each product to avoid duplicates
     const createProductKey = (product: Product) => 
-      `${product.familia}_${product.modelo}_${product.acabamento}_${product.cor}_${product.comprimento}`;
+      `${product.modelo}_${product.acabamento}_${product.cor}_${product.comprimento}`;
 
     // Add local products first (they have priority)
     localProducts.forEach(product => {

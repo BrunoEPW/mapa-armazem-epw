@@ -21,7 +21,7 @@ export const useSupabaseProductOperations = ({
       console.log('🔵 Starting field validation...');
       
       // Validate required fields
-      const requiredFields = ['familia', 'modelo', 'acabamento', 'cor', 'comprimento'];
+      const requiredFields = ['modelo', 'acabamento', 'cor', 'comprimento'];
       for (const field of requiredFields) {
         console.log(`🔵 Validating field "${field}":`, product[field]);
         if (!product[field]) {
@@ -37,7 +37,7 @@ export const useSupabaseProductOperations = ({
       // Create product locally with generated ID
       const newProduct: Product = {
         id: crypto.randomUUID(),
-        familia: product.familia,
+        
         modelo: product.modelo,
         acabamento: product.acabamento,
         cor: product.cor,

@@ -37,7 +37,7 @@ export const ProductSelectorSimple: React.FC<ProductSelectorSimpleProps> = ({
       id: simpleProduct.id,
       codigo: simpleProduct.codigo,
       descricao: simpleProduct.descricao,
-      familia: 'API',
+      
       modelo: simpleProduct.codigo || 'N/A',
       acabamento: 'N/A',
       cor: 'N/A',

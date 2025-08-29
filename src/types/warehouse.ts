@@ -1,6 +1,5 @@
 export interface Product {
   id: string;
-  familia: string;
   modelo: string;
   acabamento: string;
   cor: string;

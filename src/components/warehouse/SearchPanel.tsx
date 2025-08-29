@@ -101,7 +101,7 @@ const SearchPanel: React.FC = () => {
           const relatedMaterials = materials.filter(material => {
             if (searchQuery.trim()) {
               const desc = searchQuery.toLowerCase();
-              const productDesc = `${material.product.familia} ${material.product.modelo} ${material.product.acabamento}`.toLowerCase();
+              const productDesc = `${material.product.modelo} ${material.product.acabamento}`.toLowerCase();
               return productDesc.includes(desc);
             }
             return false;
@@ -331,7 +331,7 @@ const SearchPanel: React.FC = () => {
   // Agrupamentos de materiais por modelo - COM FILTRAGEM BASEADA NA API
   const modelGroups: Record<string, ModelGroup> = filteredMaterials.reduce((acc, material) => {
     const modelo = material.product.modelo || 'Sem Modelo';
-    const description = material.product.descricao || `${material.product.familia || ''} ${material.product.modelo || ''} ${material.product.acabamento || ''}`.trim();
+    const description = material.product.descricao || `${material.product.modelo || ''} ${material.product.acabamento || ''}`.trim();
     
     if (!acc[modelo]) {
       acc[modelo] = {

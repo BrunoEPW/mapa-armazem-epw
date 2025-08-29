@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Product } from '@/types/warehouse';
 import { apiService, ApiFilters } from '@/services/apiService';
 import { config } from '@/lib/config';
-import { decodeEPWReference, getEPWFamilia, getEPWModelo, getEPWAcabamento, getEPWCor, getEPWComprimento } from '@/utils/epwCodeDecoder';
+import { decodeEPWReference, getEPWModelo, getEPWAcabamento, getEPWCor, getEPWComprimento } from '@/utils/epwCodeDecoder';
 
 interface UseOptimizedProductLoaderReturn {
   products: Product[];
@@ -43,7 +43,7 @@ export const useOptimizedProductLoader = (
       
       return {
         id: `api_${apiProduct.Id}`,
-        familia: getEPWFamilia(decoded),
+        
         modelo: getEPWModelo(decoded),
         acabamento: getEPWAcabamento(decoded),
         cor: getEPWCor(decoded),
@@ -62,7 +62,7 @@ export const useOptimizedProductLoader = (
     } else {
       return {
         id: `api_${apiProduct.Id}`,
-        familia: 'Produto API',
+        
         modelo: codigo,
         acabamento: description,
         cor: 'N/A',

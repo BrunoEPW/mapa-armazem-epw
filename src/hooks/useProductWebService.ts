@@ -24,7 +24,7 @@ export const useProductWebService = () => {
 
   const mapApiArtigoToProduct = (artigo: ApiArtigo): Omit<Product, 'id'> => {
     return {
-      familia: 'API',
+      
       modelo: artigo.strCodigo || 'Sem código',
       acabamento: artigo.strDescricao || 'Sem descrição',
       cor: 'N/A',

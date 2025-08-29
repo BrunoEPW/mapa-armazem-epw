@@ -27,7 +27,7 @@ const Reports = () => {
   const [searchFilter, setSearchFilter] = useState('');
   const [sortBy, setSortBy] = useState<'nome' | 'quantidade'>('quantidade');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [exportType, setExportType] = useState<'modelo' | 'familia'>('modelo');
+  const [exportType, setExportType] = useState<'modelo'>('modelo');
   
   // State for locations dialog
   const [showLocationsDialog, setShowLocationsDialog] = useState(false);
@@ -178,7 +178,7 @@ const Reports = () => {
     return {
       modelo: productStockItem.product.codigo || productStockItem.product.modelo,
       displayName: productStockItem.product.codigo || productStockItem.product.modelo,
-      description: productStockItem.product.descricao || `${productStockItem.product.familia} ${productStockItem.product.modelo} ${productStockItem.product.acabamento} ${productStockItem.product.cor}`,
+      description: productStockItem.product.descricao || `${productStockItem.product.modelo} ${productStockItem.product.acabamento} ${productStockItem.product.cor}`,
       totalPecas: productStockItem.totalPecas,
       locations,
       materials: productMaterials,
@@ -206,48 +206,21 @@ const Reports = () => {
       // Stock histórico: apenas código, descrição e quantidade
       exportData = data.map(item => ({
         'Código Artigo': item.product.codigo || item.product.modelo,
-        'Descrição': item.product.descricao || `${item.product.familia} ${item.product.modelo} ${item.product.acabamento} ${item.product.cor}`,
+        'Descrição': item.product.descricao || `${item.product.modelo} ${item.product.acabamento} ${item.product.cor}`,
         'Quantidade': item.totalPecas
       }));
       filename = `stock_historico_${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
     } else {
-      // Stock atual: formato completo baseado no tipo de exportação
-      if (exportType === 'familia') {
-        // Group by family
-        const familyGroups = new Map();
-        data.forEach(item => {
-          const familia = item.product.familia;
-          if (!familyGroups.has(familia)) {
-            familyGroups.set(familia, {
-              familia,
-              totalPecas: 0,
-              modelos: new Set()
-            });
-          }
-          const group = familyGroups.get(familia);
-          group.totalPecas += item.totalPecas;
-          group.modelos.add(item.product.modelo);
-        });
-        
-        exportData = Array.from(familyGroups.values()).map(group => ({
-          'Família': group.familia,
-          'Total de Peças': group.totalPecas,
-          'Modelos': Array.from(group.modelos).join(', ')
-        }));
-        filename = `relatorio_familias_${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
-      } else {
-        // Export by model
-        exportData = data.map(item => ({
-          'Modelo': item.product.modelo,
-          'Acabamento': item.product.acabamento,
-          'Cor': item.product.cor,
-          'Comprimento (mm)': item.product.comprimento,
-          'Família': item.product.familia,
-          'Quantidade': item.totalPecas,
-          'Localizações': Array.from(item.locations).join(', ')
-        }));
-        filename = `relatorio_modelos_${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
-      }
+      // Stock atual: formato completo por modelo
+      exportData = data.map(item => ({
+        'Modelo': item.product.modelo,
+        'Acabamento': item.product.acabamento,
+        'Cor': item.product.cor,
+        'Comprimento (mm)': item.product.comprimento,
+        'Quantidade': item.totalPecas,
+        'Localizações': Array.from(item.locations).join(', ')
+      }));
+      filename = `relatorio_modelos_${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
     }
 
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -397,15 +370,7 @@ const Reports = () => {
                     </Button>
                   </div>
                   <div className="flex items-center gap-2">
-                  <Select value={exportType} onValueChange={(value: 'modelo' | 'familia') => setExportType(value)}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Exportar por" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="modelo">Por Modelo</SelectItem>
-                      <SelectItem value="familia">Por Família</SelectItem>
-                    </SelectContent>
-                  </Select>
+                   {/* Export type selector removed since familia was removed */}
                   <Button variant="secondary" onClick={() => exportToExcel('current')}>
                     <Download className="h-4 w-4 mr-2" />
                     Exportar
@@ -433,7 +398,7 @@ const Reports = () => {
                           onClick={() => handleProductClick(item)}
                         >
                           <TableCell className="font-medium">{item.product.codigo || item.product.modelo}</TableCell>
-                          <TableCell>{item.product.descricao || `${item.product.familia} ${item.product.modelo} ${item.product.acabamento} ${item.product.cor}`}</TableCell>
+                          <TableCell>{item.product.descricao || `${item.product.modelo} ${item.product.acabamento} ${item.product.cor}`}</TableCell>
                           <TableCell className="text-right font-bold">{item.totalPecas}</TableCell>
                         </TableRow>
                       ))
@@ -509,7 +474,7 @@ const Reports = () => {
                         .map((item, index) => (
                           <TableRow key={index}>
                             <TableCell className="font-medium">{item.product.codigo || item.product.modelo}</TableCell>
-                            <TableCell>{item.product.descricao || `${item.product.familia} ${item.product.modelo} ${item.product.acabamento} ${item.product.cor}`}</TableCell>
+                            <TableCell>{item.product.descricao || `${item.product.modelo} ${item.product.acabamento} ${item.product.cor}`}</TableCell>
                             <TableCell className="text-right font-bold">{item.totalPecas}</TableCell>
                           </TableRow>
                         ))

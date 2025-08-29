@@ -103,7 +103,7 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {material.product.descricao || `${material.product.familia} ${material.product.modelo}`}
+            {material.product.descricao || material.product.modelo}
           </DialogTitle>
         </DialogHeader>
         

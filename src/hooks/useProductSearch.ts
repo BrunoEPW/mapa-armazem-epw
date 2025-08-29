@@ -8,7 +8,7 @@ export const useProductSearch = <T extends Product | CombinedProduct>(products: 
   const [selectedSource, setSelectedSource] = useState<'all' | 'local' | 'api'>('all');
 
   const familias = useMemo(() => {
-    const uniqueFamilias = [...new Set(products.map(p => p.familia))];
+    const uniqueFamilias: string[] = [];
     return uniqueFamilias.sort();
   }, [products]);
 
@@ -24,7 +24,7 @@ export const useProductSearch = <T extends Product | CombinedProduct>(products: 
     
     // Filter by family
     if (selectedFamilia && selectedFamilia !== 'all') {
-      filtered = filtered.filter(product => product.familia === selectedFamilia);
+      // Familia filtering removed
     }
     
     // Filter by search query
