@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { config } from '@/lib/config';
 
 interface ApiArtigo {
   Id: number;
@@ -29,9 +30,21 @@ interface ProxyStatus {
   isBlocked: boolean;
 }
 
+interface CacheEntry {
+  data: ApiResponse;
+  timestamp: number;
+  expiresAt: number;
+}
+
 class ApiService {
   private originalApiUrl = 'https://pituxa.epw.pt/api/artigos';
-  // Cache removed - no caching enabled
+  
+  // Memory cache with 1-hour expiration
+  private cache = new Map<string, CacheEntry>();
+  private cacheTimeout = config.api.cacheTimeout; // 1 hour
+  
+  // Auto-refresh interval
+  private refreshInterval: NodeJS.Timeout | null = null;
   
   // Circuit breaker para proxies
   private proxyStatuses = new Map<string, ProxyStatus>();
@@ -45,8 +58,6 @@ class ApiService {
   // Timeouts e retry
   private defaultTimeout = 30000; // 30 segundos
   private maxRetries = 3;
-  
-  // Cache disabled - no persistent cache
 
   async fetchArtigos(draw: number = 1, start: number = 0, length: number = 10): Promise<ApiArtigo[]> {
     const result = await this.fetchArtigosWithTotal(draw, start, length);
@@ -54,13 +65,22 @@ class ApiService {
   }
 
   async fetchArtigosWithTotal(draw: number = 1, start: number = 0, length: number = 10, filters?: ApiFilters): Promise<ApiResponse> {
-    console.log('🚀 [ApiService] Making fresh API call - no cache enabled');
+    const cacheKey = this.generateCacheKey(start, length, filters);
     
-    // Direct call without cache
-    return this.queueRequest(`${start}-${length}`, async () => {
-      return this.makeRequestWithRetry(draw, start, length, filters);
+    // Check cache first
+    const cached = this.getCachedData(cacheKey);
+    if (cached) {
+      console.log(`💾 [ApiService] Cache HIT for key: ${cacheKey}`);
+      return cached;
+    }
+    
+    console.log(`🚀 [ApiService] Cache MISS for key: ${cacheKey} - fetching from API`);
+    
+    return this.queueRequest(cacheKey, async () => {
+      const result = await this.makeRequestWithRetry(draw, start, length, filters);
+      this.setCachedData(cacheKey, result);
+      return result;
     });
-
   }
   
   private async queueRequest(cacheKey: string, requestFn: () => Promise<ApiResponse>): Promise<ApiResponse> {
@@ -92,7 +112,6 @@ class ApiService {
     try {
       const result = await requestFn();
       
-      // No caching - just return result
       console.log('✅ [ApiService] Fresh API call completed successfully');
 
       // Resolver requisições na fila
@@ -113,7 +132,13 @@ class ApiService {
         this.requestQueue.delete(cacheKey);
       }
       
-      // No fallback cache - throw error directly
+      // Try to use stale cache as fallback
+      const staleCached = this.cache.get(cacheKey);
+      if (staleCached) {
+        console.log(`⚠️ [ApiService] Using stale cache as fallback for key: ${cacheKey}`);
+        return staleCached.data;
+      }
+      
       throw error;
     } finally {
       this.activeRequests.delete(cacheKey);
@@ -349,7 +374,67 @@ class ApiService {
     }
   }
 
-  // Cache methods removed - no caching enabled
+  private getCachedData(cacheKey: string): ApiResponse | null {
+    const cached = this.cache.get(cacheKey);
+    if (!cached) return null;
+    
+    const now = Date.now();
+    if (now > cached.expiresAt) {
+      console.log(`⏰ [ApiService] Cache expired for key: ${cacheKey}`);
+      this.cache.delete(cacheKey);
+      return null;
+    }
+    
+    return cached.data;
+  }
+  
+  private setCachedData(cacheKey: string, data: ApiResponse): void {
+    const now = Date.now();
+    const cacheEntry: CacheEntry = {
+      data,
+      timestamp: now,
+      expiresAt: now + this.cacheTimeout
+    };
+    
+    this.cache.set(cacheKey, cacheEntry);
+    console.log(`💾 [ApiService] Cached data for key: ${cacheKey} (expires at ${new Date(cacheEntry.expiresAt).toLocaleTimeString()})`);
+  }
+  
+  private startAutoRefresh(): void {
+    if (this.refreshInterval) return;
+    
+    console.log(`🔄 [ApiService] Starting auto-refresh every ${this.cacheTimeout / 1000 / 60} minutes`);
+    
+    this.refreshInterval = setInterval(async () => {
+      const expiredKeys: string[] = [];
+      const now = Date.now();
+      
+      // Find expired cache entries
+      for (const [key, entry] of this.cache.entries()) {
+        if (now >= entry.expiresAt) {
+          expiredKeys.push(key);
+        }
+      }
+      
+      if (expiredKeys.length > 0) {
+        console.log(`🔄 [ApiService] Auto-refreshing ${expiredKeys.length} expired cache entries`);
+        
+        // Clear expired entries
+        expiredKeys.forEach(key => {
+          this.cache.delete(key);
+          console.log(`🗑️ [ApiService] Removed expired cache: ${key}`);
+        });
+      }
+    }, this.cacheTimeout);
+  }
+  
+  private stopAutoRefresh(): void {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+      this.refreshInterval = null;
+      console.log('⏹️ [ApiService] Auto-refresh stopped');
+    }
+  }
 
   async fetchAllArtigos(): Promise<ApiArtigo[]> {
     try {
@@ -497,10 +582,16 @@ class ApiService {
   }
 
   clearCache(): void {
-    console.log('🧹 [ApiService] No cache to clear - caching disabled');
+    console.log('🧹 [ApiService] Clearing all cache entries');
+    this.cache.clear();
     this.activeRequests.clear();
     this.requestQueue.clear();
     this.proxyStatuses.clear();
+    this.stopAutoRefresh();
+  }
+  
+  initializeAutoRefresh(): void {
+    this.startAutoRefresh();
   }
 
   private generateCacheKey(start: number, length: number, filters?: ApiFilters): string {
@@ -510,4 +601,8 @@ class ApiService {
 }
 
 export const apiService = new ApiService();
+
+// Initialize auto-refresh when the service is first loaded
+apiService.initializeAutoRefresh();
+
 export type { ApiArtigo, ApiResponse, ApiFilters };

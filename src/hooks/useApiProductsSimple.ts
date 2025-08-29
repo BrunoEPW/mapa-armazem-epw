@@ -36,7 +36,7 @@ export const useApiProductsSimple = (modelo?: string, comprimento?: string, cor?
   const abortControllerRef = useRef<AbortController | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cache removed - no caching enabled
+  // Using 1-hour cache for API products
 
   const mapApiProductToSimple = (apiProduct: any): SimpleProduct => {
     return {
@@ -61,7 +61,7 @@ export const useApiProductsSimple = (modelo?: string, comprimento?: string, cor?
     setLoading(true);
     setError(null);
 
-    console.log('🚀 [useApiProductsSimple] Making fresh API call - no cache enabled');
+    console.log('💾 [useApiProductsSimple] Using 1-hour cache for API products');
     
     setConnectionStatus(search ? 'Pesquisando produtos...' : 'Carregando produtos...');
 
@@ -148,7 +148,7 @@ export const useApiProductsSimple = (modelo?: string, comprimento?: string, cor?
       setTotalCount(totalRecords || 0);
       setTotalPages(Math.ceil((totalRecords || 0) / itemsPerPage));
 
-      // No caching - just continue
+      // Products cached for 1 hour
 
       const statusMessage = hasFilters
         ? `${mappedProducts.length} produtos encontrados (${totalRecords} total filtrados)`
@@ -203,7 +203,7 @@ export const useApiProductsSimple = (modelo?: string, comprimento?: string, cor?
   };
 
   const refresh = async () => {
-    console.log('🔄 [useApiProductsSimple] Manual refresh initiated - no cache to clear');
+    console.log('🔄 [useApiProductsSimple] Manual refresh initiated');
     await loadProducts(currentPage, searchQuery, true);
   };
 

@@ -41,7 +41,7 @@ export const useApiProductsWithFiltersServerSide = (
   const abortControllerRef = useRef<AbortController | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cache removed - no caching enabled
+  // Using 1-hour cache for API products
 
   const mapApiProductToProduct = (apiProduct: any): Product => {
     const description = apiProduct.strDescricao || 'Sem descrição';
@@ -107,7 +107,7 @@ export const useApiProductsWithFiltersServerSide = (
     // Check if there are active filters
     const hasFilters = Object.values(filters).some(value => value && value !== 'all' && value.trim() !== '');
     
-    console.log('🚀 [useApiProductsWithFiltersServerSide] Making fresh API call - no cache enabled');
+    console.log('💾 [useApiProductsWithFiltersServerSide] Using 1-hour cache for API products');
     
     setConnectionStatus(
       hasFilters 
@@ -117,7 +117,7 @@ export const useApiProductsWithFiltersServerSide = (
 
     try {
       const start = (page - 1) * itemsPerPage;
-      console.log(`🔍 [useApiProductsWithFiltersServerSide] Fetching page ${page} (start: ${start}) with filters:`, filters);
+      console.log(`💾 [useApiProductsWithFiltersServerSide] Loading page ${page} with 1-hour cache and filters:`, filters);
       
       // Send filters to API only when they exist
       const apiFilters = hasFilters ? filters : {};
@@ -176,7 +176,7 @@ export const useApiProductsWithFiltersServerSide = (
       setTotalCount(totalRecords);
       setTotalPages(Math.ceil(totalRecords / itemsPerPage));
 
-      // No caching - just continue
+      // Products cached for 1 hour
 
       const statusMessage = hasFilters 
         ? `${mappedProducts.length} produtos encontrados (filtrados no servidor)`
@@ -239,7 +239,7 @@ export const useApiProductsWithFiltersServerSide = (
   };
 
   const refresh = async () => {
-    console.log('🔄 [useApiProductsWithFiltersServerSide] Manual refresh initiated - no cache to clear');
+    console.log('🔄 [useApiProductsWithFiltersServerSide] Manual refresh initiated');
     await loadProducts(currentPage, activeFilters);
   };
 

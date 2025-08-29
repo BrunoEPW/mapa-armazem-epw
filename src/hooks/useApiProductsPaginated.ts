@@ -100,7 +100,7 @@ export const useApiProductsPaginated = (
     abortControllerRef.current = new AbortController();
 
     try {
-      console.log(`🔍 [useApiProductsPaginated] Fetching page ${page}...`);
+      console.log(`💾 [useApiProductsPaginated] Loading page ${page} with 1-hour cache...`);
       console.log(`🔍 [useApiProductsPaginated] exclusionFilter function provided: ${!!exclusionFilter}`);
       setConnectionStatus('Conectando...');
       

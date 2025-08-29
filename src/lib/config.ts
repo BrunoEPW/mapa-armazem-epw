@@ -32,8 +32,8 @@ export const config = {
     baseUrl: 'https://pituxa.epw.pt/api/artigos',
     timeout: 10000, // 10 seconds
     retryAttempts: 3,
-    cacheTimeout: 5 * 60 * 1000, // 5 minutes
-    syncInterval: 30 * 60 * 1000, // 30 minutes
+    cacheTimeout: 60 * 60 * 1000, // 1 hour
+    syncInterval: 60 * 60 * 1000, // 1 hour
   },
 } as const;
 
