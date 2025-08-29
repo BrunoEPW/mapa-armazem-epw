@@ -49,9 +49,18 @@ const Reports = () => {
     const targetDate = format(date, 'yyyy-MM-dd');
     const historicalMaterials = new Map();
 
-    // Start with all current materials
+    console.log(`📅 [calculateHistoricalStock] Calculating for date: ${targetDate}`);
+    console.log(`📦 [calculateHistoricalStock] Available materials: ${materials.length}`);
+    console.log(`🔄 [calculateHistoricalStock] Available movements: ${movements.length}`);
+
+    // Start with empty stock - build up from movements
+    // First, collect all unique products from both materials and movements
+    const allProducts = new Set();
+    
+    // Add products from current materials
     materials.forEach(material => {
       const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
+      allProducts.add(key);
       historicalMaterials.set(key, {
         product: material.product,
         totalPecas: 0,
@@ -59,27 +68,50 @@ const Reports = () => {
       });
     });
 
-    // Apply movements up to the selected date
-    movements
-      .filter(movement => movement.date <= targetDate)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .forEach(movement => {
-        const material = materials.find(m => m.id === movement.materialId);
-        if (material) {
-          const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
-          const existing = historicalMaterials.get(key);
-          if (existing) {
-            if (movement.type === 'entrada') {
-              existing.totalPecas += movement.pecas;
-            } else {
-              existing.totalPecas -= movement.pecas;
-            }
-            existing.locations.add(`${material.location.estante}${material.location.prateleira}`);
-          }
+    // Add products from movements (for products that might not exist anymore)
+    movements.forEach(movement => {
+      const material = materials.find(m => m.id === movement.materialId);
+      if (material) {
+        const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
+        if (!historicalMaterials.has(key)) {
+          historicalMaterials.set(key, {
+            product: material.product,
+            totalPecas: 0,
+            locations: new Set()
+          });
         }
-      });
+      }
+    });
 
-    return Array.from(historicalMaterials.values()).filter(item => item.totalPecas > 0);
+    console.log(`🔍 [calculateHistoricalStock] Unique products found: ${historicalMaterials.size}`);
+
+    // Apply all movements up to and including the selected date
+    const relevantMovements = movements
+      .filter(movement => movement.date <= targetDate)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    console.log(`📋 [calculateHistoricalStock] Relevant movements: ${relevantMovements.length}`);
+
+    relevantMovements.forEach(movement => {
+      const material = materials.find(m => m.id === movement.materialId);
+      if (material) {
+        const key = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
+        const existing = historicalMaterials.get(key);
+        if (existing) {
+          if (movement.type === 'entrada') {
+            existing.totalPecas += movement.pecas;
+          } else {
+            existing.totalPecas -= movement.pecas;
+          }
+          existing.locations.add(`${material.location.estante}${material.location.prateleira}`);
+        }
+      }
+    });
+
+    const result = Array.from(historicalMaterials.values()).filter(item => item.totalPecas > 0);
+    console.log(`📊 [calculateHistoricalStock] Final result: ${result.length} products with stock > 0`);
+    
+    return result;
   };
 
   // Group materials by product
