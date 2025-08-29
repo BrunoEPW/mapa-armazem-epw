@@ -25,7 +25,7 @@ interface ModelLocationsDialogProps {
   modelData: ModelLocationData | null;
   isOpen: boolean;
   onClose: () => void;
-  onLocationClick: (location: { estante: string; prateleira: number }) => void;
+  onLocationClick: (location: { estante: string; prateleira: number }, materialId?: string) => void;
 }
 
 export const ModelLocationsDialog: React.FC<ModelLocationsDialogProps> = ({
@@ -69,7 +69,13 @@ export const ModelLocationsDialog: React.FC<ModelLocationsDialogProps> = ({
     });
 
   const handleLocationClick = (location: { estante: string; prateleira: number }) => {
-    onLocationClick(location);
+    // Find a material in that location to highlight
+    const materialInLocation = modelData?.materials?.find(material => 
+      material.location.estante === location.estante && 
+      material.location.prateleira === location.prateleira
+    );
+    
+    onLocationClick(location, materialInLocation?.id);
     onClose();
   };
 

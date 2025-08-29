@@ -128,9 +128,12 @@ const SearchPanel: React.FC = () => {
     setSearchResults([]);
   };
 
-  const handleLocationClick = (location: { estante: string; prateleira: number }) => {
+  const handleLocationClick = (location: { estante: string; prateleira: number }, materialId?: string) => {
     setSelectedShelf(location);
-    navigate(`/prateleira/${location.estante}/${location.prateleira}`);
+    const url = materialId 
+      ? `/prateleira/${location.estante}/${location.prateleira}?highlight=${materialId}`
+      : `/prateleira/${location.estante}/${location.prateleira}`;
+    navigate(url);
   };
 
   const handleModelClick = (modelData: any) => {
