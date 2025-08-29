@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Material, Product, Movement, ShelfData, ShelfLocation } from '@/types/warehouse';
 
+import { useWarehouseData } from '@/hooks/useWarehouseData';
 import { useSupabaseWarehouseData } from '@/hooks/useSupabaseWarehouseData';
 import { useSupabaseWarehouseOperations } from '@/hooks/useSupabaseWarehouseOperations';
 import { useRealTimeSync } from '@/hooks/useRealTimeSync';
@@ -46,13 +47,20 @@ interface WarehouseContextType {
 const WarehouseContext = createContext<WarehouseContextType | undefined>(undefined);
 
 export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize state first
+  // Initialize state with localStorage data
   const [selectedShelf, setSelectedShelf] = useState<ShelfLocation | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [materials, setMaterials] = useState<Material[]>([]);
-  const [movements, setMovements] = useState<Movement[]>([]);
   
-  // Then use hooks
+  // Use useWarehouseData as primary data source (loads from localStorage with recovery)
+  const {
+    materials,
+    products,
+    movements,
+    setMaterials,
+    setProducts,
+    setMovements,
+  } = useWarehouseData();
+  
+  // Keep Supabase as secondary data source for sync
   const warehouseData = useSupabaseWarehouseData();
   const { clearAllData, clearDataPreservingMaterials } = useDataReset(setMaterials, setProducts, setMovements);
   
