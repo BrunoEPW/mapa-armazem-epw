@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { useToast } from '@/hooks/use-toast';
+import { useDataReset } from '@/hooks/useDataReset';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 
@@ -27,9 +28,10 @@ interface EmailSettings {
 }
 
 const SettingsDialog = ({ children }: SettingsDialogProps) => {
-  const { materials, products, movements } = useWarehouse();
+  const { materials, products, movements, clearAllData } = useWarehouse();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const [emailSettings, setEmailSettings] = useState<EmailSettings>(() => {
     const saved = localStorage.getItem('warehouse_email_settings');
     return saved ? JSON.parse(saved) : {
@@ -170,6 +172,56 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
     event.target.value = '';
   };
 
+  // Clear mock data function
+  const handleClearMockData = async () => {
+    try {
+      setIsClearing(true);
+      console.log('🧹 [handleClearMockData] Starting mock data cleanup...');
+
+      // Clear all localStorage keys that might contain mock data
+      const keysToRemove = [
+        'warehouse-materials',
+        'warehouse-products',
+        'warehouse-movements',
+        'warehouse-materials-backup',
+        'warehouse-products-backup',
+        'warehouse-movements-backup',
+        'warehouse-backup-metadata',
+        'warehouse-migrated',
+        'supabase-migration-completed'
+      ];
+
+      keysToRemove.forEach(key => {
+        const item = localStorage.getItem(key);
+        if (item) {
+          console.log(`🗑️ [handleClearMockData] Removing ${key}`);
+          localStorage.removeItem(key);
+        }
+      });
+
+      console.log('✅ [handleClearMockData] Mock data cleanup completed');
+      toast({
+        title: "Dados mock removidos",
+        description: "Todos os dados mock foram limpos. A página será recarregada.",
+      });
+      
+      // Reload page to ensure clean state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('❌ [handleClearMockData] Error clearing mock data:', error);
+      toast({
+        title: "Erro ao limpar dados",
+        description: "Ocorreu um erro durante a limpeza dos dados mock",
+        variant: "destructive",
+      });
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
   // Save email settings
   const saveEmailSettings = () => {
     try {
@@ -204,10 +256,11 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
         </DialogHeader>
 
         <Tabs defaultValue="manual-backup" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="manual-backup">Backup Manual</TabsTrigger>
             <TabsTrigger value="upload-backup">Carregar Backup</TabsTrigger>
             <TabsTrigger value="automatic-backup">Backup Automático</TabsTrigger>
+            <TabsTrigger value="cleanup">Limpeza</TabsTrigger>
           </TabsList>
 
           <TabsContent value="manual-backup" className="space-y-4">
@@ -402,6 +455,63 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
                 <Button onClick={saveEmailSettings} className="w-full">
                   <Save className="h-4 w-4 mr-2" />
                   Guardar Configurações
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="cleanup" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5" />
+                  Limpeza de Dados Mock
+                </CardTitle>
+                <CardDescription>
+                  Remover todos os dados mock/teste do localStorage para garantir que apenas produtos da API são utilizados
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-orange-800">Atenção:</p>
+                      <p className="text-orange-700">
+                        Esta ação irá remover todos os materiais e produtos mock/teste do sistema. 
+                        Apenas produtos obtidos da API serão mantidos. Esta ação não pode ser desfeita.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="font-medium">O que será removido:</Label>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground text-sm">
+                    <li>Todos os materiais com produtos mock</li>
+                    <li>Produtos de teste/exemplo</li>
+                    <li>Backups contendo dados mock</li>
+                    <li>Cache de dados antigos</li>
+                  </ul>
+                </div>
+
+                <Button 
+                  onClick={handleClearMockData} 
+                  variant="destructive" 
+                  className="w-full"
+                  disabled={isClearing}
+                >
+                  {isClearing ? (
+                    <>
+                      <Clock className="h-4 w-4 mr-2 animate-spin" />
+                      A limpar dados mock...
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      Limpar Todos os Dados Mock
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>

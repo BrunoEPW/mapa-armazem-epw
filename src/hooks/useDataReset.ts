@@ -99,9 +99,53 @@ export const useDataReset = (
     return clearAllData(true);
   };
 
+  const clearMockData = async () => {
+    try {
+      setIsResetting(true);
+      console.log('🧹 [clearMockData] Starting mock data cleanup...');
+
+      // Clear all localStorage keys that might contain mock data
+      const keysToRemove = [
+        STORAGE_KEYS.MATERIALS,
+        STORAGE_KEYS.PRODUCTS,
+        STORAGE_KEYS.MOVEMENTS,
+        'warehouse-materials-backup',
+        'warehouse-products-backup',
+        'warehouse-movements-backup',
+        'warehouse-backup-metadata',
+        'warehouse-migrated',
+        'supabase-migration-completed'
+      ];
+
+      keysToRemove.forEach(key => {
+        const item = localStorage.getItem(key);
+        if (item) {
+          console.log(`🗑️ [clearMockData] Removing ${key}`);
+          localStorage.removeItem(key);
+        }
+      });
+
+      // Clear state
+      setMaterials([]);
+      setProducts([]);
+      setMovements([]);
+
+      console.log('✅ [clearMockData] Mock data cleanup completed');
+      toast.success('Dados mock removidos com sucesso!');
+      return true;
+    } catch (error) {
+      console.error('❌ [clearMockData] Error clearing mock data:', error);
+      toast.error('Erro ao limpar dados mock');
+      return false;
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return {
     clearAllData: clearAllDataFull,
     clearDataPreservingMaterials,
+    clearMockData,
     isResetting,
   };
 };
