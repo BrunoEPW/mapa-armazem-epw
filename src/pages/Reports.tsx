@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, Package, ArrowUpDown, Calendar as CalendarIcon, Search, Download, ArrowLeft } from 'lucide-react';
+import { TrendingUp, Package, ArrowUpDown, Calendar as CalendarIcon, Search, Download, ArrowLeft, BarChart3 } from 'lucide-react';
 import reportsBanner from '@/assets/reports-banner.jpg';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +16,8 @@ import * as XLSX from 'xlsx';
 import EPWLogo from '@/components/ui/epw-logo';
 import Footer from '@/components/ui/Footer';
 import { ModelLocationsDialog } from '@/components/warehouse/ModelLocationsDialog';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -131,6 +133,67 @@ const Reports = () => {
   const historicalStock = calculateHistoricalStock(selectedDate);
   const productStock = groupedProducts();
 
+  // Prepare chart data
+  const prepareChartData = () => {
+    // Top 10 produtos por quantidade para gráfico de barras
+    const topProducts = productStock
+      .slice(0, 10)
+      .map((item, index) => ({
+        modelo: item.product.codigo || item.product.modelo,
+        quantidade: item.totalPecas,
+        fill: `hsl(${24 + (index * 30) % 360}, 70%, 50%)` // Orange-based palette
+      }));
+
+    // Dados para gráfico de pizza (top 8 + outros)
+    const pieData = (() => {
+      const top8 = productStock.slice(0, 8);
+      const others = productStock.slice(8);
+      const othersTotal = others.reduce((sum, item) => sum + item.totalPecas, 0);
+      
+      const data = top8.map((item, index) => ({
+        name: item.product.codigo || item.product.modelo,
+        value: item.totalPecas,
+        fill: `hsl(${24 + (index * 45) % 360}, 70%, 55%)`
+      }));
+
+      if (othersTotal > 0) {
+        data.push({
+          name: 'Outros',
+          value: othersTotal,
+          fill: 'hsl(220, 30%, 60%)'
+        });
+      }
+
+      return data;
+    })();
+
+    // Dados por estante
+    const shelfData = (() => {
+      const shelfMap = new Map();
+      materials.forEach(material => {
+        const estante = material.location.estante;
+        if (!shelfMap.has(estante)) {
+          shelfMap.set(estante, { estante, total: 0, produtos: new Set() });
+        }
+        const shelf = shelfMap.get(estante);
+        shelf.total += material.pecas;
+        shelf.produtos.add(`${material.product.modelo}-${material.product.acabamento}-${material.product.cor}`);
+      });
+
+      return Array.from(shelfMap.values())
+        .map(shelf => ({
+          ...shelf,
+          produtos: shelf.produtos.size,
+          fill: `hsl(${200 + (shelf.estante.charCodeAt(0) * 20) % 120}, 60%, 50%)`
+        }))
+        .sort((a, b) => a.estante.localeCompare(b.estante));
+    })();
+
+    return { topProducts, pieData, shelfData };
+  };
+
+  const chartData = prepareChartData();
+
   // Export functions
   // Prepare product location data for dialog
   const prepareProductLocationData = (productStockItem: any) => {
@@ -235,8 +298,121 @@ const Reports = () => {
               <span className="font-medium">Voltar</span>
             </button>
           </div>
-          
 
+          {/* Análise Visual */}
+          <div className="mb-6">
+            <Card className="bg-card/80 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Análise Visual
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-6">
+                  {/* Top Products Bar Chart */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Top Produtos por Quantidade</h3>
+                    <div className="h-64">
+                      <ChartContainer
+                        config={{
+                          quantidade: {
+                            label: "Quantidade",
+                            color: "hsl(var(--primary))",
+                          },
+                        }}
+                        className="h-full w-full"
+                      >
+                        <BarChart data={chartData.topProducts} layout="horizontal">
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" />
+                          <YAxis 
+                            dataKey="modelo" 
+                            type="category" 
+                            width={120}
+                            tick={{ fontSize: 12 }}
+                          />
+                          <ChartTooltip
+                            content={<ChartTooltipContent />}
+                          />
+                          <Bar dataKey="quantidade" radius={4} />
+                        </BarChart>
+                      </ChartContainer>
+                    </div>
+                  </div>
+
+                  {/* Pie Chart and Shelf Chart */}
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Distribution Pie Chart */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Distribuição do Stock</h3>
+                      <div className="h-64">
+                        <ChartContainer
+                          config={{
+                            value: {
+                              label: "Quantidade",
+                              color: "hsl(var(--primary))",
+                            },
+                          }}
+                          className="h-full w-full"
+                        >
+                          <PieChart>
+                            <Pie
+                              data={chartData.pieData}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                            >
+                              {chartData.pieData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                              ))}
+                            </Pie>
+                            <ChartTooltip
+                              content={<ChartTooltipContent />}
+                            />
+                          </PieChart>
+                        </ChartContainer>
+                      </div>
+                    </div>
+
+                    {/* Shelf Distribution Chart */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Stock por Estante</h3>
+                      <div className="h-64">
+                        <ChartContainer
+                          config={{
+                            total: {
+                              label: "Total Peças",
+                              color: "hsl(var(--primary))",
+                            },
+                            produtos: {
+                              label: "Produtos Únicos",
+                              color: "hsl(var(--secondary))",
+                            },
+                          }}
+                          className="h-full w-full"
+                        >
+                          <BarChart data={chartData.shelfData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="estante" />
+                            <YAxis />
+                            <ChartTooltip
+                              content={<ChartTooltipContent />}
+                            />
+                            <Bar dataKey="total" fill="hsl(var(--primary))" radius={4} />
+                          </BarChart>
+                        </ChartContainer>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+ 
         {/* Stock por Produto */}
         <div className="mb-6">
           <Card className="bg-card/80 backdrop-blur">
