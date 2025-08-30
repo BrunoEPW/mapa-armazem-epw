@@ -148,19 +148,23 @@ const Reports = () => {
 
   // Prepare chart data
   const prepareChartData = () => {
-    // Agrupar por modelo apenas
+    // Agrupar por modelo usando epwModelo (com descrição) ou modelo como fallback
     const modelMap = new Map();
     productStock.forEach(item => {
-      const modelo = item.product.modelo;
-      if (!modelMap.has(modelo)) {
-        modelMap.set(modelo, {
-          modelo,
+      // Usar epwModelo se disponível, senão usar modelo
+      const modeloCode = item.product.epwModelo?.l || item.product.modelo;
+      const modeloDesc = item.product.epwModelo?.d || item.product.modelo;
+      
+      if (!modelMap.has(modeloCode)) {
+        modelMap.set(modeloCode, {
+          modelo: modeloCode,
+          modeloDescricao: modeloDesc,
           quantidade: 0,
           descricao: item.product.descricao,
           items: []
         });
       }
-      const existing = modelMap.get(modelo);
+      const existing = modelMap.get(modeloCode);
       existing.quantidade += item.totalPecas;
       existing.items.push(item);
     });
@@ -170,7 +174,8 @@ const Reports = () => {
       .sort((a, b) => b.quantidade - a.quantidade)
       .slice(0, 15)
       .map((item, index) => ({
-        modelo: item.modelo,
+        modelo: item.modeloDescricao, // Usar descrição do modelo para exibição
+        modeloCode: item.modelo, // Manter código para referência
         quantidade: item.quantidade,
         descricao: item.descricao,
         fill: `hsl(${24 + (index * 25) % 360}, 70%, 50%)`,
@@ -180,7 +185,12 @@ const Reports = () => {
     // Prepare drill-down data if model is selected
     let drillDownData = [];
     if (selectedModel) {
-      const modelItems = productStock.filter(item => item.product.modelo === selectedModel);
+      // Usar modeloCode para filtrar quando um modelo é selecionado
+      const selectedModelCode = modelData.find(m => m.modelo === selectedModel)?.modeloCode;
+      const modelItems = productStock.filter(item => 
+        (item.product.epwModelo?.l === selectedModelCode) || 
+        (item.product.modelo === selectedModelCode)
+      );
       
       if (drillDownType === 'cor') {
         const corMap = new Map();
@@ -368,8 +378,8 @@ const Reports = () => {
                           data={chartData.modelData} 
                           onClick={(data) => {
                             if (data && data.activePayload && data.activePayload[0]) {
-                              const modelo = data.activePayload[0].payload.modelo;
-                              setSelectedModel(modelo);
+                              const modeloDescricao = data.activePayload[0].payload.modelo;
+                              setSelectedModel(modeloDescricao);
                             }
                           }}
                         >
