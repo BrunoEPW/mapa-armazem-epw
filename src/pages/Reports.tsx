@@ -411,66 +411,6 @@ const Reports = () => {
           </Card>
         </div>
 
-        {/* Últimas Movimentações */}
-        <div className="mb-6">
-          <Card className="bg-card/80 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ArrowUpDown className="h-5 w-5" />
-                Últimas Movimentações
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Material</TableHead>
-                      <TableHead className="text-right">Quantidade</TableHead>
-                      <TableHead>Localização</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recentMovements.length > 0 ? (
-                      recentMovements.map((movement) => {
-                        const material = materials.find(m => m.id === movement.materialId);
-                        return (
-                          <TableRow key={movement.id}>
-                            <TableCell>{format(new Date(movement.date), 'dd/MM/yyyy HH:mm')}</TableCell>
-                            <TableCell>
-                              <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs ${
-                                movement.type === 'entrada'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-red-100 text-red-800'
-                              }`}>
-                                {movement.type === 'entrada' ? 'Entrada' : 'Saída'}
-                              </span>
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {material ? material.product.modelo : 'Material não encontrado'}
-                            </TableCell>
-                            <TableCell className="text-right font-bold">{movement.pecas}</TableCell>
-                            <TableCell>
-                              {material ? `${material.location.estante}${material.location.prateleira}` : '-'}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                          Nenhuma movimentação registada
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
         </div>
       </div>
       <Footer />
