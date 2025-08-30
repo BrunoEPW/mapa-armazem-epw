@@ -387,7 +387,7 @@ const Reports = () => {
                           <XAxis 
                             dataKey="modelo" 
                             tick={{ fontSize: 10 }}
-                            height={80}
+                            height={100}
                             interval={0}
                             angle={-45}
                             textAnchor="end"
