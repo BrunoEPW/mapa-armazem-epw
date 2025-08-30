@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Settings, Download, Upload, Mail, Clock, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import MinimumStockPanel from './MinimumStockPanel';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -256,10 +257,11 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
         </DialogHeader>
 
         <Tabs defaultValue="manual-backup" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="manual-backup">Backup Manual</TabsTrigger>
             <TabsTrigger value="upload-backup">Carregar Backup</TabsTrigger>
             <TabsTrigger value="automatic-backup">Backup Automático</TabsTrigger>
+            <TabsTrigger value="minimum-stocks">Stocks Mínimos</TabsTrigger>
             <TabsTrigger value="cleanup">Limpeza</TabsTrigger>
           </TabsList>
 
@@ -458,6 +460,10 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
                 </Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="minimum-stocks" className="space-y-4">
+            <MinimumStockPanel />
           </TabsContent>
 
           <TabsContent value="cleanup" className="space-y-4">

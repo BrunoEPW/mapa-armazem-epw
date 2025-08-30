@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { TrendingUp, Package, ArrowUpDown, Calendar as CalendarIcon, Search, Download, ArrowLeft, BarChart3 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { TrendingUp, Package, ArrowUpDown, Calendar as CalendarIcon, Search, Download, ArrowLeft, BarChart3, AlertTriangle, CheckCircle } from 'lucide-react';
 import reportsBanner from '@/assets/reports-banner.jpg';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
 import { useWarehouse } from '@/contexts/WarehouseContext';
+import { useMinimumStocks } from '@/hooks/useMinimumStocks';
+import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import * as XLSX from 'xlsx';
@@ -22,6 +24,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, Respon
 const Reports = () => {
   const navigate = useNavigate();
   const { materials, movements, products } = useWarehouse();
+  const { getMinimumStockSummary, getStockAlerts } = useMinimumStocks(materials, products);
   
   // State for date selection and filters
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -37,6 +40,10 @@ const Reports = () => {
   // State for drill-down analysis
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [drillDownType, setDrillDownType] = useState<'cor' | 'comprimento'>('cor');
+  
+  // Get minimum stock data
+  const minimumStockSummary = useMemo(() => getMinimumStockSummary(), [getMinimumStockSummary]);
+  const stockAlerts = useMemo(() => getStockAlerts(), [getStockAlerts]);
 
   // Calculate statistics
   const totalMaterials = materials.length;
@@ -590,6 +597,110 @@ const Reports = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Stocks Mínimos */}
+        {minimumStockSummary.totalProductsWithMinimum > 0 && (
+          <div className="mb-6">
+            <Card className="bg-card/80 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Análise de Stocks Mínimos
+                </CardTitle>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{minimumStockSummary.totalProductsWithMinimum}</div>
+                    <div className="text-sm text-muted-foreground">Produtos Configurados</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{minimumStockSummary.productsOk}</div>
+                    <div className="text-sm text-muted-foreground">Stock OK</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-600">{minimumStockSummary.productsLow}</div>
+                    <div className="text-sm text-muted-foreground">Stock Baixo</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-red-600">{minimumStockSummary.productsCritical}</div>
+                    <div className="text-sm text-muted-foreground">Sem Stock</div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {stockAlerts.filter(alert => alert.status !== 'ok').length > 0 ? (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-red-600">Produtos que Necessitam Reposição</h3>
+                    <div className="overflow-auto max-h-64">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Produto</TableHead>
+                            <TableHead className="text-right">Stock Atual</TableHead>
+                            <TableHead className="text-right">Stock Mínimo</TableHead>
+                            <TableHead className="text-right">Necessário</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {stockAlerts
+                            .filter(alert => alert.status !== 'ok')
+                            .sort((a, b) => {
+                              if (a.status === 'critical' && b.status !== 'critical') return -1;
+                              if (b.status === 'critical' && a.status !== 'critical') return 1;
+                              return b.deficit - a.deficit;
+                            })
+                            .map((alert, index) => (
+                              <TableRow key={index}>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    {alert.status === 'critical' ? (
+                                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                                    ) : (
+                                      <AlertTriangle className="h-4 w-4 text-orange-500" />
+                                    )}
+                                    <Badge 
+                                      variant={alert.status === 'critical' ? 'destructive' : 'secondary'}
+                                    >
+                                      {alert.status === 'critical' ? 'Sem Stock' : 'Stock Baixo'}
+                                    </Badge>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">{alert.modelo}</div>
+                                    <div className="text-sm text-muted-foreground">
+                                      {alert.acabamento} - {alert.cor} - {alert.comprimento}mm
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <span className={alert.currentStock === 0 ? 'text-red-600 font-bold' : ''}>
+                                    {alert.currentStock}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-right">{alert.minimumStock}</TableCell>
+                                <TableCell className="text-right">
+                                  <span className="text-red-600 font-bold">
+                                    {alert.deficit}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                    <p className="text-lg font-semibold text-green-600">Todos os stocks estão adequados!</p>
+                    <p className="text-muted-foreground">Nenhum produto está abaixo do stock mínimo definido</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Inventários */}
         <div className="mb-6">
