@@ -20,7 +20,7 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
   onSuccess,
   onCancel,
 }) => {
-  const { products, addMaterial, addMovement, createProductFromApi } = useWarehouse();
+  const { products, addMaterial, addMovement, createProductFromApi, getMaterialsByShelf, updateMaterial } = useWarehouse();
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [pecas, setPecas] = useState<number>(1);
@@ -79,24 +79,41 @@ export const AddMaterialForm: React.FC<AddMaterialFormProps> = ({
         }
       }
 
-      const materialId = `${productToUse.id}_${location.estante}${location.prateleira}_${Date.now()}`;
-      
-      const createdMaterial = await addMaterial({
-        productId: productToUse.id,
-        product: productToUse,
-        pecas,
-        location,
-      });
+      // Check if material with same product already exists on this shelf
+      const existingMaterials = getMaterialsByShelf(location);
+      const existingMaterial = existingMaterials.find(m => m.productId === productToUse.id);
 
+      let materialId: string;
+      
+      if (existingMaterial) {
+        // Update existing material quantity
+        await updateMaterial(existingMaterial.id, {
+          pecas: existingMaterial.pecas + pecas
+        });
+        materialId = existingMaterial.id;
+        
+        toast.success(`Quantidade aumentada! Adicionadas ${pecas} peças de ${selectedProduct.epwModelo?.d || selectedProduct.modelo} (total: ${existingMaterial.pecas + pecas}) em ${location.estante}${location.prateleira}`);
+      } else {
+        // Create new material
+        const createdMaterial = await addMaterial({
+          productId: productToUse.id,
+          product: productToUse,
+          pecas,
+          location,
+        });
+        materialId = createdMaterial.id;
+        
+        toast.success(`Material adicionado com sucesso! ${pecas} peças de ${selectedProduct.epwModelo?.d || selectedProduct.modelo} em ${location.estante}${location.prateleira}`);
+      }
+
+      // Always create movement record
       await addMovement({
-        materialId: createdMaterial.id,
+        materialId,
         type: 'entrada',
         pecas,
         norc: norc.trim(),
         date: new Date().toISOString(),
       });
-      
-      toast.success(`Material adicionado com sucesso! ${pecas} peças de ${selectedProduct.epwModelo?.d || selectedProduct.modelo} em ${location.estante}${location.prateleira}`);
       onSuccess();
     } catch (error) {
       toast.error('Erro ao adicionar material. Tente novamente.');
