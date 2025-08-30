@@ -366,7 +366,6 @@ const Reports = () => {
                       >
                         <BarChart 
                           data={chartData.modelData} 
-                          layout="horizontal"
                           onClick={(data) => {
                             if (data && data.activePayload && data.activePayload[0]) {
                               const modelo = data.activePayload[0].payload.modelo;
@@ -375,12 +374,16 @@ const Reports = () => {
                           }}
                         >
                           <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis type="number" />
-                          <YAxis 
+                          <XAxis 
                             dataKey="modelo" 
-                            type="category" 
-                            width={120}
-                            tick={{ fontSize: 11 }}
+                            tick={{ fontSize: 10 }}
+                            height={80}
+                            interval={0}
+                            angle={-45}
+                            textAnchor="end"
+                          />
+                          <YAxis 
+                            label={{ value: 'Quantidade', angle: -90, position: 'insideLeft' }}
                           />
                           <ChartTooltip
                             content={({ active, payload }) => {
