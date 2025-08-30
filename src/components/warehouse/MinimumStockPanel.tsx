@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Plus, Trash2, Search, Package, AlertTriangle, CheckCircle } from 'lucide-react';
+import React, { useState, useMemo, useRef } from 'react';
+import { Plus, Trash2, Search, Package, AlertTriangle, CheckCircle, Edit } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,9 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { useMinimumStocks } from '@/hooks/useMinimumStocks';
 import { Product } from '@/types/warehouse';
+import { ModeloSelect, ModeloSelectRef } from '@/components/warehouse/ModeloSelect';
+import { ComprimentoSelect, ComprimentoSelectRef } from '@/components/warehouse/ComprimentoSelect';
+import { CorSelect, CorSelectRef } from '@/components/warehouse/CorSelect';
 
 const MinimumStockPanel = () => {
   const { materials, products } = useWarehouse();
@@ -32,19 +36,56 @@ const MinimumStockPanel = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [minimumQuantity, setMinimumQuantity] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'with-minimum' | 'without-minimum'>('all');
+  
+  // Product filters (like in other tabs)
+  const [selectedModel, setSelectedModel] = useState<string>('all');
+  const [selectedComprimento, setSelectedComprimento] = useState<string>('all');
+  const [selectedCor, setSelectedCor] = useState<string>('all');
+  const [productSearchQuery, setProductSearchQuery] = useState('');
+  
+  // Dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editQuantity, setEditQuantity] = useState<string>('');
+  
+  const modeloSelectRef = useRef<ModeloSelectRef>(null);
+  const comprimentoSelectRef = useRef<ComprimentoSelectRef>(null);
+  const corSelectRef = useRef<CorSelectRef>(null);
 
-  // Filter products based on search and status
+  // Filter products based on search and filters
   const filteredProducts = useMemo(() => {
     let filtered = products.filter(product => {
+      // Basic search
       const searchLower = searchTerm.toLowerCase();
-      return (
+      const searchMatch = searchTerm === '' || 
         product.modelo.toLowerCase().includes(searchLower) ||
         product.acabamento.toLowerCase().includes(searchLower) ||
         product.cor.toLowerCase().includes(searchLower) ||
-        product.comprimento.toString().includes(searchLower)
-      );
+        product.comprimento.toString().includes(searchLower) ||
+        (product.descricao && product.descricao.toLowerCase().includes(searchLower));
+
+      // Product description search
+      const productSearchMatch = productSearchQuery === '' ||
+        (product.descricao && product.descricao.toLowerCase().includes(productSearchQuery.toLowerCase())) ||
+        (product.codigo && product.codigo.toLowerCase().includes(productSearchQuery.toLowerCase()));
+
+      // Model filter (using EPW decoded fields)
+      const modelMatch = selectedModel === 'all' || 
+        (product.epwModelo?.l === selectedModel) ||
+        (product.epwModelo?.d === selectedModel);
+      
+      const comprimentoMatch = selectedComprimento === 'all' || 
+        (product.epwComprimento?.l === selectedComprimento) ||
+        (product.epwComprimento?.d === selectedComprimento);
+      
+      const corMatch = selectedCor === 'all' || 
+        (product.epwCor?.l === selectedCor) ||
+        (product.epwCor?.d === selectedCor);
+
+      return searchMatch && productSearchMatch && modelMatch && comprimentoMatch && corMatch;
     });
 
+    // Status filter
     if (filterStatus === 'with-minimum') {
       filtered = filtered.filter(product => getMinimumStock(product));
     } else if (filterStatus === 'without-minimum') {
@@ -52,7 +93,7 @@ const MinimumStockPanel = () => {
     }
 
     return filtered;
-  }, [products, searchTerm, filterStatus, getMinimumStock]);
+  }, [products, searchTerm, productSearchQuery, selectedModel, selectedComprimento, selectedCor, filterStatus, getMinimumStock]);
 
   const handleAddMinimumStock = () => {
     if (!selectedProduct || !minimumQuantity || parseInt(minimumQuantity) <= 0) return;
@@ -60,6 +101,31 @@ const MinimumStockPanel = () => {
     addMinimumStock(selectedProduct, parseInt(minimumQuantity));
     setSelectedProduct(null);
     setMinimumQuantity('');
+  };
+
+  const handleEditProduct = (product: Product) => {
+    const existingMinimum = getMinimumStock(product);
+    setEditingProduct(product);
+    setEditQuantity(existingMinimum ? existingMinimum.minimumQuantity.toString() : '');
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingProduct || !editQuantity || parseInt(editQuantity) <= 0) return;
+
+    addMinimumStock(editingProduct, parseInt(editQuantity));
+    setEditDialogOpen(false);
+    setEditingProduct(null);
+    setEditQuantity('');
+  };
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setProductSearchQuery('');
+    setSelectedModel('all');
+    setSelectedComprimento('all');
+    setSelectedCor('all');
+    setFilterStatus('all');
   };
 
   const handleRemoveMinimumStock = (product: Product) => {
@@ -165,6 +231,37 @@ const MinimumStockPanel = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Product Filters (like in other tabs) */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <ModeloSelect
+                ref={modeloSelectRef}
+                value={selectedModel}
+                onValueChange={setSelectedModel}
+              />
+              <ComprimentoSelect
+                ref={comprimentoSelectRef}
+                value={selectedComprimento}
+                onValueChange={setSelectedComprimento}
+              />
+              <CorSelect
+                ref={corSelectRef}
+                value={selectedCor}
+                onValueChange={setSelectedCor}
+              />
+            </div>
+            
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Pesquisar por descrição de produto..."
+                value={productSearchQuery}
+                onChange={(e) => setProductSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
           <div className="flex gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -185,6 +282,9 @@ const MinimumStockPanel = () => {
                 <SelectItem value="without-minimum">Sem stock mínimo</SelectItem>
               </SelectContent>
             </Select>
+            <Button onClick={clearAllFilters} variant="outline" size="sm">
+              Limpar Filtros
+            </Button>
           </div>
 
           {/* Products table */}
@@ -192,65 +292,42 @@ const MinimumStockPanel = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Produto</TableHead>
+                  <TableHead>Descrição do Artigo</TableHead>
                   <TableHead>Stock Atual</TableHead>
                   <TableHead>Stock Mínimo</TableHead>
-                  <TableHead>Deficit</TableHead>
-                  <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredProducts.map(product => {
                   const currentStock = getCurrentStock(product);
                   const minimumStock = getMinimumStock(product);
-                  const deficit = minimumStock ? Math.max(0, minimumStock.minimumQuantity - currentStock) : 0;
+                  const isLowStock = minimumStock && currentStock < minimumStock.minimumQuantity;
 
                   return (
-                    <TableRow key={product.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(product)}
-                          {getStatusBadge(product)}
-                        </div>
-                      </TableCell>
+                    <TableRow 
+                      key={product.id}
+                      className={`cursor-pointer hover:bg-muted/50 ${isLowStock ? 'bg-orange-100 hover:bg-orange-200' : ''}`}
+                      onClick={() => handleEditProduct(product)}
+                    >
                       <TableCell>
                         <div>
-                          <div className="font-medium">{product.modelo}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {product.acabamento} - {product.cor} - {product.comprimento}mm
+                          <div className="font-medium">
+                            {product.descricao || `${product.modelo} - ${product.acabamento} - ${product.cor} - ${product.comprimento}mm`}
                           </div>
+                          {product.codigo && (
+                            <div className="text-sm text-muted-foreground">
+                              Código: {product.codigo}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className={currentStock === 0 ? 'text-destructive font-medium' : ''}>
+                        <span className={currentStock === 0 ? 'text-destructive font-medium' : isLowStock ? 'text-orange-600 font-medium' : ''}>
                           {currentStock}
                         </span>
                       </TableCell>
                       <TableCell>
                         {minimumStock ? minimumStock.minimumQuantity : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {deficit > 0 && (
-                          <span className="text-destructive font-medium">
-                            {deficit}
-                          </span>
-                        )}
-                        {deficit === 0 && minimumStock && (
-                          <span className="text-green-600">-</span>
-                        )}
-                        {!minimumStock && '-'}
-                      </TableCell>
-                      <TableCell>
-                        {minimumStock && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRemoveMinimumStock(product)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
                       </TableCell>
                     </TableRow>
                   );
@@ -266,6 +343,66 @@ const MinimumStockPanel = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="h-5 w-5" />
+              Definir Stock Mínimo
+            </DialogTitle>
+            <DialogDescription>
+              Defina a quantidade mínima para este produto
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingProduct && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="font-medium">Produto</Label>
+                <div className="p-3 bg-muted rounded-lg">
+                  <div className="font-medium">
+                    {editingProduct.descricao || `${editingProduct.modelo} - ${editingProduct.acabamento} - ${editingProduct.cor} - ${editingProduct.comprimento}mm`}
+                  </div>
+                  {editingProduct.codigo && (
+                    <div className="text-sm text-muted-foreground">
+                      Código: {editingProduct.codigo}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-quantity">Quantidade Mínima</Label>
+                <Input
+                  id="edit-quantity"
+                  type="number"
+                  min="1"
+                  placeholder="Ex: 10"
+                  value={editQuantity}
+                  onChange={(e) => setEditQuantity(e.target.value)}
+                />
+              </div>
+              
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setEditDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleSaveEdit}
+                  disabled={!editQuantity || parseInt(editQuantity) <= 0}
+                >
+                  Guardar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
