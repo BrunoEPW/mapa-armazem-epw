@@ -33,6 +33,10 @@ const Reports = () => {
   // State for locations dialog
   const [showLocationsDialog, setShowLocationsDialog] = useState(false);
   const [selectedProductData, setSelectedProductData] = useState<any>(null);
+  
+  // State for drill-down analysis
+  const [selectedModel, setSelectedModel] = useState<string | null>(null);
+  const [drillDownType, setDrillDownType] = useState<'cor' | 'comprimento'>('cor');
 
   // Calculate statistics
   const totalMaterials = materials.length;
@@ -135,61 +139,78 @@ const Reports = () => {
 
   // Prepare chart data
   const prepareChartData = () => {
-    // Top 10 produtos por quantidade para gráfico de barras
-    const topProducts = productStock
-      .slice(0, 10)
-      .map((item, index) => ({
-        modelo: item.product.codigo || item.product.modelo,
-        quantidade: item.totalPecas,
-        fill: `hsl(${24 + (index * 30) % 360}, 70%, 50%)` // Orange-based palette
-      }));
-
-    // Dados para gráfico de pizza (top 8 + outros)
-    const pieData = (() => {
-      const top8 = productStock.slice(0, 8);
-      const others = productStock.slice(8);
-      const othersTotal = others.reduce((sum, item) => sum + item.totalPecas, 0);
-      
-      const data = top8.map((item, index) => ({
-        name: item.product.descricao || `${item.product.modelo} ${item.product.acabamento} ${item.product.cor}`,
-        value: item.totalPecas,
-        fill: `hsl(${24 + (index * 45) % 360}, 70%, 55%)`
-      }));
-
-      if (othersTotal > 0) {
-        data.push({
-          name: 'Outros',
-          value: othersTotal,
-          fill: 'hsl(220, 30%, 60%)'
+    // Agrupar por modelo apenas
+    const modelMap = new Map();
+    productStock.forEach(item => {
+      const modelo = item.product.modelo;
+      if (!modelMap.has(modelo)) {
+        modelMap.set(modelo, {
+          modelo,
+          quantidade: 0,
+          descricao: item.product.descricao,
+          items: []
         });
       }
+      const existing = modelMap.get(modelo);
+      existing.quantidade += item.totalPecas;
+      existing.items.push(item);
+    });
 
-      return data;
-    })();
+    // Top modelos por quantidade para gráfico de barras
+    const modelData = Array.from(modelMap.values())
+      .sort((a, b) => b.quantidade - a.quantidade)
+      .slice(0, 15)
+      .map((item, index) => ({
+        modelo: item.modelo,
+        quantidade: item.quantidade,
+        descricao: item.descricao,
+        fill: `hsl(${24 + (index * 25) % 360}, 70%, 50%)`,
+        items: item.items
+      }));
 
-    // Dados por estante
-    const shelfData = (() => {
-      const shelfMap = new Map();
-      materials.forEach(material => {
-        const estante = material.location.estante;
-        if (!shelfMap.has(estante)) {
-          shelfMap.set(estante, { estante, total: 0, produtos: new Set() });
-        }
-        const shelf = shelfMap.get(estante);
-        shelf.total += material.pecas;
-        shelf.produtos.add(`${material.product.modelo}-${material.product.acabamento}-${material.product.cor}`);
-      });
+    // Prepare drill-down data if model is selected
+    let drillDownData = [];
+    if (selectedModel) {
+      const modelItems = productStock.filter(item => item.product.modelo === selectedModel);
+      
+      if (drillDownType === 'cor') {
+        const corMap = new Map();
+        modelItems.forEach(item => {
+          const cor = item.product.cor;
+          if (!corMap.has(cor)) {
+            corMap.set(cor, 0);
+          }
+          corMap.set(cor, corMap.get(cor) + item.totalPecas);
+        });
+        
+        drillDownData = Array.from(corMap.entries())
+          .map(([cor, quantidade], index) => ({
+            name: cor,
+            value: quantidade,
+            fill: `hsl(${index * 40}, 70%, 60%)`
+          }))
+          .sort((a, b) => b.value - a.value);
+      } else {
+        const comprimentoMap = new Map();
+        modelItems.forEach(item => {
+          const comprimento = item.product.comprimento.toString();
+          if (!comprimentoMap.has(comprimento)) {
+            comprimentoMap.set(comprimento, 0);
+          }
+          comprimentoMap.set(comprimento, comprimentoMap.get(comprimento) + item.totalPecas);
+        });
+        
+        drillDownData = Array.from(comprimentoMap.entries())
+          .map(([comprimento, quantidade], index) => ({
+            name: `${comprimento}mm`,
+            value: quantidade,
+            fill: `hsl(${index * 40}, 70%, 60%)`
+          }))
+          .sort((a, b) => b.value - a.value);
+      }
+    }
 
-      return Array.from(shelfMap.values())
-        .map(shelf => ({
-          ...shelf,
-          produtos: shelf.produtos.size,
-          fill: `hsl(${200 + (shelf.estante.charCodeAt(0) * 20) % 120}, 60%, 50%)`
-        }))
-        .sort((a, b) => a.estante.localeCompare(b.estante));
-    })();
-
-    return { topProducts, pieData, shelfData };
+    return { modelData, drillDownData };
   };
 
   const chartData = prepareChartData();
@@ -305,15 +326,26 @@ const Reports = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
-                  Análise Visual
+                  Análise Visual - Stock por Modelo
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-6">
-                  {/* Top Products Bar Chart */}
+                  {/* Models Bar Chart */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Top Produtos por Quantidade</h3>
-                    <div className="h-64">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold">Modelos em Stock (clique para detalhar)</h3>
+                      {selectedModel && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedModel(null)}
+                        >
+                          Voltar à Vista Geral
+                        </Button>
+                      )}
+                    </div>
+                    <div className="h-80">
                       <ChartContainer
                         config={{
                           quantidade: {
@@ -323,91 +355,139 @@ const Reports = () => {
                         }}
                         className="h-full w-full"
                       >
-                        <BarChart data={chartData.topProducts} layout="horizontal">
+                        <BarChart 
+                          data={chartData.modelData} 
+                          layout="horizontal"
+                          onClick={(data) => {
+                            if (data && data.activePayload && data.activePayload[0]) {
+                              const modelo = data.activePayload[0].payload.modelo;
+                              setSelectedModel(modelo);
+                            }
+                          }}
+                        >
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis type="number" />
                           <YAxis 
                             dataKey="modelo" 
                             type="category" 
                             width={120}
-                            tick={{ fontSize: 12 }}
+                            tick={{ fontSize: 11 }}
                           />
                           <ChartTooltip
-                            content={<ChartTooltipContent />}
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                return (
+                                  <div className="bg-background p-3 border rounded-lg shadow-lg">
+                                    <p className="font-semibold">{data.modelo}</p>
+                                    {data.descricao && <p className="text-sm text-muted-foreground">{data.descricao}</p>}
+                                    <p className="text-sm">Quantidade: <span className="font-semibold">{data.quantidade}</span></p>
+                                    <p className="text-xs text-muted-foreground mt-1">Clique para detalhar</p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
                           />
-                          <Bar dataKey="quantidade" radius={4} />
+                          <Bar 
+                            dataKey="quantidade" 
+                            radius={4}
+                            className="cursor-pointer hover:opacity-80"
+                          />
                         </BarChart>
                       </ChartContainer>
                     </div>
                   </div>
 
-                  {/* Pie Chart and Shelf Chart */}
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* Distribution Pie Chart */}
+                  {/* Drill-down chart */}
+                  {selectedModel && chartData.drillDownData.length > 0 && (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Distribuição do Stock</h3>
-                      <div className="h-64">
-                        <ChartContainer
-                          config={{
-                            value: {
-                              label: "Quantidade",
-                              color: "hsl(var(--primary))",
-                            },
-                          }}
-                          className="h-full w-full"
-                        >
-                          <PieChart>
-                            <Pie
-                              data={chartData.pieData}
-                              dataKey="value"
-                              nameKey="name"
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={80}
-                              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                            >
-                              {chartData.pieData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.fill} />
-                              ))}
-                            </Pie>
-                            <ChartTooltip
-                              content={<ChartTooltipContent />}
-                            />
-                          </PieChart>
-                        </ChartContainer>
+                      <div className="flex items-center gap-4">
+                        <h3 className="text-lg font-semibold">
+                          Detalhes do modelo "{selectedModel}" por {drillDownType === 'cor' ? 'Cor' : 'Comprimento'}
+                        </h3>
+                        <div className="flex gap-2">
+                          <Button
+                            variant={drillDownType === 'cor' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setDrillDownType('cor')}
+                          >
+                            Por Cor
+                          </Button>
+                          <Button
+                            variant={drillDownType === 'comprimento' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setDrillDownType('comprimento')}
+                          >
+                            Por Comprimento
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                      
+                      <div className="grid md:grid-cols-2 gap-6">
+                        {/* Bar Chart */}
+                        <div className="h-64">
+                          <ChartContainer
+                            config={{
+                              value: {
+                                label: "Quantidade",
+                                color: "hsl(var(--primary))",
+                              },
+                            }}
+                            className="h-full w-full"
+                          >
+                            <BarChart data={chartData.drillDownData}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis 
+                                dataKey="name" 
+                                tick={{ fontSize: 12 }}
+                                angle={-45}
+                                textAnchor="end"
+                                height={60}
+                              />
+                              <YAxis />
+                              <ChartTooltip
+                                content={<ChartTooltipContent />}
+                              />
+                              <Bar dataKey="value" radius={4} />
+                            </BarChart>
+                          </ChartContainer>
+                        </div>
 
-                    {/* Shelf Distribution Chart */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Stock por Estante</h3>
-                      <div className="h-64">
-                        <ChartContainer
-                          config={{
-                            total: {
-                              label: "Total Peças",
-                              color: "hsl(var(--primary))",
-                            },
-                            produtos: {
-                              label: "Produtos Únicos",
-                              color: "hsl(var(--secondary))",
-                            },
-                          }}
-                          className="h-full w-full"
-                        >
-                          <BarChart data={chartData.shelfData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="estante" />
-                            <YAxis />
-                            <ChartTooltip
-                              content={<ChartTooltipContent />}
-                            />
-                            <Bar dataKey="total" fill="hsl(var(--primary))" radius={4} />
-                          </BarChart>
-                        </ChartContainer>
+                        {/* Pie Chart */}
+                        <div className="h-64">
+                          <ChartContainer
+                            config={{
+                              value: {
+                                label: "Quantidade",
+                                color: "hsl(var(--primary))",
+                              },
+                            }}
+                            className="h-full w-full"
+                          >
+                            <PieChart>
+                              <Pie
+                                data={chartData.drillDownData}
+                                dataKey="value"
+                                nameKey="name"
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={80}
+                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                              >
+                                {chartData.drillDownData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                                ))}
+                              </Pie>
+                              <ChartTooltip
+                                content={<ChartTooltipContent />}
+                              />
+                            </PieChart>
+                          </ChartContainer>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
