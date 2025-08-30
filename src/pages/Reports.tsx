@@ -151,7 +151,7 @@ const Reports = () => {
       const othersTotal = others.reduce((sum, item) => sum + item.totalPecas, 0);
       
       const data = top8.map((item, index) => ({
-        name: item.product.codigo || item.product.modelo,
+        name: item.product.descricao || `${item.product.modelo} ${item.product.acabamento} ${item.product.cor}`,
         value: item.totalPecas,
         fill: `hsl(${24 + (index * 45) % 360}, 70%, 55%)`
       }));
