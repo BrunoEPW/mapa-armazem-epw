@@ -45,6 +45,8 @@ const Reports = () => {
   const minimumStockSummary = useMemo(() => getMinimumStockSummary(), [getMinimumStockSummary]);
   const stockAlerts = useMemo(() => getStockAlerts(), [getStockAlerts]);
 
+  console.log('🔍 [Reports] Minimum Stock Summary:', minimumStockSummary);
+
   // Calculate statistics
   const totalMaterials = materials.length;
   const totalPecas = materials.reduce((sum, m) => sum + m.pecas, 0);

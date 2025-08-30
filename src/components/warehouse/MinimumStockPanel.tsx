@@ -22,6 +22,12 @@ const MinimumStockPanel = () => {
     generateProductKey
   } = useMinimumStocks(materials, products);
 
+  console.log('🔍 [MinimumStockPanel] Data:', { 
+    materialsCount: materials.length, 
+    productsCount: products.length, 
+    minimumStocksCount: minimumStocks.length 
+  });
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [minimumQuantity, setMinimumQuantity] = useState<string>('');
