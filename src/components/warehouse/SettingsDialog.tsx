@@ -257,12 +257,12 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
         </DialogHeader>
 
         <Tabs defaultValue="manual-backup" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="manual-backup">Backup Manual</TabsTrigger>
-            <TabsTrigger value="upload-backup">Carregar Backup</TabsTrigger>
-            <TabsTrigger value="automatic-backup">Backup Automático</TabsTrigger>
-            <TabsTrigger value="minimum-stocks">Stocks Mínimos</TabsTrigger>
-            <TabsTrigger value="cleanup">Limpeza</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1">
+            <TabsTrigger value="manual-backup" className="text-xs md:text-sm">Backup Manual</TabsTrigger>
+            <TabsTrigger value="upload-backup" className="text-xs md:text-sm">Carregar Backup</TabsTrigger>
+            <TabsTrigger value="automatic-backup" className="text-xs md:text-sm">Backup Automático</TabsTrigger>
+            <TabsTrigger value="minimum-stocks" className="text-xs md:text-sm">Stocks Mínimos</TabsTrigger>
+            <TabsTrigger value="cleanup" className="text-xs md:text-sm">Limpeza</TabsTrigger>
           </TabsList>
 
           <TabsContent value="manual-backup" className="space-y-4">
