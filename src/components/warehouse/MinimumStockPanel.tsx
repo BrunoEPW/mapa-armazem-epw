@@ -195,7 +195,7 @@ const MinimumStockPanel = () => {
                 <SelectContent>
                   {products.map(product => (
                     <SelectItem key={product.id} value={product.id}>
-                      {product.modelo} - {product.acabamento} - {product.cor} - {product.comprimento}mm
+                      {product.descricao || `${product.modelo} - ${product.acabamento} - ${product.cor} - ${product.comprimento}mm`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -317,6 +317,11 @@ const MinimumStockPanel = () => {
                           {product.codigo && (
                             <div className="text-sm text-muted-foreground">
                               Código: {product.codigo}
+                            </div>
+                          )}
+                          {!product.descricao && (
+                            <div className="text-xs text-muted-foreground">
+                              Modelo: {product.modelo} | Acabamento: {product.acabamento} | Cor: {product.cor} | {product.comprimento}mm
                             </div>
                           )}
                         </div>
