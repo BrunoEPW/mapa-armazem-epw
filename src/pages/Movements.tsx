@@ -36,6 +36,18 @@ const Movements = () => {
   const comprimentoSelectRef = useRef<ComprimentoSelectRef>(null);
   const corSelectRef = useRef<CorSelectRef>(null);
 
+  // Debug logs
+  console.log('🔍 [Movements Debug] Total movements:', movements.length);
+  console.log('🔍 [Movements Debug] Total materials:', materials.length);
+  console.log('🔍 [Movements Debug] Filter values:', { 
+    selectedModel, 
+    selectedComprimento, 
+    selectedCor, 
+    productSearchQuery, 
+    searchFilter, 
+    typeFilter 
+  });
+
   // Filter and sort movements
   const filteredMovements = useMemo(() => {
     return movements
@@ -52,6 +64,13 @@ const Movements = () => {
         };
       })
       .filter(movement => {
+        console.log('🔍 [Filter Debug] Processing movement:', {
+          id: movement.id,
+          material: movement.material,
+          materialCode: movement.materialCode,
+          product: movement.material?.product
+        });
+
         // Filter by search term (material code, description, or norc)
         const searchMatch = searchFilter === '' || 
           movement.materialCode.toLowerCase().includes(searchFilter.toLowerCase()) ||
@@ -78,7 +97,19 @@ const Movements = () => {
           (movement.material?.product?.codigo && 
            movement.material.product.codigo.toLowerCase().includes(productSearchQuery.toLowerCase()));
         
-        return searchMatch && typeMatch && modelMatch && comprimentoMatch && corMatch && productSearchMatch;
+        const finalMatch = searchMatch && typeMatch && modelMatch && comprimentoMatch && corMatch && productSearchMatch;
+        
+        console.log('🔍 [Filter Debug] Filter results:', {
+          searchMatch,
+          typeMatch,
+          modelMatch,
+          comprimentoMatch,
+          corMatch,
+          productSearchMatch,
+          finalMatch
+        });
+        
+        return finalMatch;
       })
       .sort((a, b) => {
         let compareValue = 0;
