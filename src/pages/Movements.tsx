@@ -83,8 +83,10 @@ const Movements = () => {
         const typeMatch = typeFilter === 'all' || movement.type === typeFilter;
         
         // Product filters (using EPW decoded fields)
+        console.log('🔍 [Model Debug] Comparing selectedModel:', selectedModel, 'with epwModelo:', movement.material?.product?.epwModelo);
         const modelMatch = selectedModel === 'all' || 
-          (movement.material?.product?.epwModelo?.l === selectedModel);
+          (movement.material?.product?.epwModelo?.l === selectedModel) ||
+          (movement.material?.product?.epwModelo?.d === selectedModel);
         
         const comprimentoMatch = selectedComprimento === 'all' || 
           (movement.material?.product?.epwComprimento?.l === selectedComprimento);
