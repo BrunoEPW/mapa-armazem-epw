@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { ArrowUpDown, Search, ArrowLeft, Package, Calendar, Filter } from 'lucide-react';
+import React, { useState, useMemo, useRef } from 'react';
+import { ArrowUpDown, Search, ArrowLeft, Package, Calendar, Filter, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,6 +12,9 @@ import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import Header from '@/components/Header';
 import Footer from '@/components/ui/Footer';
+import { ModeloSelect, ModeloSelectRef } from '@/components/warehouse/ModeloSelect';
+import { ComprimentoSelect, ComprimentoSelectRef } from '@/components/warehouse/ComprimentoSelect';
+import { CorSelect, CorSelectRef } from '@/components/warehouse/CorSelect';
 import movementsBanner from '@/assets/movements-banner.jpg';
 
 const Movements = () => {
@@ -22,6 +25,16 @@ const Movements = () => {
   const [typeFilter, setTypeFilter] = useState<'all' | 'entrada' | 'saida'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'material' | 'type' | 'quantity'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  
+  // Product filters (like in Products page)
+  const [selectedModel, setSelectedModel] = useState<string>('all');
+  const [selectedComprimento, setSelectedComprimento] = useState<string>('all');
+  const [selectedCor, setSelectedCor] = useState<string>('all');
+  const [productSearchQuery, setProductSearchQuery] = useState('');
+  
+  const modeloSelectRef = useRef<ModeloSelectRef>(null);
+  const comprimentoSelectRef = useRef<ComprimentoSelectRef>(null);
+  const corSelectRef = useRef<CorSelectRef>(null);
 
   // Filter and sort movements
   const filteredMovements = useMemo(() => {
@@ -48,7 +61,24 @@ const Movements = () => {
         // Filter by movement type
         const typeMatch = typeFilter === 'all' || movement.type === typeFilter;
         
-        return searchMatch && typeMatch;
+        // Product filters (like in Products page)
+        const modelMatch = selectedModel === 'all' || 
+          (movement.material?.product?.modelo === selectedModel);
+        
+        const comprimentoMatch = selectedComprimento === 'all' || 
+          (movement.material?.product?.comprimento && 
+           movement.material.product.comprimento.toString() === selectedComprimento);
+        
+        const corMatch = selectedCor === 'all' || 
+          (movement.material?.product?.cor === selectedCor);
+        
+        const productSearchMatch = productSearchQuery === '' ||
+          (movement.material?.product?.descricao && 
+           movement.material.product.descricao.toLowerCase().includes(productSearchQuery.toLowerCase())) ||
+          (movement.material?.product?.codigo && 
+           movement.material.product.codigo.toLowerCase().includes(productSearchQuery.toLowerCase()));
+        
+        return searchMatch && typeMatch && modelMatch && comprimentoMatch && corMatch && productSearchMatch;
       })
       .sort((a, b) => {
         let compareValue = 0;
@@ -70,7 +100,7 @@ const Movements = () => {
         
         return sortOrder === 'asc' ? compareValue : -compareValue;
       });
-  }, [movements, materials, searchFilter, typeFilter, sortBy, sortOrder]);
+  }, [movements, materials, searchFilter, typeFilter, sortBy, sortOrder, selectedModel, selectedComprimento, selectedCor, productSearchQuery]);
 
   const totalEntradas = movements.filter(m => m.type === 'entrada').reduce((sum, m) => sum + m.pecas, 0);
   const totalSaidas = movements.filter(m => m.type === 'saida').reduce((sum, m) => sum + m.pecas, 0);
@@ -90,6 +120,15 @@ const Movements = () => {
         {type === 'entrada' ? 'Entrada' : 'Saída'}
       </Badge>
     );
+  };
+
+  const clearAllFilters = () => {
+    setSearchFilter('');
+    setTypeFilter('all');
+    setSelectedModel('all');
+    setSelectedComprimento('all');
+    setSelectedCor('all');
+    setProductSearchQuery('');
   };
 
   return (
@@ -181,7 +220,38 @@ const Movements = () => {
                   Lista de Movimentos
                 </CardTitle>
                 
-                {/* Filters */}
+                {/* Product Filters (like in Products page) */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <ModeloSelect
+                      ref={modeloSelectRef}
+                      value={selectedModel}
+                      onValueChange={setSelectedModel}
+                    />
+                    <ComprimentoSelect
+                      ref={comprimentoSelectRef}
+                      value={selectedComprimento}
+                      onValueChange={setSelectedComprimento}
+                    />
+                    <CorSelect
+                      ref={corSelectRef}
+                      value={selectedCor}
+                      onValueChange={setSelectedCor}
+                    />
+                  </div>
+                  
+                  <div className="relative w-full max-w-md">
+                    <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Pesquisar por descrição de produto..."
+                      value={productSearchQuery}
+                      onChange={(e) => setProductSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                
+                {/* Basic Filters */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-between">
                   <div className="flex items-center gap-2">
                     <Search className="h-4 w-4 text-muted-foreground" />
@@ -205,6 +275,16 @@ const Movements = () => {
                         <SelectItem value="saida">Saídas</SelectItem>
                       </SelectContent>
                     </Select>
+                    
+                    <Button 
+                      onClick={clearAllFilters}
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center gap-2"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Limpar
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
