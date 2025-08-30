@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useWarehouse } from '@/contexts/WarehouseContext';
+import { useApiProducts } from '@/hooks/useApiProducts';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import Header from '@/components/Header';
@@ -20,6 +21,7 @@ import movementsBanner from '@/assets/movements-banner.jpg';
 const Movements = () => {
   const navigate = useNavigate();
   const { movements, materials } = useWarehouse();
+  const { apiProducts, loading: apiLoading } = useApiProducts();
   
   const [searchFilter, setSearchFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'entrada' | 'saida'>('all');
@@ -80,16 +82,15 @@ const Movements = () => {
         // Filter by movement type
         const typeMatch = typeFilter === 'all' || movement.type === typeFilter;
         
-        // Product filters (like in Products page)
+        // Product filters (using EPW decoded fields)
         const modelMatch = selectedModel === 'all' || 
-          (movement.material?.product?.modelo === selectedModel);
+          (movement.material?.product?.epwModelo?.l === selectedModel);
         
         const comprimentoMatch = selectedComprimento === 'all' || 
-          (movement.material?.product?.comprimento && 
-           movement.material.product.comprimento.toString() === selectedComprimento);
+          (movement.material?.product?.epwComprimento?.l === selectedComprimento);
         
         const corMatch = selectedCor === 'all' || 
-          (movement.material?.product?.cor === selectedCor);
+          (movement.material?.product?.epwCor?.l === selectedCor);
         
         const productSearchMatch = productSearchQuery === '' ||
           (movement.material?.product?.descricao && 
@@ -132,6 +133,40 @@ const Movements = () => {
         return sortOrder === 'asc' ? compareValue : -compareValue;
       });
   }, [movements, materials, searchFilter, typeFilter, sortBy, sortOrder, selectedModel, selectedComprimento, selectedCor, productSearchQuery]);
+
+  // Filter API products based on same criteria
+  const filteredApiProducts = useMemo(() => {
+    return apiProducts.filter(product => {
+      const modelMatch = selectedModel === 'all' || 
+        (product.epwModelo?.l === selectedModel);
+      
+      const comprimentoMatch = selectedComprimento === 'all' || 
+        (product.epwComprimento?.l === selectedComprimento);
+      
+      const corMatch = selectedCor === 'all' || 
+        (product.epwCor?.l === selectedCor);
+      
+      const productSearchMatch = productSearchQuery === '' ||
+        (product.descricao && 
+         product.descricao.toLowerCase().includes(productSearchQuery.toLowerCase())) ||
+        (product.codigo && 
+         product.codigo.toLowerCase().includes(productSearchQuery.toLowerCase()));
+      
+      return modelMatch && comprimentoMatch && corMatch && productSearchMatch;
+    });
+  }, [apiProducts, selectedModel, selectedComprimento, selectedCor, productSearchQuery]);
+
+  // Check which products have movements
+  const productsWithMovements = useMemo(() => {
+    const productIds = new Set();
+    materials.forEach(material => {
+      const hasMovements = movements.some(movement => movement.materialId === material.id);
+      if (hasMovements) {
+        productIds.add(material.product.codigo || material.product.modelo);
+      }
+    });
+    return productIds;
+  }, [materials, movements]);
 
   const totalEntradas = movements.filter(m => m.type === 'entrada').reduce((sum, m) => sum + m.pecas, 0);
   const totalSaidas = movements.filter(m => m.type === 'saida').reduce((sum, m) => sum + m.pecas, 0);
@@ -396,6 +431,68 @@ const Movements = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Filtered Products List */}
+            {filteredApiProducts.length > 0 && (
+              <Card className="bg-card/80 backdrop-blur mt-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Produtos Filtrados ({filteredApiProducts.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-auto">
+                    {filteredApiProducts.map((product) => {
+                      const hasMovements = productsWithMovements.has(product.codigo || product.modelo);
+                      return (
+                        <div
+                          key={product.id}
+                          className={`p-4 rounded-lg border ${
+                            hasMovements 
+                              ? 'bg-orange-100 border-orange-300 dark:bg-orange-900/20 dark:border-orange-700' 
+                              : 'bg-background border-border'
+                          } transition-colors duration-200`}
+                        >
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-sm">
+                                {product.codigo || product.modelo}
+                              </span>
+                              {hasMovements && (
+                                <Badge variant="default" className="bg-orange-500 text-white">
+                                  Com Movimentos
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground line-clamp-2">
+                              {product.descricao || product.acabamento}
+                            </p>
+                            {product.epwModelo && (
+                              <div className="flex flex-wrap gap-1 text-xs">
+                                <Badge variant="outline" className="text-xs">
+                                  Modelo: {product.epwModelo.d}
+                                </Badge>
+                                {product.epwComprimento && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {product.epwComprimento.d}
+                                  </Badge>
+                                )}
+                                {product.epwCor && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {product.epwCor.d}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
