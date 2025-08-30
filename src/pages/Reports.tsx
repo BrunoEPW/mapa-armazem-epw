@@ -335,13 +335,13 @@ const Reports = () => {
           </Card>
         </div>
 
-        {/* Stock Histórico */}
+        {/* Inventários */}
         <div className="mb-6">
           <Card className="bg-card/80 backdrop-blur">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CalendarIcon className="h-5 w-5" />
-                Stock Histórico
+                Inventários
               </CardTitle>
               <div className="flex items-center gap-4">
                 <Popover>
@@ -374,38 +374,8 @@ const Reports = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="mb-4 text-sm text-muted-foreground">
-                Stock calculado para: <span className="font-medium">{format(selectedDate, "dd/MM/yyyy")}</span>
-              </div>
-              <div className="overflow-auto max-h-96">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Código</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead className="text-right">Quantidade</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {historicalStock.length > 0 ? (
-                      historicalStock
-                        .sort((a, b) => b.totalPecas - a.totalPecas)
-                        .map((item, index) => (
-                          <TableRow key={index}>
-                            <TableCell className="font-medium">{item.product.codigo || item.product.modelo}</TableCell>
-                            <TableCell>{item.product.descricao || `${item.product.modelo} ${item.product.acabamento} ${item.product.cor}`}</TableCell>
-                            <TableCell className="text-right font-bold">{item.totalPecas}</TableCell>
-                          </TableRow>
-                        ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
-                          Nenhum material em stock na data selecionada
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+              <div className="text-sm text-muted-foreground">
+                Selecione uma data e clique em "Exportar" para gerar o inventário para: <span className="font-medium">{format(selectedDate, "dd/MM/yyyy")}</span>
               </div>
             </CardContent>
           </Card>
