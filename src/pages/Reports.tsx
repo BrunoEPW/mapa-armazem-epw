@@ -183,7 +183,7 @@ const Reports = () => {
         'Descrição': item.product.descricao || `${item.product.modelo} ${item.product.acabamento} ${item.product.cor}`,
         'Quantidade': item.totalPecas
       }));
-      filename = `stock_historico_${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
+      filename = `inventário-${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
     } else {
       // Stock atual: formato completo por modelo
       exportData = data.map(item => ({
@@ -194,7 +194,7 @@ const Reports = () => {
         'Quantidade': item.totalPecas,
         'Localizações': Array.from(item.locations).join(', ')
       }));
-      filename = `relatorio_modelos_${format(selectedDate, 'dd-MM-yyyy')}.xlsx`;
+      filename = `inventário-${format(new Date(), 'dd-MM-yyyy')}.xlsx`;
     }
 
     const ws = XLSX.utils.json_to_sheet(exportData);
