@@ -584,6 +584,64 @@ const Reports = () => {
             </Card>
           </div>
 
+          {/* Model Stock Chart */}
+          <div className="mb-6">
+            <Card className="bg-card/80 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Modelos em Stock - Visão por Quantidade
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Top {modelStockChartData.length} modelos por número de peças em armazém
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ChartContainer
+                    config={{
+                      pecas: {
+                        label: "Peças",
+                        color: "hsl(var(--primary))",
+                      },
+                    }}
+                    className="h-full w-full"
+                  >
+                    <BarChart data={modelStockChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="modelo" 
+                        tick={{ fontSize: 10 }}
+                        height={100}
+                        interval={0}
+                        angle={-45}
+                        textAnchor="end"
+                      />
+                      <YAxis 
+                        label={{ value: 'Número de Peças', angle: -90, position: 'insideLeft' }}
+                      />
+                      <ChartTooltip
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-background p-3 border rounded-lg shadow-lg">
+                                <p className="font-semibold">{data.modelo}</p>
+                                <p className="text-sm">Peças: <span className="font-semibold">{data.pecas}</span></p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Bar dataKey="pecas" />
+                    </BarChart>
+                  </ChartContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+ 
         {/* Stock por Produto */}
         <div className="mb-6">
           <Card className="bg-card/80 backdrop-blur">
