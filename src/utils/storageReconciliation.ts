@@ -46,12 +46,16 @@ export const migrateStorageData = (): boolean => {
   console.log('🔄 [StorageReconciliation] Starting storage migration...');
   
   try {
-    // Check if migration already done
+    // Check if migration already done AND we have data
     const migrationFlag = localStorage.getItem('storage_migration_v2_completed');
-    if (migrationFlag) {
-      console.log('✅ [StorageReconciliation] Migration already completed');
+    const hasPrimaryData = loadFromStorage(STORAGE_KEYS.MATERIALS, []).length > 0;
+    
+    if (migrationFlag && hasPrimaryData) {
+      console.log('✅ [StorageReconciliation] Migration already completed and data exists');
       return true;
     }
+    
+    console.log(`🔄 [StorageReconciliation] Migration needed (flag: ${!!migrationFlag}, data: ${hasPrimaryData})`);
     
     // Find best materials data from any source
     const legacyMaterials = loadFromStorage(STORAGE_KEYS.MATERIALS, []);
@@ -127,6 +131,35 @@ export const recoverMaterials = (): StorageReconciliationResult => {
     { key: 'materials_emergency_backup', name: 'legacy_session', storage: 'session' }
   ];
   
+  // First, let's debug what's actually in storage
+  console.log('🔍 [StorageReconciliation] Debugging storage contents:');
+  sources.forEach(source => {
+    try {
+      let data;
+      if (source.storage === 'session') {
+        data = sessionStorage.getItem(source.key);
+      } else {
+        data = localStorage.getItem(source.key);
+      }
+      console.log(`📦 [StorageReconciliation] ${source.name} (${source.key}):`, data ? `${data.length} chars` : 'null');
+      
+      if (data) {
+        try {
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed)) {
+            console.log(`  └── Array with ${parsed.length} items`);
+          } else if (parsed && typeof parsed === 'object') {
+            console.log(`  └── Object with keys:`, Object.keys(parsed));
+          }
+        } catch (e) {
+          console.log(`  └── Failed to parse:`, e.message);
+        }
+      }
+    } catch (e) {
+      console.log(`❌ [StorageReconciliation] Error checking ${source.name}:`, e.message);
+    }
+  });
+  
   for (const source of sources) {
     try {
       let materials: Material[] = [];
@@ -145,22 +178,35 @@ export const recoverMaterials = (): StorageReconciliationResult => {
         }
       }
       
-      if (isRealUserData(materials)) {
-        console.log(`✅ [StorageReconciliation] Recovered ${materials.length} materials from ${source.name}`);
+      console.log(`🔍 [StorageReconciliation] Checking ${source.name}: ${materials.length} materials`);
+      
+      // More lenient check - any materials that aren't obviously mock
+      if (materials.length > 0) {
+        const realMaterials = materials.filter(m => 
+          m && 
+          m.id && 
+          !m.id.startsWith('mock-') &&
+          m.product &&
+          m.product.modelo
+        );
         
-        // Save recovered data to all systems
-        saveToStorage(STORAGE_KEYS.MATERIALS, materials);
-        saveToStorage(STORAGE_KEYS.MATERIALS_BACKUP, materials);
-        saveToStorage(UNIFIED_KEYS.MATERIALS_PRIMARY, materials);
+        console.log(`🔍 [StorageReconciliation] ${source.name} has ${realMaterials.length} potentially real materials`);
         
-        return {
-          materials,
-          source: source.name,
-          success: true,
-          recovered: true
-        };
-      } else if (materials.length > 0) {
-        console.log(`⚠️ [StorageReconciliation] Found ${materials.length} materials in ${source.name} but they appear to be mock data`);
+        if (realMaterials.length > 0) {
+          console.log(`✅ [StorageReconciliation] Recovered ${realMaterials.length} materials from ${source.name}`);
+          
+          // Save recovered data to all systems
+          saveToStorage(STORAGE_KEYS.MATERIALS, realMaterials);
+          saveToStorage(STORAGE_KEYS.MATERIALS_BACKUP, realMaterials);
+          saveToStorage(UNIFIED_KEYS.MATERIALS_PRIMARY, realMaterials);
+          
+          return {
+            materials: realMaterials,
+            source: source.name,
+            success: true,
+            recovered: true
+          };
+        }
       }
       
     } catch (error) {
@@ -168,7 +214,7 @@ export const recoverMaterials = (): StorageReconciliationResult => {
     }
   }
   
-  console.log('❌ [StorageReconciliation] No recoverable materials found');
+  console.log('❌ [StorageReconciliation] No recoverable materials found in any source');
   return {
     materials: [],
     source: 'none',

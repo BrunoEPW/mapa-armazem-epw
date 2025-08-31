@@ -56,9 +56,20 @@ export const useWarehouseData = () => {
         console.log(`✅ [useWarehouseData] Recovery successful: ${recoveryResult.materials.length} materials from ${recoveryResult.source}`);
         savedMaterials = recoveryResult.materials;
       } else {
-        console.log('❌ [useWarehouseData] All recovery attempts failed - falling back to mock data');
-        // Use mock data as last resort
-        savedMaterials = mockMaterials;
+        console.log('❌ [useWarehouseData] All recovery attempts failed');
+        console.log('🔄 [useWarehouseData] Loading fresh mock data as baseline...');
+        
+        // Import fresh mock data to provide a baseline
+        import('@/data/mock-data').then(({ mockMaterials: freshMockMaterials }) => {
+          savedMaterials = freshMockMaterials;
+          
+          // Save the mock data to establish a baseline for future operations
+          saveMaterialsSmart(freshMockMaterials, 'mock');
+          console.log(`🔄 [useWarehouseData] Loaded ${freshMockMaterials.length} fresh mock materials as baseline`);
+          
+          // Update state with fresh mock materials
+          setMaterials(freshMockMaterials);
+        });
       }
     } else {
       // Even if we have data, check for potential loss
