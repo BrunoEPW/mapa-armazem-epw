@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { Material } from '@/types/warehouse';
+import { getBestProductDescription } from '@/utils/productDescriptionUpdater';
 import { toast } from 'sonner';
 
 interface EditMaterialDialogProps {
@@ -87,7 +88,7 @@ export const EditMaterialDialog: React.FC<EditMaterialDialogProps> = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {material.product.descricao || material.product.modelo}
+            {getBestProductDescription(material.product)}
           </DialogTitle>
         </DialogHeader>
         

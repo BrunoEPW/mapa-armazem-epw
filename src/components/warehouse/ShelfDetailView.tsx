@@ -11,7 +11,7 @@ import { Material, WAREHOUSE_CONFIG } from '@/types/warehouse';
 import { AddMaterialDialog } from './AddMaterialDialog';
 import { EditMaterialDialog } from './EditMaterialDialog';
 import { MovementHistoryDialog } from './MovementHistoryDialog';
-import { enhanceProductDescription } from '@/utils/productDescriptionGenerator';
+import { getBestProductDescription } from '@/utils/productDescriptionUpdater';
 
 const ShelfDetailView: React.FC = () => {
   const navigate = useNavigate();
@@ -186,13 +186,7 @@ const ShelfDetailView: React.FC = () => {
                     <div>
                       <p className="text-sm text-muted-foreground">Descrição</p>
                       <p className="font-medium">
-                        {enhanceProductDescription(material.product.descricao || '', {
-                          codigo: material.product.codigo,
-                          modelo: material.product.modelo,
-                          acabamento: material.product.acabamento,
-                          cor: material.product.cor,
-                          comprimento: material.product.comprimento
-                        }) || material.product.modelo}
+                        {getBestProductDescription(material.product)}
                       </p>
                     </div>
                     <div>

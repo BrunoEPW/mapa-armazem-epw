@@ -11,6 +11,8 @@ import { useProductWebService } from '@/hooks/useProductWebService';
 import * as epwCodeDecoder from '@/utils/epwCodeDecoder';
 import { ensureValidProductId } from '@/utils/uuidUtils';
 import { generateProductDescription } from '@/utils/productDescriptionGenerator';
+import { updateProductDescriptions } from '@/utils/productDescriptionUpdater';
+import { useProductDescriptionUpdater } from '@/hooks/useProductDescriptionUpdater';
 import { toast } from 'sonner';
 
 interface WarehouseContextType {
@@ -54,12 +56,18 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Use useWarehouseData as primary data source (loads from localStorage with recovery)
   const {
     materials,
-    products,
+    products: rawProducts,
     movements,
     setMaterials,
-    setProducts,
+    setProducts: setRawProducts,
     setMovements,
   } = useWarehouseData();
+  
+  // Enhance products with better descriptions
+  const products = updateProductDescriptions(rawProducts);
+  const setProducts = (updater: (prev: Product[]) => Product[]) => {
+    setRawProducts(prev => updateProductDescriptions(updater(prev)));
+  };
   
   // Keep Supabase as secondary data source for sync
   const warehouseData = useSupabaseWarehouseData();
@@ -78,6 +86,9 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   
   const adminOps = useSupabaseAdminOperations();
   const { syncStatus, syncProducts } = useProductWebService();
+  
+  // Auto-update product descriptions
+  useProductDescriptionUpdater(rawProducts, setRawProducts);
   
   // Enable real-time synchronization
   useRealTimeSync(warehouseData.refreshData, warehouseData.refreshData, warehouseData.refreshData);

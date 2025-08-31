@@ -16,6 +16,7 @@ import Footer from '@/components/ui/Footer';
 import { ModeloSelect, ModeloSelectRef } from '@/components/warehouse/ModeloSelect';
 import { ComprimentoSelect, ComprimentoSelectRef } from '@/components/warehouse/ComprimentoSelect';
 import { CorSelect, CorSelectRef } from '@/components/warehouse/CorSelect';
+import { getBestProductDescription } from '@/utils/productDescriptionUpdater';
 import movementsBanner from '@/assets/movements-banner.jpg';
 
 const Movements = () => {
@@ -105,7 +106,7 @@ const Movements = () => {
       
       const productSearchMatch = debouncedProductSearchQuery === '' ||
         (movement.material?.product?.descricao && 
-         movement.material.product.descricao.toLowerCase().includes(debouncedProductSearchQuery.toLowerCase())) ||
+         getBestProductDescription(movement.material.product).toLowerCase().includes(debouncedProductSearchQuery.toLowerCase())) ||
         (movement.material?.product?.codigo && 
          movement.material.product.codigo.toLowerCase().includes(debouncedProductSearchQuery.toLowerCase()));
       
@@ -156,7 +157,7 @@ const Movements = () => {
       
       const productSearchMatch = debouncedProductSearchQuery === '' ||
         (product.descricao && 
-         product.descricao.toLowerCase().includes(debouncedProductSearchQuery.toLowerCase())) ||
+         getBestProductDescription(product).toLowerCase().includes(debouncedProductSearchQuery.toLowerCase())) ||
         (product.codigo && 
          product.codigo.toLowerCase().includes(debouncedProductSearchQuery.toLowerCase()));
       
@@ -427,7 +428,7 @@ const Movements = () => {
                               )}
                             </div>
                             <p className="text-sm text-muted-foreground line-clamp-2">
-                              {product.descricao || product.acabamento}
+                              {getBestProductDescription(product)}
                             </p>
                             {product.epwModelo && (
                               <div className="flex flex-wrap gap-1 text-xs">
