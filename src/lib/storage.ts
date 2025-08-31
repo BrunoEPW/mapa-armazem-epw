@@ -15,6 +15,12 @@ export const STORAGE_KEYS = {
   BACKUP_METADATA: 'warehouse-backup-metadata',
   // Manual data clearing flags
   MANUAL_DATA_CLEARED: 'warehouse-manual-data-cleared',
+  // Emergency recovery keys
+  MATERIALS_EMERGENCY: 'materials_emergency_backup',
+  MATERIALS_SESSION: 'materials_session_backup',
+  // Unified system compatibility
+  MATERIALS_UNIFIED_PRIMARY: 'unified_materials_primary',
+  MATERIALS_UNIFIED_BACKUP: 'unified_materials_backup',
   
 } as const;
 
