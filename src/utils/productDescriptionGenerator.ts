@@ -8,13 +8,19 @@ export interface ProductDescriptionData {
   comprimento?: string | number;
   codigo?: string;
   epwOriginalCode?: string;
+  apiDescription?: string;
 }
 
 /**
  * Generates an intelligent product description using available data sources
  */
 export const generateProductDescription = (data: ProductDescriptionData): string => {
-  // First try to use EPW decoded data if available
+  // First priority: use API description if available
+  if (data.apiDescription && !data.apiDescription.startsWith('Produto EPW')) {
+    return data.apiDescription;
+  }
+  
+  // Second priority: try to use EPW decoded data if available
   if (data.epwOriginalCode) {
     const decoded = decodeEPWReference(data.epwOriginalCode);
     if (decoded.success && decoded.product) {

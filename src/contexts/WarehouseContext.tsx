@@ -10,6 +10,7 @@ import { useSupabaseAdminOperations } from '@/hooks/useSupabaseAdminOperations';
 import { useProductWebService } from '@/hooks/useProductWebService';
 import * as epwCodeDecoder from '@/utils/epwCodeDecoder';
 import { ensureValidProductId } from '@/utils/uuidUtils';
+import { generateProductDescription } from '@/utils/productDescriptionGenerator';
 import { toast } from 'sonner';
 
 interface WarehouseContextType {
@@ -193,7 +194,14 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         foto: apiProduct.foto || apiProduct.strFoto || undefined,
         // API fields
         codigo: codigo,
-        descricao: apiProduct.descricao || apiProduct.strDescricao || `${apiProduct.familia || 'EPW'} ${codigo}`,
+        descricao: generateProductDescription({
+          codigo,
+          modelo: apiProduct.modelo || decodedEpw?.modelo?.l,
+          acabamento: apiProduct.acabamento || decodedEpw?.acabamento?.l,
+          cor: apiProduct.cor || decodedEpw?.cor?.l,
+          comprimento: apiProduct.comprimento || decodedEpw?.comprim?.l,
+          apiDescription: apiProduct.descricao || apiProduct.strDescricao
+        }),
         // EPW decoded fields for reference
         ...(decodedEpw && {
           epwTipo: decodedEpw.tipo?.d,
