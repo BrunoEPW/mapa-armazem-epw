@@ -241,44 +241,6 @@ const Movements = () => {
               </button>
             </div>
 
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <Card className="bg-card/80 backdrop-blur">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Movimentos</p>
-                      <p className="text-2xl font-bold">{movements.length}</p>
-                    </div>
-                    <ArrowUpDown className="h-8 w-8 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card/80 backdrop-blur">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Entradas</p>
-                      <p className="text-2xl font-bold text-green-600">{totalEntradas}</p>
-                    </div>
-                    <Package className="h-8 w-8 text-green-500" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card/80 backdrop-blur">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Saídas</p>
-                      <p className="text-2xl font-bold text-red-600">{totalSaidas}</p>
-                    </div>
-                    <Package className="h-8 w-8 text-red-500" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
 
             {/* Movements Table */}
             <Card className="bg-card/80 backdrop-blur">
@@ -374,12 +336,6 @@ const Movements = () => {
                         >
                           Tipo {sortBy === 'type' && (sortOrder === 'asc' ? '↑' : '↓')}
                         </TableHead>
-                        <TableHead 
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleSort('material')}
-                        >
-                          Material {sortBy === 'material' && (sortOrder === 'asc' ? '↑' : '↓')}
-                        </TableHead>
                         <TableHead>Descrição</TableHead>
                         <TableHead>Localização</TableHead>
                         <TableHead 
@@ -401,9 +357,6 @@ const Movements = () => {
                             <TableCell>
                               {getMovementTypeBadge(movement.type)}
                             </TableCell>
-                            <TableCell className="font-medium">
-                              {movement.materialCode}
-                            </TableCell>
                             <TableCell className="max-w-xs truncate">
                               {movement.materialDescription}
                             </TableCell>
@@ -420,7 +373,7 @@ const Movements = () => {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                          <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                             {searchFilter || typeFilter !== 'all' ? 
                               'Nenhum movimento encontrado com os filtros aplicados' : 
                               'Nenhum movimento registrado'
