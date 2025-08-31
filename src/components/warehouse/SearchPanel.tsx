@@ -139,6 +139,13 @@ const SearchPanel: React.FC = () => {
     navigate(url);
   };
 
+  // Separate handler for model quick access (no highlight/search params)
+  const handleModelLocationClick = (location: { estante: string; prateleira: number }) => {
+    setSelectedShelf(location);
+    const url = `/prateleira/${location.estante}/${location.prateleira}`;
+    navigate(url);
+  };
+
   const handleModelClick = (modelData: any) => {
     setSelectedModelData(modelData);
     setShowModelDialog(true);
@@ -724,7 +731,7 @@ const SearchPanel: React.FC = () => {
         modelData={selectedModelData}
         isOpen={showModelDialog}
         onClose={() => setShowModelDialog(false)}
-        onLocationClick={handleLocationClick}
+        onLocationClick={handleModelLocationClick}
       />
 
       <ModelLocationsDialog
