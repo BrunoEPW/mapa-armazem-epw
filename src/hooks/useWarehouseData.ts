@@ -16,7 +16,7 @@ export const useWarehouseData = () => {
 
   // Load data from localStorage on mount
   useEffect(() => {
-    console.log('useWarehouseData - Loading data from storage...');
+    console.log('🔧 [useWarehouseData] Starting data loading and recovery process...');
     
     // Initialize unified system first
     initializeUnifiedSystem();
@@ -25,35 +25,71 @@ export const useWarehouseData = () => {
     let savedMaterials = loadFromStorage(STORAGE_KEYS.MATERIALS, mockMaterials);
     const savedMovements = loadFromStorage(STORAGE_KEYS.MOVEMENTS, mockMovements);
     
-    // 🔄 Enhanced Recovery: Try unified system first, then legacy backup
+    console.log('🔍 [useWarehouseData] Initial data check:', {
+      products: savedProducts.length,
+      materials: savedMaterials.length,
+      movements: savedMovements.length
+    });
+    
+    // 🚨 FORCE RECOVERY: Always attempt recovery if materials are missing or mock data
     const shouldRecover = savedMaterials.length === 0 || 
-                         JSON.stringify(savedMaterials) === JSON.stringify(mockMaterials);
+                         JSON.stringify(savedMaterials) === JSON.stringify(mockMaterials) ||
+                         savedMaterials.every(m => m.id.startsWith('mock-'));
     
     if (shouldRecover) {
-      console.log('🔄 [useWarehouseData] Attempting material recovery...');
+      console.log('🔄 [useWarehouseData] FORCING material recovery - data loss detected');
       
-      // Try unified system first
+      // Try all recovery methods in sequence
+      let recovered = false;
+      
+      // 1. Try unified system
       const unifiedMaterials = loadUnifiedMaterials();
-      if (unifiedMaterials && unifiedMaterials.length > 0) {
-        console.log(`🔄 [useWarehouseData] Unified system restored ${unifiedMaterials.length} materials`);
+      if (unifiedMaterials && unifiedMaterials.length > 0 && !unifiedMaterials.every(m => m.id.startsWith('mock-'))) {
+        console.log(`✅ [useWarehouseData] Unified system restored ${unifiedMaterials.length} materials`);
         savedMaterials = unifiedMaterials;
         saveToStorage(STORAGE_KEYS.MATERIALS, unifiedMaterials);
-      } else {
-        // Fallback to legacy backup system
+        recovered = true;
+      }
+      
+      // 2. Try legacy backup system
+      if (!recovered) {
         const backupMaterials = loadFromStorage(STORAGE_KEYS.MATERIALS_BACKUP, null);
-        if (backupMaterials && Array.isArray(backupMaterials) && backupMaterials.length > 0) {
-          console.log(`🔄 [useWarehouseData] Legacy backup restored ${backupMaterials.length} materials`);
+        if (backupMaterials && Array.isArray(backupMaterials) && backupMaterials.length > 0 && !backupMaterials.every(m => m.id.startsWith('mock-'))) {
+          console.log(`✅ [useWarehouseData] Legacy backup restored ${backupMaterials.length} materials`);
           savedMaterials = backupMaterials;
           saveToStorage(STORAGE_KEYS.MATERIALS, backupMaterials);
-          // Also save to unified system for future use
           saveUnifiedMaterials(backupMaterials, 'user');
+          recovered = true;
         }
       }
+      
+      // 3. Try session storage backup
+      if (!recovered) {
+        try {
+          const sessionBackup = sessionStorage.getItem('materials_emergency_backup');
+          if (sessionBackup) {
+            const sessionMaterials = JSON.parse(sessionBackup);
+            if (Array.isArray(sessionMaterials) && sessionMaterials.length > 0 && !sessionMaterials.every(m => m.id.startsWith('mock-'))) {
+              console.log(`✅ [useWarehouseData] Session backup restored ${sessionMaterials.length} materials`);
+              savedMaterials = sessionMaterials;
+              saveToStorage(STORAGE_KEYS.MATERIALS, sessionMaterials);
+              saveUnifiedMaterials(sessionMaterials, 'user');
+              recovered = true;
+            }
+          }
+        } catch (error) {
+          console.error('❌ [useWarehouseData] Session backup failed:', error);
+        }
+      }
+      
+      if (!recovered) {
+        console.log('❌ [useWarehouseData] All recovery attempts failed - using mock data');
+      }
     } else {
-      // Check for material loss even if we have data
+      // Always check for material loss even if we have data
       const lossDetected = detectMaterialLoss(savedMaterials);
       if (lossDetected) {
-        console.log('🚨 [useWarehouseData] Material loss detected - attempting recovery');
+        console.log('🚨 [useWarehouseData] Material loss detected during normal operation');
         const recovered = loadUnifiedMaterials();
         if (recovered && recovered.length > 0) {
           console.log(`🔄 [useWarehouseData] Recovered ${recovered.length} materials after loss detection`);
@@ -86,7 +122,14 @@ export const useWarehouseData = () => {
 
   useEffect(() => {
     if (materials.length > 0) {
+      console.log(`💾 [useWarehouseData] Saving ${materials.length} materials to storage`);
       saveToStorage(STORAGE_KEYS.MATERIALS, materials);
+      // Emergency session backup
+      try {
+        sessionStorage.setItem('materials_emergency_backup', JSON.stringify(materials));
+      } catch (error) {
+        console.error('❌ [useWarehouseData] Emergency backup failed:', error);
+      }
       // Also save to unified system for preservation
       saveUnifiedMaterials(materials, 'user');
     }
