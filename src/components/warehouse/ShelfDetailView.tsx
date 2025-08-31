@@ -186,7 +186,15 @@ const ShelfDetailView: React.FC = () => {
                     <div>
                       <p className="text-sm text-muted-foreground">Descrição</p>
                       <p className="font-medium">
-                        {getBestProductDescription(material.product)}
+                        {(() => {
+                          const description = getBestProductDescription(material.product);
+                          console.log(`🔍 ShelfDetailView - Product ${material.product.codigo}:`, {
+                            original: material.product.descricao,
+                            enhanced: description,
+                            produto: material.product
+                          });
+                          return description;
+                        })()}
                       </p>
                     </div>
                     <div>

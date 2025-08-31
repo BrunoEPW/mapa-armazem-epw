@@ -15,19 +15,27 @@ export interface ProductDescriptionData {
  * Generates an intelligent product description using available data sources
  */
 export const generateProductDescription = (data: ProductDescriptionData): string => {
+  console.log('🔄 generateProductDescription called with:', data);
+  
   // First priority: use API description if available
   if (data.apiDescription && !data.apiDescription.startsWith('Produto EPW')) {
+    console.log('✅ Using API description:', data.apiDescription);
     return data.apiDescription;
   }
   
-  // Second priority: try to use EPW decoded data if available
-  if (data.epwOriginalCode) {
-    const decoded = decodeEPWReference(data.epwOriginalCode);
+  // Second priority: try to decode EPW if we have a codigo
+  if (data.codigo) {
+    console.log('🔍 Attempting to decode EPW code:', data.codigo);
+    const decoded = decodeEPWReference(data.codigo);
+    console.log('🔍 EPW decode result:', decoded);
+    
     if (decoded.success && decoded.product) {
       const modelo = getEPWModelo(decoded.product);
       const cor = getEPWCor(decoded.product);
       const acabamento = getEPWAcabamento(decoded.product);
       const comprimento = getEPWComprimento(decoded.product);
+      
+      console.log('🔍 EPW decoded parts:', { modelo, cor, acabamento, comprimento });
       
       // Create description from decoded EPW data
       const parts = [];
@@ -40,12 +48,15 @@ export const generateProductDescription = (data: ProductDescriptionData): string
       }
       
       if (parts.length > 0) {
-        return parts.join(' - ');
+        const epwDescription = parts.join(' - ');
+        console.log('✅ Generated EPW description:', epwDescription);
+        return epwDescription;
       }
     }
   }
   
   // Fallback to provided data
+  console.log('🔄 Using fallback with provided data');
   const parts = [];
   
   if (data.modelo) {
@@ -67,18 +78,25 @@ export const generateProductDescription = (data: ProductDescriptionData): string
   
   // If we have enough parts, create description
   if (parts.length >= 2) {
-    return parts.join(' - ');
+    const basicDescription = parts.join(' - ');
+    console.log('✅ Generated basic description:', basicDescription);
+    return basicDescription;
   }
   
   // Last resort: use codigo or a generic description
   if (data.codigo) {
-    return `Produto ${data.codigo}`;
+    const codeDescription = `Produto ${data.codigo}`;
+    console.log('⚠️ Using code description:', codeDescription);
+    return codeDescription;
   }
   
   if (data.epwOriginalCode) {
-    return `Produto ${data.epwOriginalCode}`;
+    const epwCodeDescription = `Produto ${data.epwOriginalCode}`;
+    console.log('⚠️ Using EPW code description:', epwCodeDescription);
+    return epwCodeDescription;
   }
   
+  console.log('❌ No description could be generated, using fallback');
   return 'Produto sem descrição';
 };
 
