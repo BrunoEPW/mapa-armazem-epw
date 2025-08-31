@@ -40,6 +40,10 @@ const Reports = () => {
   const [showLocationsDialog, setShowLocationsDialog] = useState(false);
   const [selectedProductData, setSelectedProductData] = useState<any>(null);
   
+  // State for model details dialog
+  const [selectedModelData, setSelectedModelData] = useState<any>(null);
+  const [modelDetailsOpen, setModelDetailsOpen] = useState(false);
+  
   
   // Get minimum stock data
   const minimumStockSummary = useMemo(() => getMinimumStockSummary(), [getMinimumStockSummary]);
@@ -249,6 +253,80 @@ const Reports = () => {
     navigate(`/prateleira/${location.estante}/${location.prateleira}?readOnly=true`);
   };
 
+  // Prepare model detail data for when clicking on chart
+  const prepareModelDetailData = (modelName: string) => {
+    // Find the corresponding API model
+    const apiModel = apiModels.find(m => m.d === modelName);
+    if (!apiModel) return null;
+
+    // Find all materials for this model
+    const modelMaterials = materials.filter(material => {
+      const modelCode = getMaterialModelCode(material);
+      return modelCode === apiModel.l;
+    });
+
+    // Group by product (código + descrição)
+    const productGroups = new Map();
+    modelMaterials.forEach(material => {
+      const key = `${material.product.codigo || material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
+      if (!productGroups.has(key)) {
+        productGroups.set(key, {
+          product: material.product,
+          totalPecas: 0,
+          locations: []
+        });
+      }
+      const existing = productGroups.get(key);
+      existing.totalPecas += material.pecas;
+      existing.locations.push({
+        estante: material.location.estante,
+        prateleira: material.location.prateleira,
+        posicao: material.location.posicao,
+        pecas: material.pecas,
+        locationKey: `${material.location.estante}-${material.location.prateleira}`
+      });
+    });
+
+    const locations = Array.from(productGroups.values()).map(group => ({
+      estante: group.locations[0].estante,
+      prateleira: group.locations[0].prateleira,
+      posicao: group.locations[0].posicao,
+      pecas: group.totalPecas,
+      locationKey: group.locations[0].locationKey,
+      materials: [{ 
+        id: '',
+        product: group.product,
+        pecas: group.totalPecas,
+        location: {
+          estante: group.locations[0].estante,
+          prateleira: group.locations[0].prateleira,
+          posicao: group.locations[0].posicao
+        }
+      }]
+    }));
+
+    return {
+      modelo: apiModel.l,
+      displayName: apiModel.d,
+      description: apiModel.d,
+      totalPecas: modelMaterials.reduce((sum, m) => sum + m.pecas, 0),
+      locations,
+      materials: modelMaterials,
+      firstProduct: modelMaterials[0]?.product
+    };
+  };
+
+  const handleChartClick = (data: any) => {
+    if (data && data.activePayload && data.activePayload.length > 0) {
+      const clickedModel = data.activePayload[0].payload.modelo;
+      const modelData = prepareModelDetailData(clickedModel);
+      if (modelData) {
+        setSelectedModelData(modelData);
+        setModelDetailsOpen(true);
+      }
+    }
+  };
+
   const exportToExcel = (type: 'current' | 'historical') => {
     const data = type === 'current' ? productStock : historicalStock;
     
@@ -325,7 +403,7 @@ const Reports = () => {
                   Modelos em Stock - Visão por Quantidade
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Top {modelStockChartData.length} modelos por número de peças em armazém
+                  Top {modelStockChartData.length} modelos por número de peças em armazém. Clique numa coluna para ver detalhes.
                 </p>
               </CardHeader>
               <CardContent>
@@ -339,35 +417,44 @@ const Reports = () => {
                     }}
                     className="h-full w-full"
                   >
-                    <BarChart data={modelStockChartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="modelo" 
-                        tick={{ fontSize: 10 }}
-                        height={100}
-                        interval={0}
-                        angle={-45}
-                        textAnchor="end"
-                      />
-                      <YAxis 
-                        label={{ value: 'Número de Peças', angle: -90, position: 'insideLeft' }}
-                      />
-                      <ChartTooltip
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-background p-3 border rounded-lg shadow-lg">
-                                <p className="font-semibold">{data.modelo}</p>
-                                <p className="text-sm">Peças: <span className="font-semibold">{data.pecas}</span></p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Bar dataKey="pecas" />
-                    </BarChart>
+                     <BarChart 
+                       data={modelStockChartData} 
+                       onClick={handleChartClick}
+                       style={{ cursor: 'pointer' }}
+                     >
+                       <CartesianGrid strokeDasharray="3 3" />
+                       <XAxis 
+                         dataKey="modelo" 
+                         tick={{ fontSize: 10 }}
+                         height={100}
+                         interval={0}
+                         angle={-45}
+                         textAnchor="end"
+                       />
+                       <YAxis 
+                         label={{ value: 'Número de Peças', angle: -90, position: 'insideLeft' }}
+                       />
+                       <ChartTooltip
+                         content={({ active, payload }) => {
+                           if (active && payload && payload.length) {
+                             const data = payload[0].payload;
+                             return (
+                               <div className="bg-background p-3 border rounded-lg shadow-lg">
+                                 <p className="font-semibold">{data.modelo}</p>
+                                 <p className="text-sm">Peças: <span className="font-semibold">{data.pecas}</span></p>
+                                 <p className="text-xs text-muted-foreground mt-1">Clique para ver detalhes</p>
+                               </div>
+                             );
+                           }
+                           return null;
+                         }}
+                       />
+                       <Bar 
+                         dataKey="pecas"
+                         style={{ cursor: 'pointer' }}
+                         className="hover:opacity-80 transition-opacity"
+                       />
+                     </BarChart>
                   </ChartContainer>
                 </div>
               </CardContent>
@@ -626,11 +713,19 @@ const Reports = () => {
       </div>
       <Footer />
       
-      {/* Model Locations Dialog */}
+      {/* Product Locations Dialog */}
       <ModelLocationsDialog
         modelData={selectedProductData}
         isOpen={showLocationsDialog}
         onClose={() => setShowLocationsDialog(false)}
+        onLocationClick={handleLocationClick}
+      />
+      
+      {/* Model Details Dialog */}
+      <ModelLocationsDialog
+        modelData={selectedModelData}
+        isOpen={modelDetailsOpen}
+        onClose={() => setModelDetailsOpen(false)}
         onLocationClick={handleLocationClick}
       />
     </div>
