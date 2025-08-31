@@ -13,6 +13,7 @@ import { ModeloSelect } from './ModeloSelect';
 import { ComprimentoSelect } from './ComprimentoSelect';
 import { CorSelect } from './CorSelect';
 import { useApiProductsSimple } from '@/hooks/useApiProductsSimple';
+import { useApiAttributes } from '@/hooks/useApiAttributes';
 
 const SearchPanel: React.FC = () => {
   const navigate = useNavigate();
@@ -49,6 +50,9 @@ const SearchPanel: React.FC = () => {
     selectedComprimento === 'all' ? undefined : selectedComprimento,
     selectedCor === 'all' ? undefined : selectedCor
   );
+
+  // Hook para buscar atributos da API (modelos limpos)
+  const { modelos: apiModels } = useApiAttributes();
 
   // Função para pesquisar materiais baseado nos produtos da API
   const handleApiSearch = () => {
@@ -307,12 +311,12 @@ const SearchPanel: React.FC = () => {
     return materials;
   }, [materials, hasActiveFilters, apiProducts, getMatchingLocalModels]);
 
-  // Interface para o tipo de modelo
-  interface ModelGroup {
-    modelo: string;
-    displayName: string;
-    description: string;
+  // Interface para o tipo de modelo baseado na API
+  interface ApiModelGroup {
+    modeloCode: string;
+    modeloName: string;
     totalPecas: number;
+    totalArticles: number;
     locations: Array<{
       estante: string;
       prateleira: number;
@@ -321,44 +325,78 @@ const SearchPanel: React.FC = () => {
       locationKey: string;
     }>;
     materials: any[];
-    firstProduct: any;
+    uniqueProducts: any[];
   }
 
-  // Agrupamentos de materiais por modelo - COM FILTRAGEM BASEADA NA API
-  const modelGroups: Record<string, ModelGroup> = filteredMaterials.reduce((acc, material) => {
-    const modelo = material.product.modelo || 'Sem Modelo';
-    const description = material.product.descricao || `${material.product.modelo || ''} ${material.product.acabamento || ''}`.trim();
+  // Função para mapear código de material para modelo da API
+  const getMaterialModelCode = (material: any): string | null => {
+    if (!material.product) return null;
     
-    if (!acc[modelo]) {
-      acc[modelo] = {
-        modelo,
-        displayName: getModelDisplayName(modelo, material.product),
-        totalPecas: 0,
-        locations: [],
-        materials: [],
-        firstProduct: material.product,
-        description: description
-      };
+    // Try to decode EPW reference to get model code
+    if (material.product.codigo) {
+      const decoded = decodeEPWReference(material.product.codigo, false);
+      if (decoded.success && decoded.product?.modelo?.l) {
+        return decoded.product.modelo.l;
+      }
     }
-    acc[modelo].totalPecas += material.pecas;
-    acc[modelo].locations.push({
-      estante: material.location.estante,
-      prateleira: material.location.prateleira,
-      posicao: material.location.posicao,
-      pecas: material.pecas,
-      locationKey: `${material.location.estante}${material.location.prateleira}`
-    });
-    acc[modelo].materials.push(material);
-    return acc;
-  }, {} as Record<string, ModelGroup>);
+    
+    // Fallback to direct model matching
+    const materialModel = material.product.modelo?.toLowerCase() || '';
+    return apiModels.find(model => 
+      model.l.toLowerCase() === materialModel ||
+      model.d.toLowerCase().includes(materialModel) ||
+      materialModel.includes(model.l.toLowerCase())
+    )?.l || null;
+  };
 
-  // Ordenar por ordem alfabética da descrição do modelo
-  const sortedModels: ModelGroup[] = Object.values(modelGroups)
-    .sort((a, b) => {
-      const descA = a.description || a.displayName || a.modelo || '';
-      const descB = b.description || b.displayName || b.modelo || '';
-      return descA.localeCompare(descB, 'pt', { numeric: true, sensitivity: 'base' });
+  // Agrupamentos de materiais por modelos da API
+  const apiModelGroups: Record<string, ApiModelGroup> = React.useMemo(() => {
+    const groups: Record<string, ApiModelGroup> = {};
+    
+    filteredMaterials.forEach(material => {
+      const modelCode = getMaterialModelCode(material);
+      const apiModel = apiModels.find(m => m.l === modelCode);
+      
+      if (modelCode && apiModel) {
+        if (!groups[modelCode]) {
+          groups[modelCode] = {
+            modeloCode: modelCode,
+            modeloName: apiModel.d,
+            totalPecas: 0,
+            totalArticles: 0,
+            locations: [],
+            materials: [],
+            uniqueProducts: []
+          };
+        }
+        
+        groups[modelCode].totalPecas += material.pecas;
+        groups[modelCode].locations.push({
+          estante: material.location.estante,
+          prateleira: material.location.prateleira,
+          posicao: material.location.posicao,
+          pecas: material.pecas,
+          locationKey: `${material.location.estante}${material.location.prateleira}`
+        });
+        groups[modelCode].materials.push(material);
+        
+        // Track unique products for article count
+        const productKey = `${material.product.modelo}-${material.product.acabamento}-${material.product.cor}-${material.product.comprimento}`;
+        if (!groups[modelCode].uniqueProducts.some(p => 
+          `${p.modelo}-${p.acabamento}-${p.cor}-${p.comprimento}` === productKey
+        )) {
+          groups[modelCode].uniqueProducts.push(material.product);
+          groups[modelCode].totalArticles++;
+        }
+      }
     });
+    
+    return groups;
+  }, [filteredMaterials, apiModels]);
+
+  // Ordenar por nome do modelo da API
+  const sortedApiModels: ApiModelGroup[] = Object.values(apiModelGroups)
+    .sort((a, b) => a.modeloName.localeCompare(b.modeloName, 'pt', { numeric: true, sensitivity: 'base' }));
 
   return (
     <div className="space-y-6">
@@ -457,13 +495,9 @@ const SearchPanel: React.FC = () => {
               Acesso Rápido por Modelo
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="font-medium text-primary">{sortedModels.length}</span>
+              <span className="font-medium text-primary">{sortedApiModels.length}</span>
               {hasActiveFilters ? (
-                <span>modelos filtrados ({materials?.reduce((acc, m) => {
-                  const modelo = m.product?.modelo;
-                  if (!modelo || acc.includes(modelo)) return acc;
-                  return [...acc, modelo];
-                }, [] as string[]).length || 0} total)</span>
+                <span>modelos filtrados</span>
               ) : (
                 <span>modelos em stock</span>
               )}
@@ -472,7 +506,7 @@ const SearchPanel: React.FC = () => {
         </CardHeader>
         <CardContent className="w-full">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full">
-            {sortedModels.map((group) => {
+            {sortedApiModels.map((group) => {
               // Agregar localizações por estante/prateleira e somar peças
               const locationSummary = group.locations.reduce((acc, loc) => {
                 const key = loc.locationKey;
@@ -488,30 +522,43 @@ const SearchPanel: React.FC = () => {
               }, {} as Record<string, { estante: string; prateleira: number; totalPecas: number }>);
 
               const uniqueLocations = Object.values(locationSummary);
-              const locationText = uniqueLocations.length <= 3 
-                ? uniqueLocations.map(loc => `${loc.estante}${loc.prateleira} (${loc.totalPecas})`).join(', ')
-                : `${uniqueLocations.slice(0, 2).map(loc => `${loc.estante}${loc.prateleira}`).join(', ')} +${uniqueLocations.length - 2}`;
 
               return (
                 <Button
-                  key={group.modelo}
+                  key={group.modeloCode}
                   variant="outline"
-                  onClick={() => handleModelClick(group)}
+                  onClick={() => handleModelClick({
+                    modelo: group.modeloCode,
+                    displayName: group.modeloName,
+                    description: group.modeloName,
+                    totalPecas: group.totalPecas,
+                    locations: group.locations,
+                    materials: group.materials,
+                    firstProduct: group.materials[0]?.product,
+                    totalArticles: group.totalArticles
+                  })}
                   className="h-auto p-4 flex flex-col gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all duration-200 group text-left"
                 >
                   <div className="flex items-start gap-2 w-full">
                     <div className="w-3 h-3 rounded-full bg-emerald-500 group-hover:bg-primary transition-colors mt-1 flex-shrink-0"></div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm text-white leading-tight mb-2 break-words whitespace-normal max-h-10 overflow-hidden">
-                        {group.description}
+                      <div className="font-medium text-lg text-white leading-tight mb-2 break-words whitespace-normal">
+                        {group.modeloName}
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold text-emerald-600 group-hover:text-primary text-sm">
-                          {group.totalPecas} peças
-                        </span>
-                        <span className="font-semibold text-orange-500 text-sm">
-                          {uniqueLocations.length} locais
-                        </span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-emerald-600 group-hover:text-primary text-sm">
+                            {group.totalPecas} peças
+                          </span>
+                          <span className="font-semibold text-blue-400 text-sm">
+                            {group.totalArticles} artigos
+                          </span>
+                        </div>
+                        <div className="flex justify-center">
+                          <span className="font-semibold text-orange-500 text-sm">
+                            {uniqueLocations.length} locais
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -519,7 +566,7 @@ const SearchPanel: React.FC = () => {
               );
             })}
           </div>
-          {sortedModels.length === 0 && (
+          {sortedApiModels.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>Nenhum modelo em stock</p>
