@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Search, MapPin, Package, AlertCircle, Loader2, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ const SearchPanel: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState('all');
   const [selectedComprimento, setSelectedComprimento] = useState('all');
   const [selectedCor, setSelectedCor] = useState('all');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   
   // Estado para resultados e UI
   const [searchResults, setSearchResults] = useState<Array<any>>([]);
@@ -51,33 +52,39 @@ const SearchPanel: React.FC = () => {
     selectedCor === 'all' ? undefined : selectedCor
   );
 
+  // Debounce search query for better performance (after hook declaration)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Hook para buscar atributos da API (modelos limpos)
   const { modelos: apiModels } = useApiAttributes();
 
-  // Função para pesquisar materiais baseado nos produtos da API
-  const handleApiSearch = () => {
-    if (selectedModel === 'all' && selectedComprimento === 'all' && selectedCor === 'all' && !searchQuery.trim()) {
+  // Optimized function to search materials based on API products with debouncing
+  const handleApiSearch = useCallback(() => {
+    if (selectedModel === 'all' && selectedComprimento === 'all' && selectedCor === 'all' && !debouncedSearchQuery.trim()) {
       setSearchResults([]);
       return;
     }
 
-    // Usar os produtos da API já filtrados pelo hook (sem filtragem duplicada)
+    // Use already filtered API products from the hook
     const filteredApiProducts = apiProducts;
 
-    // Para cada produto da API, encontrar materiais correspondentes no armazém
+    // For each API product, find corresponding materials in the warehouse
     const matchingMaterials: any[] = [];
     
     filteredApiProducts.forEach(apiProduct => {
       if (apiProduct.codigo) {
-        // Tentar decodificar o código EPW
+        // Try to decode EPW code
         const decoded = decodeEPWReference(apiProduct.codigo, false);
         
         if (decoded.success && decoded.product) {
-          // Buscar materiais que correspondem aos atributos decodificados
+          // Find materials that match decoded attributes
           const relatedMaterials = materials.filter(material => {
             const product = material.product;
-            
-            // Comparar atributos decodificados com o material
             let matches = true;
             
             if (decoded.product.modelo?.l && product.modelo) {
@@ -92,18 +99,15 @@ const SearchPanel: React.FC = () => {
               matches = matches && product.cor.toLowerCase().includes(decoded.product.cor.l.toLowerCase());
             }
             
-            // Note: comprimento não está disponível no tipo EPWDecodedProduct
-            // Podemos adicionar esta verificação se necessário no futuro
-            
             return matches;
           });
           
           matchingMaterials.push(...relatedMaterials);
         } else {
-          // Se não conseguiu decodificar, tentar correspondência direta por descrição
+          // If decode failed, try direct description matching
           const relatedMaterials = materials.filter(material => {
-            if (searchQuery.trim()) {
-              const desc = searchQuery.toLowerCase();
+            if (debouncedSearchQuery.trim()) {
+              const desc = debouncedSearchQuery.toLowerCase();
               const productDesc = `${material.product.modelo} ${material.product.acabamento}`.toLowerCase();
               return productDesc.includes(desc);
             }
@@ -115,21 +119,21 @@ const SearchPanel: React.FC = () => {
       }
     });
 
-    // Remover duplicatas
+    // Remove duplicates
     const uniqueMaterials = matchingMaterials.filter((material, index, self) => 
       index === self.findIndex(m => m.id === material.id)
     );
     
     setSearchResults(uniqueMaterials);
-  };
+  }, [selectedModel, selectedComprimento, selectedCor, debouncedSearchQuery, apiProducts, materials]);
 
-  const handleClearApiSearch = () => {
+  const handleClearApiSearch = useCallback(() => {
     setSelectedModel('all');
     setSelectedComprimento('all');
     setSelectedCor('all');
     setSearchQuery('');
     setSearchResults([]);
-  };
+  }, [setSearchQuery]);
 
   const handleLocationClick = (location: { estante: string; prateleira: number }, materialId?: string) => {
     setSelectedShelf(location);
@@ -151,15 +155,13 @@ const SearchPanel: React.FC = () => {
     setShowModelDialog(true);
   };
 
-  // Função para calcular quantidade em armazém de um produto da API
-  const getApiProductWarehouseQuantity = (apiProduct: any) => {
+  // Optimized function to calculate warehouse quantity for an API product
+  const getApiProductWarehouseQuantity = useCallback((apiProduct: any) => {
     if (!apiProduct.codigo) return 0;
     
-    // Tentar decodificar o código EPW
     const decoded = decodeEPWReference(apiProduct.codigo, false);
     
     if (decoded.success && decoded.product) {
-      // Buscar materiais que correspondem aos atributos decodificados
       const relatedMaterials = materials.filter(material => {
         const product = material.product;
         let matches = true;
@@ -183,7 +185,7 @@ const SearchPanel: React.FC = () => {
     }
     
     return 0;
-  };
+  }, [materials]);
 
   // Função para obter dados de localização de um produto da API
   const getApiProductLocationData = (apiProduct: any) => {
@@ -299,16 +301,16 @@ const SearchPanel: React.FC = () => {
     return matchingMaterials;
   }, []);
 
-  // Verificar se há filtros ativos
-  const hasActiveFilters = React.useMemo(() => {
+  // Verify if there are active filters (using debounced search query)
+  const hasActiveFilters = useMemo(() => {
     return selectedModel !== 'all' || 
            selectedComprimento !== 'all' || 
            selectedCor !== 'all' || 
-           (searchQuery && searchQuery.trim().length > 0);
-  }, [selectedModel, selectedComprimento, selectedCor, searchQuery]);
+           (debouncedSearchQuery && debouncedSearchQuery.trim().length > 0);
+  }, [selectedModel, selectedComprimento, selectedCor, debouncedSearchQuery]);
 
-  // Filtrar materiais baseado nos produtos da API quando há filtros ativos
-  const filteredMaterials = React.useMemo(() => {
+  // Filter materials based on API products when there are active filters
+  const filteredMaterials = useMemo(() => {
     if (!materials) return [];
     
     if (hasActiveFilters && apiProducts && apiProducts.length > 0) {

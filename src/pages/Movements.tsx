@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { ArrowUpDown, Search, ArrowLeft, Package, Calendar, Filter, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +24,7 @@ const Movements = () => {
   const { apiProducts, loading: apiLoading } = useApiProducts();
   
   const [searchFilter, setSearchFilter] = useState('');
+  const [debouncedSearchFilter, setDebouncedSearchFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'entrada' | 'saida'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'material' | 'type' | 'quantity'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -33,6 +34,22 @@ const Movements = () => {
   const [selectedComprimento, setSelectedComprimento] = useState<string>('all');
   const [selectedCor, setSelectedCor] = useState<string>('all');
   const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [debouncedProductSearchQuery, setDebouncedProductSearchQuery] = useState('');
+
+  // Debounce search filters for better performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchFilter(searchFilter);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchFilter]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedProductSearchQuery(productSearchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [productSearchQuery]);
   
   const modeloSelectRef = useRef<ModeloSelectRef>(null);
   const comprimentoSelectRef = useRef<ComprimentoSelectRef>(null);
@@ -50,91 +67,82 @@ const Movements = () => {
     typeFilter 
   });
 
-  // Filter and sort movements
+  // Memoize movements with material data for better performance
+  const movementsWithMaterialData = useMemo(() => {
+    return movements.map(movement => {
+      const material = materials.find(m => m.id === movement.materialId);
+      return {
+        ...movement,
+        material: material || null,
+        materialCode: material?.product?.codigo || material?.product?.modelo || 'N/A',
+        materialDescription: material?.product?.descricao || 
+          (material ? `${material.product.modelo} ${material.product.acabamento} ${material.product.cor}` : 'Material não encontrado'),
+        location: material ? `${material.location.estante}${material.location.prateleira}` : 'N/A'
+      };
+    });
+  }, [movements, materials]);
+
+  // Optimized filter functions with useCallback
+  const filterMovements = useCallback((movementsList: typeof movementsWithMaterialData) => {
+    return movementsList.filter(movement => {
+      // Filter by NORC only (using debounced value)
+      const searchMatch = debouncedSearchFilter === '' || 
+        (movement.norc && movement.norc.toLowerCase().includes(debouncedSearchFilter.toLowerCase()));
+      
+      // Filter by movement type
+      const typeMatch = typeFilter === 'all' || movement.type === typeFilter;
+      
+      // Product filters (using EPW decoded fields)
+      const modelMatch = selectedModel === 'all' || 
+        (movement.material?.product?.epwModelo?.l === selectedModel) ||
+        (movement.material?.product?.epwModelo?.d === selectedModel);
+      
+      const comprimentoMatch = selectedComprimento === 'all' || 
+        (movement.material?.product?.epwComprimento?.l === selectedComprimento);
+      
+      const corMatch = selectedCor === 'all' || 
+        (movement.material?.product?.epwCor?.l === selectedCor);
+      
+      const productSearchMatch = debouncedProductSearchQuery === '' ||
+        (movement.material?.product?.descricao && 
+         movement.material.product.descricao.toLowerCase().includes(debouncedProductSearchQuery.toLowerCase())) ||
+        (movement.material?.product?.codigo && 
+         movement.material.product.codigo.toLowerCase().includes(debouncedProductSearchQuery.toLowerCase()));
+      
+      return searchMatch && typeMatch && modelMatch && comprimentoMatch && corMatch && productSearchMatch;
+    });
+  }, [debouncedSearchFilter, typeFilter, selectedModel, selectedComprimento, selectedCor, debouncedProductSearchQuery]);
+
+  const sortMovements = useCallback((movementsList: typeof movementsWithMaterialData) => {
+    return [...movementsList].sort((a, b) => {
+      let compareValue = 0;
+      
+      switch (sortBy) {
+        case 'date':
+          compareValue = new Date(a.date).getTime() - new Date(b.date).getTime();
+          break;
+        case 'material':
+          compareValue = a.materialCode.localeCompare(b.materialCode);
+          break;
+        case 'type':
+          compareValue = a.type.localeCompare(b.type);
+          break;
+        case 'quantity':
+          compareValue = a.pecas - b.pecas;
+          break;
+      }
+      
+      return sortOrder === 'asc' ? compareValue : -compareValue;
+    });
+  }, [sortBy, sortOrder]);
+
+  // Filter and sort movements with optimized performance
   const filteredMovements = useMemo(() => {
-    return movements
-      .map(movement => {
-        // Find the material to get additional info
-        const material = materials.find(m => m.id === movement.materialId);
-        return {
-          ...movement,
-          material: material || null,
-          materialCode: material?.product?.codigo || material?.product?.modelo || 'N/A',
-          materialDescription: material?.product?.descricao || 
-            (material ? `${material.product.modelo} ${material.product.acabamento} ${material.product.cor}` : 'Material não encontrado'),
-          location: material ? `${material.location.estante}${material.location.prateleira}` : 'N/A'
-        };
-      })
-      .filter(movement => {
-        console.log('🔍 [Filter Debug] Processing movement:', {
-          id: movement.id,
-          material: movement.material,
-          materialCode: movement.materialCode,
-          product: movement.material?.product
-        });
+    const filtered = filterMovements(movementsWithMaterialData);
+    return sortMovements(filtered);
+  }, [movementsWithMaterialData, filterMovements, sortMovements]);
 
-        // Filter by NORC only
-        const searchMatch = searchFilter === '' || 
-          (movement.norc && movement.norc.toLowerCase().includes(searchFilter.toLowerCase()));
-        
-        // Filter by movement type
-        const typeMatch = typeFilter === 'all' || movement.type === typeFilter;
-        
-        // Product filters (using EPW decoded fields)
-        console.log('🔍 [Model Debug] Comparing selectedModel:', selectedModel, 'with epwModelo:', movement.material?.product?.epwModelo);
-        const modelMatch = selectedModel === 'all' || 
-          (movement.material?.product?.epwModelo?.l === selectedModel) ||
-          (movement.material?.product?.epwModelo?.d === selectedModel);
-        
-        const comprimentoMatch = selectedComprimento === 'all' || 
-          (movement.material?.product?.epwComprimento?.l === selectedComprimento);
-        
-        const corMatch = selectedCor === 'all' || 
-          (movement.material?.product?.epwCor?.l === selectedCor);
-        
-        const productSearchMatch = productSearchQuery === '' ||
-          (movement.material?.product?.descricao && 
-           movement.material.product.descricao.toLowerCase().includes(productSearchQuery.toLowerCase())) ||
-          (movement.material?.product?.codigo && 
-           movement.material.product.codigo.toLowerCase().includes(productSearchQuery.toLowerCase()));
-        
-        const finalMatch = searchMatch && typeMatch && modelMatch && comprimentoMatch && corMatch && productSearchMatch;
-        
-        console.log('🔍 [Filter Debug] Filter results:', {
-          searchMatch,
-          typeMatch,
-          modelMatch,
-          comprimentoMatch,
-          corMatch,
-          productSearchMatch,
-          finalMatch
-        });
-        
-        return finalMatch;
-      })
-      .sort((a, b) => {
-        let compareValue = 0;
-        
-        switch (sortBy) {
-          case 'date':
-            compareValue = new Date(a.date).getTime() - new Date(b.date).getTime();
-            break;
-          case 'material':
-            compareValue = a.materialCode.localeCompare(b.materialCode);
-            break;
-          case 'type':
-            compareValue = a.type.localeCompare(b.type);
-            break;
-          case 'quantity':
-            compareValue = a.pecas - b.pecas;
-            break;
-        }
-        
-        return sortOrder === 'asc' ? compareValue : -compareValue;
-      });
-  }, [movements, materials, searchFilter, typeFilter, sortBy, sortOrder, selectedModel, selectedComprimento, selectedCor, productSearchQuery]);
-
-  // Filter API products based on same criteria
+  // Filter API products based on same criteria with debounced search
   const filteredApiProducts = useMemo(() => {
     return apiProducts.filter(product => {
       const modelMatch = selectedModel === 'all' || 
@@ -146,15 +154,15 @@ const Movements = () => {
       const corMatch = selectedCor === 'all' || 
         (product.epwCor?.l === selectedCor);
       
-      const productSearchMatch = productSearchQuery === '' ||
+      const productSearchMatch = debouncedProductSearchQuery === '' ||
         (product.descricao && 
-         product.descricao.toLowerCase().includes(productSearchQuery.toLowerCase())) ||
+         product.descricao.toLowerCase().includes(debouncedProductSearchQuery.toLowerCase())) ||
         (product.codigo && 
-         product.codigo.toLowerCase().includes(productSearchQuery.toLowerCase()));
+         product.codigo.toLowerCase().includes(debouncedProductSearchQuery.toLowerCase()));
       
       return modelMatch && comprimentoMatch && corMatch && productSearchMatch;
     });
-  }, [apiProducts, selectedModel, selectedComprimento, selectedCor, productSearchQuery]);
+  }, [apiProducts, selectedModel, selectedComprimento, selectedCor, debouncedProductSearchQuery]);
 
   // Check which products have movements
   const productsWithMovements = useMemo(() => {
@@ -188,14 +196,14 @@ const Movements = () => {
     );
   };
 
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     setSearchFilter('');
     setTypeFilter('all');
     setSelectedModel('all');
     setSelectedComprimento('all');
     setSelectedCor('all');
     setProductSearchQuery('');
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -346,7 +354,7 @@ const Movements = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredMovements.length > 0 ? (
+                        {filteredMovements.length > 0 ? (
                         filteredMovements.map((movement) => (
                           <TableRow key={movement.id}>
                             <TableCell className="font-medium">
@@ -372,7 +380,7 @@ const Movements = () => {
                       ) : (
                         <TableRow>
                           <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                            {searchFilter || typeFilter !== 'all' ? 
+                            {debouncedSearchFilter || typeFilter !== 'all' ? 
                               'Nenhum movimento encontrado com os filtros aplicados' : 
                               'Nenhum movimento registrado'
                             }
