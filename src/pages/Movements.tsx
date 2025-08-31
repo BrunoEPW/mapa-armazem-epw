@@ -286,7 +286,7 @@ const Movements = () => {
                   <div className="flex items-center gap-2">
                     <Search className="h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Pesquisar por material ou NORC..."
+                      placeholder="Pesquisar por NORC, material ou descrição..."
                       value={searchFilter}
                       onChange={(e) => setSearchFilter(e.target.value)}
                       className="max-w-sm"
