@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useNavigate } from 'react-router-dom';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { useMinimumStocks } from '@/hooks/useMinimumStocks';
+import { useApiAttributes } from '@/hooks/useApiAttributes';
+import { decodeEPWReference } from '@/utils/epwCodeDecoder';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -25,6 +27,7 @@ const Reports = () => {
   const navigate = useNavigate();
   const { materials, movements, products } = useWarehouse();
   const { getMinimumStockSummary, getStockAlerts } = useMinimumStocks(materials, products);
+  const { modelos: apiModels } = useApiAttributes();
   
   // State for date selection and filters
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -234,6 +237,69 @@ const Reports = () => {
   };
 
   const chartData = prepareChartData();
+
+  // Model stock analysis using the same logic as SearchPanel
+  const getMaterialModelCode = (material: any): string | null => {
+    // Try EPW decoding first
+    if (material.product.codigo) {
+      try {
+        const decoded = decodeEPWReference(material.product.codigo);
+        if (decoded && decoded.success && decoded.product?.modelo) {
+          const apiModel = apiModels.find(m => 
+            m.l.toLowerCase() === decoded.product.modelo.l.toLowerCase() ||
+            m.d.toLowerCase().includes(decoded.product.modelo.l.toLowerCase())
+          );
+          if (apiModel) {
+            return apiModel.l;
+          }
+        }
+      } catch (error) {
+        // Continue to fallback
+      }
+    }
+
+    // Fallback to direct model matching
+    const materialModel = material.product.modelo?.toLowerCase() || '';
+    return apiModels.find(model => 
+      model.l.toLowerCase() === materialModel ||
+      model.d.toLowerCase().includes(materialModel) ||
+      materialModel.includes(model.l.toLowerCase())
+    )?.l || null;
+  };
+
+  // Group materials by API models
+  const apiModelGroups = React.useMemo(() => {
+    const groups: Record<string, { modeloCode: string; modeloName: string; totalPecas: number }> = {};
+    
+    materials.forEach(material => {
+      const modelCode = getMaterialModelCode(material);
+      const apiModel = apiModels.find(m => m.l === modelCode);
+      
+      if (modelCode && apiModel) {
+        if (!groups[modelCode]) {
+          groups[modelCode] = {
+            modeloCode: modelCode,
+            modeloName: apiModel.d,
+            totalPecas: 0
+          };
+        }
+        
+        groups[modelCode].totalPecas += material.pecas;
+      }
+    });
+    
+    return groups;
+  }, [materials, apiModels]);
+
+  // Prepare model stock chart data
+  const modelStockChartData = Object.values(apiModelGroups)
+    .sort((a, b) => b.totalPecas - a.totalPecas)
+    .slice(0, 15)
+    .map((item, index) => ({
+      modelo: item.modeloName,
+      pecas: item.totalPecas,
+      fill: `hsl(${24 + (index * 25) % 360}, 70%, 50%)`
+    }));
 
   // Export functions
   // Prepare product location data for dialog
@@ -513,6 +579,64 @@ const Reports = () => {
                       </div>
                     </div>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Model Stock Chart */}
+          <div className="mb-6">
+            <Card className="bg-card/80 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Modelos em Stock - Visão por Quantidade
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Top {modelStockChartData.length} modelos por número de peças em armazém
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ChartContainer
+                    config={{
+                      pecas: {
+                        label: "Peças",
+                        color: "hsl(var(--primary))",
+                      },
+                    }}
+                    className="h-full w-full"
+                  >
+                    <BarChart data={modelStockChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="modelo" 
+                        tick={{ fontSize: 10 }}
+                        height={100}
+                        interval={0}
+                        angle={-45}
+                        textAnchor="end"
+                      />
+                      <YAxis 
+                        label={{ value: 'Número de Peças', angle: -90, position: 'insideLeft' }}
+                      />
+                      <ChartTooltip
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-background p-3 border rounded-lg shadow-lg">
+                                <p className="font-semibold">{data.modelo}</p>
+                                <p className="text-sm">Peças: <span className="font-semibold">{data.pecas}</span></p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Bar dataKey="pecas" />
+                    </BarChart>
+                  </ChartContainer>
                 </div>
               </CardContent>
             </Card>
