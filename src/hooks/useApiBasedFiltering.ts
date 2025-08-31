@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Product } from '@/types/warehouse';
 
-interface ApiFilters {
+interface LocalFilters {
   modelo: string;
   comprimento: string;
   cor: string;
@@ -16,7 +16,7 @@ interface UseApiBasedFilteringReturn {
 
 export const useApiBasedFiltering = (
   products: Product[],
-  filters: ApiFilters,
+  filters: LocalFilters,
   searchQuery: string = ''
 ): UseApiBasedFilteringReturn => {
   const filteredProducts = useMemo(() => {

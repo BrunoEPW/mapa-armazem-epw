@@ -17,7 +17,7 @@ interface ProductSelectorAdvancedProps {
   onProductSelect: (productId: string, product: Product) => void;
 }
 
-interface EPWFilters {
+interface LocalEPWFilters {
   modelo: string;
   comprimento: string;
   cor: string;
@@ -29,7 +29,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
   onProductSelect,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [epwFilters, setEpwFilters] = useState<EPWFilters>({
+  const [epwFilters, setEpwFilters] = useState<LocalEPWFilters>({
     modelo: 'all',
     comprimento: 'all',
     cor: 'all',
@@ -41,7 +41,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
   const hasEPWFilters = Object.values(epwFilters).some(value => value && value !== 'all');
   
   // Convert EPW filters to API filters - only used when not using local filtering
-  const convertToApiFilters = (epwFilters: EPWFilters): ApiFilters => {
+  const convertToApiFilters = (epwFilters: LocalEPWFilters): ApiFilters => {
     const extractCode = (filterValue: string): string | undefined => {
       if (!filterValue || filterValue === 'all') return undefined;
       // If the value contains " - " (format "l - d"), extract the code part
@@ -75,7 +75,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
   } = useApiProductsWithFiltersServerSide();
 
 
-  const handleEpwFilterChange = (filterType: keyof EPWFilters, value: string) => {
+  const handleEpwFilterChange = (filterType: keyof LocalEPWFilters, value: string) => {
     const newEpwFilters = {
       ...epwFilters,
       [filterType]: value
