@@ -146,7 +146,10 @@ const ShelfDetailView: React.FC = () => {
                 return 0;
               })
               .map((material) => {
-                const isHighlighted = material.id === highlightMaterialId;
+                // Only highlight if coming from advanced search (check referrer)
+                const isFromAdvancedSearch = document.referrer.includes('/pesquisa') || 
+                                           window.location.search.includes('fromSearch=true');
+                const isHighlighted = material.id === highlightMaterialId && isFromAdvancedSearch;
                 return (
               <Card 
                 key={material.id}

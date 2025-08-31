@@ -134,7 +134,7 @@ const SearchPanel: React.FC = () => {
   const handleLocationClick = (location: { estante: string; prateleira: number }, materialId?: string) => {
     setSelectedShelf(location);
     const url = materialId 
-      ? `/prateleira/${location.estante}/${location.prateleira}?highlight=${materialId}`
+      ? `/prateleira/${location.estante}/${location.prateleira}?highlight=${materialId}&fromSearch=true`
       : `/prateleira/${location.estante}/${location.prateleira}`;
     navigate(url);
   };

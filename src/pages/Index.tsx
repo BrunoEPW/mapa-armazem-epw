@@ -38,6 +38,13 @@ const Index = () => {
 
   useEffect(() => {
     setLastUpdate(new Date());
+    console.log('📊 Materials in warehouse:', materials.length);
+    
+    // Auto-populate test data if no materials exist
+    if (materials.length === 0 && !isPopulating) {
+      console.log('⚡ No materials found, auto-populating test data...');
+      handlePopulateTestData();
+    }
     
     // Auto-save materials when they change and preservation is enabled
     if (isPreservationEnabled() && materials.length > 0) {
