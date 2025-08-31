@@ -65,8 +65,12 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   
   // Enhance products with better descriptions
   const products = updateProductDescriptions(rawProducts);
-  const setProducts = (updater: (prev: Product[]) => Product[]) => {
-    setRawProducts(prev => updateProductDescriptions(updater(prev)));
+  const setProducts = (updaterOrValue: ((prev: Product[]) => Product[]) | Product[]) => {
+    if (typeof updaterOrValue === 'function') {
+      setRawProducts(prev => updateProductDescriptions(updaterOrValue(prev)));
+    } else {
+      setRawProducts(updateProductDescriptions(updaterOrValue));
+    }
   };
   
   // Keep Supabase as secondary data source for sync
