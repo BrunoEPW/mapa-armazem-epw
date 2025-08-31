@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Product } from '@/types/warehouse';
 import { useApiProductsWithFiltersServerSide } from '@/hooks/useApiProductsWithFiltersServerSide';
-import { useEPWLocalFiltering } from '@/hooks/useEPWLocalFiltering';
+import { useApiBasedFiltering } from '@/hooks/useApiBasedFiltering';
 
 
 import { ApiFilters } from '@/services/apiService';
@@ -101,8 +101,8 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
     clearApiFilters();
   };
 
-  // Use local EPW filtering when EPW filters are active
-  const { filteredProducts, filteredCount, totalLoadedCount } = useEPWLocalFiltering(
+  // Use API-based filtering 
+  const { filteredProducts, filteredCount, totalLoadedCount } = useApiBasedFiltering(
     products, 
     epwFilters, 
     searchQuery
@@ -111,7 +111,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
   const hasActiveFilters = Object.values(epwFilters).some(value => value !== 'all') || searchQuery.length > 0;
   const isUsingLocalFiltering = hasEPWFilters || searchQuery.length > 0;
 
-  // Always use filtered products from EPW local filtering
+  // Always use filtered products from API-based filtering
   const displayProducts = filteredProducts;
 
   return (
@@ -120,7 +120,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
-          placeholder="Pesquisar por código EPW..."
+          placeholder="Pesquisar por código ou descrição..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
@@ -147,7 +147,7 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
       <div className="text-sm text-muted-foreground">
         Status: {connectionStatus}
         {isUsingLocalFiltering ? (
-          <> | Filtros: <span className="font-semibold text-primary">Decodificação EPW Local</span> | 
+          <> | Filtros: <span className="font-semibold text-primary">Filtragem Local</span> | 
           Resultados: {filteredCount} de {totalLoadedCount} carregados</>
         ) : (
           <> | Filtros: Servidor | Total: {totalCount} produtos</>
@@ -191,9 +191,9 @@ export const ProductSelectorAdvanced: React.FC<ProductSelectorAdvancedProps> = (
                 >
                    <TableCell className="font-mono text-sm">
                      <div className="flex items-center gap-2">
-                       {product.codigo || product.epwOriginalCode || product.modelo}
-                      <Badge variant="secondary" className="text-xs">API</Badge>
-                    </div>
+                        {product.codigo || product.modelo}
+                       <Badge variant="secondary" className="text-xs">API</Badge>
+                     </div>
                   </TableCell>
                   <TableCell>{product.descricao || product.acabamento}</TableCell>
                   <TableCell>

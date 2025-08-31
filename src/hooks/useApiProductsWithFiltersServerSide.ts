@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Product } from '@/types/warehouse';
 import { apiService, ApiFilters } from '@/services/apiService';
 import { config } from '@/lib/config';
-import { decodeEPWReference, getEPWModelo, getEPWAcabamento, getEPWCor, getEPWComprimento } from '@/utils/epwCodeDecoder';
+// Removed EPW decoding - using only API data
 
 interface UseApiProductsWithFiltersServerSideOptions {
   enabled?: boolean;
@@ -47,46 +47,17 @@ export const useApiProductsWithFiltersServerSide = (
     const description = apiProduct.strDescricao || 'Sem descrição';
     const codigo = apiProduct.strCodigo || 'Sem código';
     
-    // Try to decode EPW reference if available
-    const epwDecodeResult = decodeEPWReference(codigo, config.isDevelopment);
-    
-    // Use EPW decoded data if successful, otherwise fallback to API data
-    if (epwDecodeResult.success && epwDecodeResult.product) {
-      const decoded = epwDecodeResult.product;
-      
-      return {
-        id: `api_${apiProduct.Id}`,
-        
-        modelo: getEPWModelo(decoded),
-        acabamento: getEPWAcabamento(decoded),
-        cor: getEPWCor(decoded),
-        comprimento: getEPWComprimento(decoded),
-        foto: apiProduct.strFoto || undefined,
-        codigo: codigo,
-        descricao: description,
-        epwTipo: decoded.tipo,
-        epwCertificacao: decoded.certif,
-        epwModelo: decoded.modelo,
-        epwComprimento: decoded.comprim,
-        epwCor: decoded.cor,
-        epwAcabamento: decoded.acabamento,
-        epwOriginalCode: codigo,
-      };
-    } else {
-      // Non-EPW product - do NOT set epwOriginalCode
-      return {
-        id: `api_${apiProduct.Id}`,
-        
-        modelo: codigo,
-        acabamento: description,
-        cor: 'N/A',
-        comprimento: 0,
-        foto: apiProduct.strFoto || undefined,
-        codigo: codigo,
-        descricao: description,
-        // epwOriginalCode is intentionally NOT set for non-EPW products
-      };
-    }
+    // Use only API data - no EPW decoding
+    return {
+      id: `api_${apiProduct.Id}`,
+      codigo: codigo,
+      descricao: description,
+      modelo: codigo, // Use codigo as modelo for backward compatibility
+      acabamento: description, // Use description as acabamento for backward compatibility
+      cor: 'N/A',
+      comprimento: 0,
+      foto: apiProduct.strFoto || undefined,
+    };
   };
 
   const generateCacheKey = (page: number, filters: ApiFilters): string => {

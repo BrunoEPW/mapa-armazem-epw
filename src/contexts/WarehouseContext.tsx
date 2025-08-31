@@ -8,7 +8,7 @@ import { useRealTimeSync } from '@/hooks/useRealTimeSync';
 import { useDataReset } from '@/hooks/useDataReset';
 import { useSupabaseAdminOperations } from '@/hooks/useSupabaseAdminOperations';
 import { useProductWebService } from '@/hooks/useProductWebService';
-import * as epwCodeDecoder from '@/utils/epwCodeDecoder';
+// Removed EPW decoding - using only API data
 import { ensureValidProductId } from '@/utils/uuidUtils';
 import { generateProductDescription } from '@/utils/productDescriptionGenerator';
 import { updateProductDescriptions } from '@/utils/productDescriptionUpdater';
@@ -179,50 +179,19 @@ export const WarehouseProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return '0';
       };
 
-      // Step 6: Process EPW code if available for better field extraction
-      let decodedEpw = null;
-      try {
-        console.log('🔍 Attempting to decode EPW code:', codigo);
-        const epwResult = epwCodeDecoder.decodeEPWReference(codigo, true);
-        if (epwResult.success && epwResult.product) {
-          decodedEpw = epwResult.product;
-          console.log('🎯 EPW decoded result:', decodedEpw);
-        } else {
-          console.log('⚠️ EPW code not recognized or failed to decode:', epwResult.message);
-        }
-      } catch (epwError) {
-        console.warn('⚠️ EPW decoding failed (non-critical):', epwError);
-      }
+      // Use only API data - no EPW decoding
 
-      // Step 7: Build product data with comprehensive fallbacks
+      // Build product data using only API data
       const productData: Omit<Product, 'id'> = {
-        // Use API data or EPW decoded data as fallback
-        
-        modelo: safeString(apiProduct.modelo || decodedEpw?.modelo?.l, codigo.substring(0, 6)),
-        acabamento: safeString(apiProduct.acabamento || decodedEpw?.acabamento?.l, codigo.substring(6, 8)),
-        cor: safeString(apiProduct.cor || decodedEpw?.cor?.l, codigo.substring(8, 10)),
-        comprimento: safeComprimento(apiProduct.comprimento || decodedEpw?.comprim?.l || 32),
+        // Use API data with safe fallbacks
+        modelo: safeString(apiProduct.modelo, codigo),
+        acabamento: safeString(apiProduct.acabamento, 'Indefinido'),
+        cor: safeString(apiProduct.cor, 'Indefinido'),
+        comprimento: safeComprimento(apiProduct.comprimento || 0),
         foto: apiProduct.foto || apiProduct.strFoto || undefined,
         // API fields
         codigo: codigo,
-        descricao: generateProductDescription({
-          codigo,
-          modelo: apiProduct.modelo || decodedEpw?.modelo?.l,
-          acabamento: apiProduct.acabamento || decodedEpw?.acabamento?.l,
-          cor: apiProduct.cor || decodedEpw?.cor?.l,
-          comprimento: apiProduct.comprimento || decodedEpw?.comprim?.l,
-          apiDescription: apiProduct.descricao || apiProduct.strDescricao
-        }),
-        // EPW decoded fields for reference
-        ...(decodedEpw && {
-          epwTipo: decodedEpw.tipo?.d,
-          epwCertificacao: decodedEpw.certif?.d,
-          epwModelo: decodedEpw.modelo?.d,
-          epwComprimento: decodedEpw.comprim?.d,
-          epwCor: decodedEpw.cor?.d,
-          epwAcabamento: decodedEpw.acabamento?.d,
-          epwOriginalCode: codigo,
-        }),
+        descricao: apiProduct.descricao || apiProduct.strDescricao || `Produto ${codigo}`,
       };
 
       console.log('📋 Step 7: Final product data to be saved:', productData);

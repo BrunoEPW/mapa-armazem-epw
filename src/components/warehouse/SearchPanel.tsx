@@ -8,7 +8,7 @@ import { useWarehouse } from '@/contexts/WarehouseContext';
 import { useNavigate } from 'react-router-dom';
 import { MovementHistoryDialog } from './MovementHistoryDialog';
 import { ModelLocationsDialog } from './ModelLocationsDialog';
-import { decodeEPWReference } from '@/utils/epwCodeDecoder';
+// Removed EPW decoding - using only API data
 import { ModeloSelect } from './ModeloSelect';
 import { ComprimentoSelect } from './ComprimentoSelect';
 import { CorSelect } from './CorSelect';
@@ -78,44 +78,18 @@ const SearchPanel: React.FC = () => {
     
     filteredApiProducts.forEach(apiProduct => {
       if (apiProduct.codigo) {
-        // Try to decode EPW code
-        const decoded = decodeEPWReference(apiProduct.codigo, false);
+        // Direct matching based on description and search query
+        const relatedMaterials = materials.filter(material => {
+          if (debouncedSearchQuery.trim()) {
+            const desc = debouncedSearchQuery.toLowerCase();
+            const productDesc = `${material.product.modelo} ${material.product.acabamento} ${material.product.descricao || ''}`.toLowerCase();
+            const apiDesc = `${apiProduct.codigo} ${apiProduct.descricao || ''}`.toLowerCase();
+            return productDesc.includes(desc) || apiDesc.includes(desc);
+          }
+          return false;
+        });
         
-        if (decoded.success && decoded.product) {
-          // Find materials that match decoded attributes
-          const relatedMaterials = materials.filter(material => {
-            const product = material.product;
-            let matches = true;
-            
-            if (decoded.product.modelo?.l && product.modelo) {
-              matches = matches && product.modelo.toLowerCase().includes(decoded.product.modelo.l.toLowerCase());
-            }
-            
-            if (decoded.product.acabamento?.l && product.acabamento) {
-              matches = matches && product.acabamento.toLowerCase().includes(decoded.product.acabamento.l.toLowerCase());
-            }
-            
-            if (decoded.product.cor?.l && product.cor) {
-              matches = matches && product.cor.toLowerCase().includes(decoded.product.cor.l.toLowerCase());
-            }
-            
-            return matches;
-          });
-          
-          matchingMaterials.push(...relatedMaterials);
-        } else {
-          // If decode failed, try direct description matching
-          const relatedMaterials = materials.filter(material => {
-            if (debouncedSearchQuery.trim()) {
-              const desc = debouncedSearchQuery.toLowerCase();
-              const productDesc = `${material.product.modelo} ${material.product.acabamento}`.toLowerCase();
-              return productDesc.includes(desc);
-            }
-            return false;
-          });
-          
-          matchingMaterials.push(...relatedMaterials);
-        }
+        matchingMaterials.push(...relatedMaterials);
       }
     });
 
@@ -155,87 +129,63 @@ const SearchPanel: React.FC = () => {
     setShowModelDialog(true);
   };
 
-  // Optimized function to calculate warehouse quantity for an API product
+  // Calculate warehouse quantity based on API product code matching
   const getApiProductWarehouseQuantity = useCallback((apiProduct: any) => {
     if (!apiProduct.codigo) return 0;
     
-    const decoded = decodeEPWReference(apiProduct.codigo, false);
-    
-    if (decoded.success && decoded.product) {
-      const relatedMaterials = materials.filter(material => {
-        const product = material.product;
-        let matches = true;
-        
-        if (decoded.product.modelo?.l && product.modelo) {
-          matches = matches && product.modelo.toLowerCase().includes(decoded.product.modelo.l.toLowerCase());
-        }
-        
-        if (decoded.product.acabamento?.l && product.acabamento) {
-          matches = matches && product.acabamento.toLowerCase().includes(decoded.product.acabamento.l.toLowerCase());
-        }
-        
-        if (decoded.product.cor?.l && product.cor) {
-          matches = matches && product.cor.toLowerCase().includes(decoded.product.cor.l.toLowerCase());
-        }
-        
-        return matches;
-      });
+    // Direct matching based on codigo/description
+    const relatedMaterials = materials.filter(material => {
+      const product = material.product;
+      const apiCode = apiProduct.codigo.toLowerCase();
+      const productCode = (product.codigo || product.modelo || '').toLowerCase();
+      const productDesc = (product.descricao || '').toLowerCase();
+      const apiDesc = (apiProduct.descricao || '').toLowerCase();
       
-      return relatedMaterials.reduce((total, material) => total + material.pecas, 0);
-    }
+      return productCode.includes(apiCode) || 
+             apiDesc.includes(productCode) ||
+             productDesc.includes(apiCode);
+    });
     
-    return 0;
+    return relatedMaterials.reduce((total, material) => total + material.pecas, 0);
   }, [materials]);
 
-  // Função para obter dados de localização de um produto da API
+  // Get location data for API product based on direct matching
   const getApiProductLocationData = (apiProduct: any) => {
     if (!apiProduct.codigo) return null;
     
-    const decoded = decodeEPWReference(apiProduct.codigo, false);
+    // Direct matching based on codigo/description
+    const relatedMaterials = materials.filter(material => {
+      const product = material.product;
+      const apiCode = apiProduct.codigo.toLowerCase();
+      const productCode = (product.codigo || product.modelo || '').toLowerCase();
+      const productDesc = (product.descricao || '').toLowerCase();
+      const apiDesc = (apiProduct.descricao || '').toLowerCase();
+      
+      return productCode.includes(apiCode) || 
+             apiDesc.includes(productCode) ||
+             productDesc.includes(apiCode);
+    });
     
-    if (decoded.success && decoded.product) {
-      const relatedMaterials = materials.filter(material => {
-        const product = material.product;
-        let matches = true;
-        
-        if (decoded.product.modelo?.l && product.modelo) {
-          matches = matches && product.modelo.toLowerCase().includes(decoded.product.modelo.l.toLowerCase());
-        }
-        
-        if (decoded.product.acabamento?.l && product.acabamento) {
-          matches = matches && product.acabamento.toLowerCase().includes(decoded.product.acabamento.l.toLowerCase());
-        }
-        
-        if (decoded.product.cor?.l && product.cor) {
-          matches = matches && product.cor.toLowerCase().includes(decoded.product.cor.l.toLowerCase());
-        }
-        
-        return matches;
-      });
-      
-      if (relatedMaterials.length === 0) return null;
-      
-      const totalPecas = relatedMaterials.reduce((total, material) => total + material.pecas, 0);
-      const locations = relatedMaterials.map(material => ({
-        estante: material.location.estante,
-        prateleira: material.location.prateleira,
-        posicao: material.location.posicao,
-        pecas: material.pecas,
-        locationKey: `${material.location.estante}${material.location.prateleira}`
-      }));
-      
-      return {
-        modelo: decoded.product.modelo?.d || apiProduct.codigo,
-        displayName: decoded.product.modelo?.d || apiProduct.descricao || apiProduct.codigo,
-        description: apiProduct.descricao || '',
-        totalPecas,
-        locations,
-        materials: relatedMaterials,
-        firstProduct: relatedMaterials[0]?.product
-      };
-    }
+    if (relatedMaterials.length === 0) return null;
     
-    return null;
+    const totalPecas = relatedMaterials.reduce((total, material) => total + material.pecas, 0);
+    const locations = relatedMaterials.map(material => ({
+      estante: material.location.estante,
+      prateleira: material.location.prateleira,
+      posicao: material.location.posicao,
+      pecas: material.pecas,
+      locationKey: `${material.location.estante}${material.location.prateleira}`
+    }));
+    
+    return {
+      modelo: apiProduct.codigo,
+      displayName: apiProduct.descricao || apiProduct.codigo,
+      description: apiProduct.descricao || '',
+      totalPecas,
+      locations,
+      materials: relatedMaterials,
+      firstProduct: relatedMaterials[0]?.product
+    };
   };
 
   // Função para lidar com clique em produto da API
@@ -247,22 +197,21 @@ const SearchPanel: React.FC = () => {
     }
   };
 
-  // Função para obter o nome do modelo decodificado
+  // Get display name based only on product data
   const getModelDisplayName = (modelo: string, product?: any): string => {
-    // Se temos um código de produto, tentar decodificar
-    if (product?.codigo) {
-      const decoded = decodeEPWReference(product.codigo, false);
-      if (decoded.success && decoded.product?.modelo?.d) {
-        return decoded.product.modelo.d;
-      }
+    // Use description if available, otherwise modelo or codigo
+    if (product?.descricao && product.descricao !== 'Sem descrição') {
+      return product.descricao;
     }
     
-    // Se não conseguiu decodificar, tentar do nome do modelo existente
+    if (product?.codigo && product.codigo !== 'Sem código') {
+      return product.codigo;
+    }
+    
     if (modelo && modelo !== 'N/A' && modelo !== 'Indefinido') {
       return modelo;
     }
     
-    // Fallback para código ou modelo
     return modelo || 'Modelo Desconhecido';
   };
 
@@ -337,22 +286,17 @@ const SearchPanel: React.FC = () => {
     uniqueProducts: any[];
   }
 
-  // Função para mapear código de material para modelo da API
+  // Map material to API model based on direct matching
   const getMaterialModelCode = (material: any): string | null => {
     if (!material.product) return null;
     
-    // Try to decode EPW reference to get model code
-    if (material.product.codigo) {
-      const decoded = decodeEPWReference(material.product.codigo, false);
-      if (decoded.success && decoded.product?.modelo?.l) {
-        return decoded.product.modelo.l;
-      }
-    }
-    
-    // Fallback to direct model matching
+    // Direct model matching without EPW decoding
     const materialModel = material.product.modelo?.toLowerCase() || '';
+    const materialCode = material.product.codigo?.toLowerCase() || '';
+    
     return apiModels.find(model => 
       model.l.toLowerCase() === materialModel ||
+      model.l.toLowerCase() === materialCode ||
       model.d.toLowerCase().includes(materialModel) ||
       materialModel.includes(model.l.toLowerCase())
     )?.l || null;

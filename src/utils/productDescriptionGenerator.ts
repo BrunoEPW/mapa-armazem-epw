@@ -1,12 +1,11 @@
-import { decodeEPWReference, getEPWModelo, getEPWAcabamento, getEPWCor, getEPWComprimento } from './epwCodeDecoder';
-import { MODELOS_POR_FAMILIA, CORES, ACABAMENTOS, COMPRIMENTOS } from '@/data/product-data';
+import { Product } from '@/types/warehouse';
 
-export interface ProductDescriptionData {
+interface ProductDescriptionData {
+  codigo?: string;
   modelo?: string;
   acabamento?: string;
   cor?: string;
   comprimento?: string | number;
-  codigo?: string;
   epwOriginalCode?: string;
   apiDescription?: string;
 }
@@ -23,39 +22,7 @@ export const generateProductDescription = (data: ProductDescriptionData): string
     return data.apiDescription;
   }
   
-  // Second priority: try to decode EPW if we have a codigo
-  if (data.codigo) {
-    console.log('🔍 Attempting to decode EPW code:', data.codigo);
-    const decoded = decodeEPWReference(data.codigo);
-    console.log('🔍 EPW decode result:', decoded);
-    
-    if (decoded.success && decoded.product) {
-      const modelo = getEPWModelo(decoded.product);
-      const cor = getEPWCor(decoded.product);
-      const acabamento = getEPWAcabamento(decoded.product);
-      const comprimento = getEPWComprimento(decoded.product);
-      
-      console.log('🔍 EPW decoded parts:', { modelo, cor, acabamento, comprimento });
-      
-      // Create description from decoded EPW data
-      const parts = [];
-      if (modelo && modelo !== 'N/A') parts.push(modelo);
-      if (cor && cor !== 'N/A') parts.push(cor);
-      if (acabamento && acabamento !== 'N/A') parts.push(acabamento);
-      if (comprimento && comprimento !== 'N/A') {
-        const compStr = typeof comprimento === 'number' ? `${comprimento}mm` : comprimento;
-        parts.push(compStr);
-      }
-      
-      if (parts.length > 0) {
-        const epwDescription = parts.join(' - ');
-        console.log('✅ Generated EPW description:', epwDescription);
-        return epwDescription;
-      }
-    }
-  }
-  
-  // Fallback to provided data
+  // Second priority: use basic product data (no EPW decoding)
   console.log('🔄 Using fallback with provided data');
   const parts = [];
   
@@ -71,9 +38,8 @@ export const generateProductDescription = (data: ProductDescriptionData): string
     parts.push(data.acabamento);
   }
   
-  if (data.comprimento) {
-    const compStr = typeof data.comprimento === 'number' ? `${data.comprimento}mm` : data.comprimento;
-    parts.push(compStr);
+  if (data.comprimento && data.comprimento !== 0) {
+    parts.push(`${data.comprimento}mm`);
   }
   
   // If we have enough parts, create description
@@ -90,61 +56,53 @@ export const generateProductDescription = (data: ProductDescriptionData): string
     return codeDescription;
   }
   
-  if (data.epwOriginalCode) {
-    const epwCodeDescription = `Produto ${data.epwOriginalCode}`;
-    console.log('⚠️ Using EPW code description:', epwCodeDescription);
-    return epwCodeDescription;
-  }
-  
   console.log('❌ No description could be generated, using fallback');
   return 'Produto sem descrição';
 };
 
 /**
- * Enhances existing product description if it's generic
+ * Enhances generic product descriptions by calling generateProductDescription
  */
 export const enhanceProductDescription = (currentDescription: string, data: ProductDescriptionData): string => {
-  // Check if current description is generic and needs enhancement
-  const isGeneric = currentDescription.startsWith('Produto EPW') || 
-                   currentDescription === 'Produto sem descrição' ||
-                   currentDescription.startsWith('Produto ') && currentDescription.length < 20;
-  
-  if (isGeneric) {
+  if (isGenericDescription(currentDescription)) {
     return generateProductDescription(data);
   }
-  
   return currentDescription;
 };
 
 /**
- * Validates if a model exists in our internal catalog
+ * Product data validation functions (simplified for API-only approach)
  */
 export const isKnownModel = (modelo: string): boolean => {
-  return Object.values(MODELOS_POR_FAMILIA).flat().includes(modelo);
+  return Boolean(modelo && modelo.length > 2);
 };
 
-/**
- * Validates if a color exists in our internal catalog
- */
 export const isKnownColor = (cor: string): boolean => {
-  return CORES.includes(cor);
+  return Boolean(cor && cor.length > 1);
 };
 
-/**
- * Validates if an acabamento exists in our internal catalog
- */
 export const isKnownAcabamento = (acabamento: string): boolean => {
-  return ACABAMENTOS.includes(acabamento);
+  return Boolean(acabamento && acabamento.length > 1);
+};
+
+export const getModelFamily = (modelo: string): string | null => {
+  // Simplified family detection based on common patterns
+  if (!modelo) return null;
+  
+  const lowerModelo = modelo.toLowerCase();
+  if (lowerModelo.includes('deck')) return 'Decks';
+  if (lowerModelo.includes('wall')) return 'Paredes';
+  if (lowerModelo.includes('titanium')) return 'Titanium';
+  
+  return 'Outros';
 };
 
 /**
- * Gets the family for a given model
+ * Checks if a product description is generic and needs enhancement
  */
-export const getModelFamily = (modelo: string): string | null => {
-  for (const [family, models] of Object.entries(MODELOS_POR_FAMILIA)) {
-    if (models.includes(modelo)) {
-      return family;
-    }
-  }
-  return null;
+export const isGenericDescription = (description: string): boolean => {
+  return description.startsWith('Produto EPW') || 
+         description === 'Produto sem descrição' ||
+         description.startsWith('EPW ') ||
+         (description.startsWith('Produto ') && description.length < 25);
 };

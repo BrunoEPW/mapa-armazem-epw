@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { useMinimumStocks } from '@/hooks/useMinimumStocks';
 import { useApiAttributes } from '@/hooks/useApiAttributes';
-import { decodeEPWReference } from '@/utils/epwCodeDecoder';
+// Removed EPW decoding - using only API data
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -151,30 +151,15 @@ const Reports = () => {
   const productStock = groupedProducts();
 
 
-  // Model stock analysis using the same logic as SearchPanel
+  // Model analysis based on direct material matching
   const getMaterialModelCode = (material: any): string | null => {
-    // Try EPW decoding first
-    if (material.product.codigo) {
-      try {
-        const decoded = decodeEPWReference(material.product.codigo);
-        if (decoded && decoded.success && decoded.product?.modelo) {
-          const apiModel = apiModels.find(m => 
-            m.l.toLowerCase() === decoded.product.modelo.l.toLowerCase() ||
-            m.d.toLowerCase().includes(decoded.product.modelo.l.toLowerCase())
-          );
-          if (apiModel) {
-            return apiModel.l;
-          }
-        }
-      } catch (error) {
-        // Continue to fallback
-      }
-    }
-
-    // Fallback to direct model matching
+    // Direct model matching without EPW decoding
     const materialModel = material.product.modelo?.toLowerCase() || '';
+    const materialCode = material.product.codigo?.toLowerCase() || '';
+    
     return apiModels.find(model => 
       model.l.toLowerCase() === materialModel ||
+      model.l.toLowerCase() === materialCode ||
       model.d.toLowerCase().includes(materialModel) ||
       materialModel.includes(model.l.toLowerCase())
     )?.l || null;
