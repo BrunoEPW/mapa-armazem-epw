@@ -174,8 +174,9 @@ const Reports = () => {
       .sort((a, b) => b.quantidade - a.quantidade)
       .slice(0, 15)
       .map((item, index) => ({
-        modelo: item.modeloDescricao, // Usar descrição do modelo para exibição
-        modeloCode: item.modelo, // Manter código para referência
+        modelo: item.modelo, // Usar código do modelo para exibição
+        modeloCode: item.modelo, // Código do modelo
+        modeloDescricao: item.modeloDescricao, // Manter descrição para referência
         quantidade: item.quantidade,
         descricao: item.descricao,
         fill: `hsl(${24 + (index * 25) % 360}, 70%, 50%)`,
@@ -185,8 +186,8 @@ const Reports = () => {
     // Prepare drill-down data if model is selected
     let drillDownData = [];
     if (selectedModel) {
-      // Usar modeloCode para filtrar quando um modelo é selecionado
-      const selectedModelCode = modelData.find(m => m.modelo === selectedModel)?.modeloCode;
+      // Usar código do modelo para filtrar quando um modelo é selecionado
+      const selectedModelCode = selectedModel; // selectedModel já é o código
       const modelItems = productStock.filter(item => 
         (item.product.epwModelo?.l === selectedModelCode) || 
         (item.product.modelo === selectedModelCode)
@@ -378,8 +379,8 @@ const Reports = () => {
                           data={chartData.modelData} 
                           onClick={(data) => {
                             if (data && data.activePayload && data.activePayload[0]) {
-                              const modeloDescricao = data.activePayload[0].payload.modelo;
-                              setSelectedModel(modeloDescricao);
+                              const modeloCode = data.activePayload[0].payload.modelo;
+                              setSelectedModel(modeloCode);
                             }
                           }}
                         >
@@ -402,7 +403,9 @@ const Reports = () => {
                                 return (
                                   <div className="bg-background p-3 border rounded-lg shadow-lg">
                                     <p className="font-semibold">{data.modelo}</p>
-                                    {data.descricao && <p className="text-sm text-muted-foreground">{data.descricao}</p>}
+                                    {data.modeloDescricao && data.modelo !== data.modeloDescricao && (
+                                      <p className="text-sm text-muted-foreground">{data.modeloDescricao}</p>
+                                    )}
                                     <p className="text-sm">Quantidade: <span className="font-semibold">{data.quantidade}</span></p>
                                     <p className="text-xs text-muted-foreground mt-1">Clique para detalhar</p>
                                   </div>
