@@ -73,10 +73,8 @@ const Movements = () => {
           product: movement.material?.product
         });
 
-        // Filter by search term (material code, description, or norc)
+        // Filter by NORC only
         const searchMatch = searchFilter === '' || 
-          movement.materialCode.toLowerCase().includes(searchFilter.toLowerCase()) ||
-          movement.materialDescription.toLowerCase().includes(searchFilter.toLowerCase()) ||
           (movement.norc && movement.norc.toLowerCase().includes(searchFilter.toLowerCase()));
         
         // Filter by movement type
@@ -286,7 +284,7 @@ const Movements = () => {
                   <div className="flex items-center gap-2">
                     <Search className="h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Pesquisar por NORC, material ou descrição..."
+                      placeholder="Pesquisar por NORC..."
                       value={searchFilter}
                       onChange={(e) => setSearchFilter(e.target.value)}
                       className="max-w-sm"
