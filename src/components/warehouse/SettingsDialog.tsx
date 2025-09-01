@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Download, Upload, Mail, Clock, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import { Settings, Download, Upload, Mail, Clock, Save, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
 import MinimumStockPanel from './MinimumStockPanel';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useWarehouse } from '@/contexts/WarehouseContext';
 import { useToast } from '@/hooks/use-toast';
 import { useDataReset } from '@/hooks/useDataReset';
+import { useNonApiProductCleaner } from '@/hooks/useNonApiProductCleaner';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 
@@ -31,8 +32,10 @@ interface EmailSettings {
 const SettingsDialog = ({ children }: SettingsDialogProps) => {
   const { materials, products, movements, clearAllData } = useWarehouse();
   const { toast } = useToast();
+  const { cleanAllShelves, previewCleanup } = useNonApiProductCleaner();
   const [open, setOpen] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [isCleaningNonApi, setIsCleaningNonApi] = useState(false);
   const [emailSettings, setEmailSettings] = useState<EmailSettings>(() => {
     const saved = localStorage.getItem('warehouse_email_settings');
     return saved ? JSON.parse(saved) : {
@@ -220,6 +223,48 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
       });
     } finally {
       setIsClearing(false);
+    }
+  };
+
+  // Clean non-API products function
+  const handleCleanNonApiProducts = async () => {
+    try {
+      setIsCleaningNonApi(true);
+      console.log('🧹 [handleCleanNonApiProducts] Starting non-API product cleanup...');
+      
+      // Preview what will be cleaned
+      const preview = previewCleanup();
+      
+      if (preview.materialsRemoved === 0) {
+        toast({
+          title: "Nenhum produto não-API encontrado",
+          description: "Todas as prateleiras já contêm apenas produtos da API",
+        });
+        return;
+      }
+      
+      console.log('🔍 [handleCleanNonApiProducts] Preview:', preview);
+      
+      // Perform cleanup
+      const result = await cleanAllShelves();
+      
+      if (result.success) {
+        console.log('✅ [handleCleanNonApiProducts] Cleanup completed successfully');
+        toast({
+          title: "Produtos não-API removidos",
+          description: `Removidos ${result.productsRemoved} produtos e ${result.materialsRemoved} materiais (${result.totalPiecesRemoved} peças)`,
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ [handleCleanNonApiProducts] Error cleaning non-API products:', error);
+      toast({
+        title: "Erro ao limpar produtos não-API",
+        description: "Ocorreu um erro durante a limpeza dos produtos não-API",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCleaningNonApi(false);
     }
   };
 
@@ -478,7 +523,7 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                   <div className="flex items-start gap-2">
                     <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5" />
                     <div className="text-sm">
@@ -516,6 +561,75 @@ const SettingsDialog = ({ children }: SettingsDialogProps) => {
                     <>
                       <AlertCircle className="h-4 w-4 mr-2" />
                       Limpar Todos os Dados Mock
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trash2 className="h-5 w-5" />
+                  Remover Produtos Não-API
+                </CardTitle>
+                <CardDescription>
+                  Identificar e remover produtos que não são provenientes da API externa
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-blue-800">Como funciona:</p>
+                      <p className="text-blue-700">
+                        Esta funcionalidade identifica produtos criados localmente ou materiais de teste 
+                        e remove-os das prateleiras, mantendo apenas produtos válidos da API externa.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="font-medium">Critérios de identificação de produtos não-API:</Label>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground text-sm">
+                    <li>IDs que começam com "local-product-"</li>
+                    <li>Descrições geradas automaticamente (padrão: MODELO - COR - ACABAMENTO - COMPRIMENTO)</li>
+                    <li>Produtos sem código da API mas com referência EPW</li>
+                    <li>Produtos básicos criados pelo sistema de teste</li>
+                  </ul>
+                </div>
+
+                {(() => {
+                  const preview = previewCleanup();
+                  return (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <Label className="font-medium">Pré-visualização da limpeza:</Label>
+                      <div className="space-y-1 text-sm mt-2">
+                        <div>Produtos não-API encontrados: {preview.productsRemoved}</div>
+                        <div>Materiais a remover: {preview.materialsRemoved}</div>
+                        <div>Total de peças: {preview.totalPiecesRemoved}</div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <Button 
+                  onClick={handleCleanNonApiProducts} 
+                  variant="destructive" 
+                  className="w-full"
+                  disabled={isCleaningNonApi}
+                >
+                  {isCleaningNonApi ? (
+                    <>
+                      <Clock className="h-4 w-4 mr-2 animate-spin" />
+                      A remover produtos não-API...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Remover Produtos Não-API
                     </>
                   )}
                 </Button>

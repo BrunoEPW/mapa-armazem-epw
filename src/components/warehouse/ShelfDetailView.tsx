@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Plus, ArrowUpDown, Trash2, History } from 'lucide-react';
+import { ArrowLeft, Plus, ArrowUpDown, Trash2, History, Trash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RandomConfirmDialog } from '@/components/ui/random-confirm-dialog';
 import { useWarehouse } from '@/contexts/WarehouseContext';
+import { useNonApiProductCleaner } from '@/hooks/useNonApiProductCleaner';
 import { Material, WAREHOUSE_CONFIG } from '@/types/warehouse';
 import { AddMaterialDialog } from './AddMaterialDialog';
 import { EditMaterialDialog } from './EditMaterialDialog';
@@ -30,11 +31,13 @@ const ShelfDetailView: React.FC = () => {
   }
   
   const { getMaterialsByShelf, removeMaterial } = warehouseContext;
+  const { cleanShelf } = useNonApiProductCleaner();
   
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [showHistoryFor, setShowHistoryFor] = useState<string | null>(null);
   const [materialToDelete, setMaterialToDelete] = useState<Material | null>(null);
+  const [isCleaningShelf, setIsCleaningShelf] = useState(false);
 
   if (!estante || !prateleira) {
     navigate('/');
@@ -67,6 +70,19 @@ const ShelfDetailView: React.FC = () => {
       await removeMaterial(materialId);
     } catch (error) {
       // Continue anyway since we're in offline mode
+    }
+  };
+
+  const handleCleanNonApiProducts = async () => {
+    if (!estante || !prateleira) return;
+    
+    try {
+      setIsCleaningShelf(true);
+      await cleanShelf(estante, parseInt(prateleira));
+    } catch (error) {
+      console.error('Error cleaning shelf:', error);
+    } finally {
+      setIsCleaningShelf(false);
     }
   };
 
@@ -112,15 +128,26 @@ const ShelfDetailView: React.FC = () => {
           </h1>
           
           {!isReadOnly && (
-            <Button
-              onClick={() => {
-                setShowAddDialog(true);
-              }}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Adicionar Material
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleCleanNonApiProducts}
+                variant="outline"
+                disabled={isCleaningShelf}
+                className="flex items-center gap-2"
+              >
+                <Trash className="w-4 h-4" />
+                {isCleaningShelf ? 'A limpar...' : 'Limpar Não-API'}
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowAddDialog(true);
+                }}
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Adicionar Material
+              </Button>
+            </div>
           )}
         </div>
 

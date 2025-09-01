@@ -67,28 +67,8 @@ export const populateTestData = async ({
         product = await createProductFromApi(productCode);
         
         if (!product) {
-          console.log(`📦 Criando produto básico ${productCode}...`);
-          
-          // Criar produto básico se não encontrar na API
-          const basicProduct: Product = {
-            id: `local-product-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            codigo: productCode,
-            epwOriginalCode: productCode,
-            modelo: productCode.substring(0, 6),
-            acabamento: productCode.substring(6, 8),
-            cor: productCode.substring(8, 10),
-            comprimento: 32,
-            descricao: generateProductDescription({
-              modelo: productCode.substring(0, 6),
-              acabamento: productCode.substring(6, 8),
-              cor: productCode.substring(8, 10),
-              comprimento: 32,
-              codigo: productCode,
-              epwOriginalCode: productCode,
-            }),
-          };
-          
-          product = basicProduct;
+          console.log(`⚠️ Produto ${productCode} não encontrado na API - saltando...`);
+          continue; // Skip this product code if not found in API
         }
         
         createdProducts[productCode] = product;
@@ -102,8 +82,8 @@ export const populateTestData = async ({
     let totalMaterials = 0;
     let totalPieces = 0;
 
-    // Para cada produto, gerar localizações aleatórias
-    for (const productCode of testProductCodes) {
+    // Para cada produto criado, gerar localizações aleatórias
+    for (const [productCode, product] of Object.entries(createdProducts)) {
       const locations = generateUniqueLocations(2, 5); // Entre 2 a 5 localizações por produto
       let productTotalPieces = 0;
       
@@ -113,8 +93,8 @@ export const populateTestData = async ({
         const quantity = generateRandomQuantity();
         
         const material = await addMaterial({
-          productId: createdProducts[productCode].id,
-          product: createdProducts[productCode],
+          productId: product.id,
+          product: product,
           pecas: quantity,
           location,
         });
@@ -137,7 +117,7 @@ export const populateTestData = async ({
     }
 
     console.log(`🎉 População de dados concluída!`);
-    console.log(`📊 Resumo: ${totalMaterials} materiais, ${totalPieces} peças totais, ${testProductCodes.length} produtos diferentes`);
+    console.log(`📊 Resumo: ${totalMaterials} materiais, ${totalPieces} peças totais, ${Object.keys(createdProducts).length} produtos diferentes`);
     
     toast.success(`Dados de teste populados! ${totalMaterials} materiais (${totalPieces} peças) distribuídos aleatoriamente.`);
     
