@@ -12,6 +12,7 @@ import { ModelLocationsDialog } from './ModelLocationsDialog';
 import { ModeloSelect } from './ModeloSelect';
 import { ComprimentoSelect } from './ComprimentoSelect';
 import { CorSelect } from './CorSelect';
+import { AcabamentoSelect } from './AcabamentoSelect';
 import { useApiProductsSimple } from '@/hooks/useApiProductsSimple';
 import { useApiAttributes } from '@/hooks/useApiAttributes';
 
@@ -23,6 +24,7 @@ const SearchPanel: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState('all');
   const [selectedComprimento, setSelectedComprimento] = useState('all');
   const [selectedCor, setSelectedCor] = useState('all');
+  const [selectedAcabamento, setSelectedAcabamento] = useState('all');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   
   // Estado para resultados e UI
@@ -49,7 +51,8 @@ const SearchPanel: React.FC = () => {
   } = useApiProductsSimple(
     selectedModel === 'all' ? undefined : selectedModel,
     selectedComprimento === 'all' ? undefined : selectedComprimento,
-    selectedCor === 'all' ? undefined : selectedCor
+    selectedCor === 'all' ? undefined : selectedCor,
+    selectedAcabamento === 'all' ? undefined : selectedAcabamento
   );
 
   // Debounce search query for better performance (after hook declaration)
@@ -65,7 +68,7 @@ const SearchPanel: React.FC = () => {
 
   // Optimized function to search materials based on API products with debouncing
   const handleApiSearch = useCallback(() => {
-    if (selectedModel === 'all' && selectedComprimento === 'all' && selectedCor === 'all' && !debouncedSearchQuery.trim()) {
+    if (selectedModel === 'all' && selectedComprimento === 'all' && selectedCor === 'all' && selectedAcabamento === 'all' && !debouncedSearchQuery.trim()) {
       setSearchResults([]);
       return;
     }
@@ -99,12 +102,13 @@ const SearchPanel: React.FC = () => {
     );
     
     setSearchResults(uniqueMaterials);
-  }, [selectedModel, selectedComprimento, selectedCor, debouncedSearchQuery, apiProducts, materials]);
+  }, [selectedModel, selectedComprimento, selectedCor, selectedAcabamento, debouncedSearchQuery, apiProducts, materials]);
 
   const handleClearApiSearch = useCallback(() => {
     setSelectedModel('all');
     setSelectedComprimento('all');
     setSelectedCor('all');
+    setSelectedAcabamento('all');
     setSearchQuery('');
     setSearchResults([]);
   }, [setSearchQuery]);
@@ -254,9 +258,9 @@ const SearchPanel: React.FC = () => {
   const hasActiveFilters = useMemo(() => {
     return selectedModel !== 'all' || 
            selectedComprimento !== 'all' || 
-           selectedCor !== 'all' || 
+           selectedCor !== 'all' || selectedAcabamento !== 'all' || 
            (debouncedSearchQuery && debouncedSearchQuery.trim().length > 0);
-  }, [selectedModel, selectedComprimento, selectedCor, debouncedSearchQuery]);
+  }, [selectedModel, selectedComprimento, selectedCor, selectedAcabamento, debouncedSearchQuery]);
 
   // Filter materials based on API products when there are active filters
   const filteredMaterials = useMemo(() => {
@@ -393,7 +397,7 @@ const SearchPanel: React.FC = () => {
           </div>
 
           {/* Filtros de pesquisa ocupando largura total */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
             <ModeloSelect 
               value={selectedModel} 
               onValueChange={setSelectedModel}
@@ -405,6 +409,10 @@ const SearchPanel: React.FC = () => {
             <CorSelect 
               value={selectedCor} 
               onValueChange={setSelectedCor}
+            />
+            <AcabamentoSelect 
+              value={selectedAcabamento} 
+              onValueChange={setSelectedAcabamento}
             />
           </div>
           
@@ -423,7 +431,7 @@ const SearchPanel: React.FC = () => {
           </div>
           
           {/* Botão para limpar filtros */}
-            {(selectedModel !== 'all' || selectedComprimento !== 'all' || selectedCor !== 'all' || searchQuery.trim()) && (
+            {(selectedModel !== 'all' || selectedComprimento !== 'all' || selectedCor !== 'all' || selectedAcabamento !== 'all' || searchQuery.trim()) && (
             <div className="flex justify-center">
               <Button 
                 onClick={handleClearApiSearch} 
@@ -533,7 +541,7 @@ const SearchPanel: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             Produtos da API
-            {(selectedModel !== 'all' || selectedComprimento !== 'all' || selectedCor !== 'all' || searchQuery.trim()) && (
+            {(selectedModel !== 'all' || selectedComprimento !== 'all' || selectedCor !== 'all' || selectedAcabamento !== 'all' || searchQuery.trim()) && (
               <Badge variant="secondary" className="ml-2">
                 Filtrado
               </Badge>

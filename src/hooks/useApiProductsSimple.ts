@@ -23,7 +23,7 @@ interface UseApiProductsSimpleReturn {
   setSearchQuery: (query: string) => void;
 }
 
-export const useApiProductsSimple = (modelo?: string, comprimento?: string, cor?: string): UseApiProductsSimpleReturn => {
+export const useApiProductsSimple = (modelo?: string, comprimento?: string, cor?: string, acabamento?: string): UseApiProductsSimpleReturn => {
   const itemsPerPage = 20;
   const [products, setProducts] = useState<SimpleProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,6 +79,9 @@ export const useApiProductsSimple = (modelo?: string, comprimento?: string, cor?
       }
       if (cor && cor !== 'all') {
         filters.Cor = cor;
+      }
+      if (acabamento && acabamento !== 'all') {
+        filters.Acabamento = acabamento;
       }
       
       // Para pesquisa simples, vamos buscar todos os produtos e filtrar localmente
@@ -141,7 +144,7 @@ export const useApiProductsSimple = (modelo?: string, comprimento?: string, cor?
       }
       
       // Use filtered count when filters are applied (search OR model filter OR comprimento filter OR cor filter)
-      const hasFilters = search.trim() || (modelo && modelo !== 'all') || (comprimento && comprimento !== 'all') || (cor && cor !== 'all');
+      const hasFilters = search.trim() || (modelo && modelo !== 'all') || (comprimento && comprimento !== 'all') || (cor && cor !== 'all') || (acabamento && acabamento !== 'all');
       const totalRecords = hasFilters ? response.recordsFiltered : response.recordsTotal;
       
       setProducts(deduplicatedProducts);
@@ -177,7 +180,7 @@ export const useApiProductsSimple = (modelo?: string, comprimento?: string, cor?
       setLoading(false);
       abortControllerRef.current = null;
     }
-  }, [itemsPerPage, modelo, comprimento, cor]);
+  }, [itemsPerPage, modelo, comprimento, cor, acabamento]);
 
   const debouncedLoadProducts = useCallback((page: number, search: string) => {
     if (debounceTimeoutRef.current) {
@@ -229,7 +232,7 @@ export const useApiProductsSimple = (modelo?: string, comprimento?: string, cor?
     } else {
       loadProducts(1, searchQuery, false);
     }
-  }, [modelo, comprimento, cor]);
+  }, [modelo, comprimento, cor, acabamento]);
 
   return {
     products,
